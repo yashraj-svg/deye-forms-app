@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #__next {
+  height: 100%;
+}
+
+body {
+  @apply bg-gray-50 text-gray-800 antialiased;
+}
+
+.card {
+  @apply bg-white shadow-sm rounded-lg p-6;
+}
+
+/* Page container that centers content */
+.container {
+  @apply max-w-6xl mx-auto px-4;
+}
+
+/* Hero styles */
+.hero {
+  @apply bg-white rounded-lg shadow-sm p-6 mb-6;
+}
+
+.hero-title {
+  @apply text-2xl md:text-3xl font-extrabold;
+}
+.hero-sub {
+  @apply text-sm text-gray-600 mt-2;
+}
+
+/* Primary CTA */
+.cta-btn {
+  @apply inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md shadow-sm hover:bg-blue-700;
+}
+
+/* Tab bar tweaks */
+.tab-btn {
+  @apply inline-flex items-center gap-2 px-4 py-2 rounded-md transition-all font-medium border bg-white;
+}
+.tab-btn.active {
+  @apply bg-blue-600 text-white border-transparent shadow;
+}
+
+/* small screens: allow horizontal scroll for tabs */
+.tab-scroll {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* subtle form container */
+.forms-wrapper {
+  @apply bg-transparent;
+}
