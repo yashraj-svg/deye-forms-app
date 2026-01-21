@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .header { background: linear-gradient(135deg, #059669, #10b981); color: white; padding: 20px; border-radius: 8px 8px 0 0; }
+        .header h1 { margin: 0; font-size: 24px; }
+        .section { margin: 20px 0; padding: 15px; background: #f9f9f9; border-left: 4px solid #059669; }
+        .section h2 { margin-top: 0; color: #059669; font-size: 16px; }
+        .detail-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; }
+        .detail-label { font-weight: bold; color: #475569; }
+        .detail-value { color: #0f172a; }
+        .stock-warning { background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 4px; }
+        .stock-warning strong { color: #856404; }
+        .action-section { background: #e7f5f0; padding: 20px; border-radius: 8px; margin: 20px 0; }
+        .button { display: inline-block; padding: 10px 20px; margin: 5px; border-radius: 4px; text-decoration: none; font-weight: bold; }
+        .btn-approve { background: #28a745; color: white; }
+        .btn-reject { background: #dc3545; color: white; }
+        .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📋 Stock Requisition Approval Required</h1>
+        </div>
+
+        <p>A new stock requisition has been submitted and requires your approval.</p>
+
+        <!-- Requisition Details -->
+        <div class="section">
+            <h2>Requisition Details</h2>
+            <div class="detail-row">
+                <span class="detail-label">Date Submitted:</span>
+                <span class="detail-value">{{ requisition.created_at|date:"d M Y, H:i" }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Engineer Name:</span>
+                <span class="detail-value">{{ requisition.manager_name }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Required To:</span>
+                <span class="detail-value">{{ requisition.required_to }}</span>
+            </div>
+        </div>
+
+        <!-- Component Details -->
+        <div class="section">
+            <h2>Component Details</h2>
+            <div class="detail-row">
+                <span class="detail-label">Serial Number:</span>
+                <span class="detail-value">{{ requisition.serial_number }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Component Type:</span>
+                <span class="detail-value">{{ requisition.component_type }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Description:</span>
+                <span class="detail-value">{{ requisition.description }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Quantity Required:</span>
+                <span class="detail-value"><strong>{{ requisition.quantity_required }} PCS</strong></span>
+            </div>
+        </div>
+
+        <!-- Stock Information -->
+        <div class="section">
+            <h2>Stock Information</h2>
+            <div class="detail-row">
+                <span class="detail-label">Current Stock:</span>
+                <span class="detail-value"><strong>{{ current_quantity }} PCS</strong></span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Remaining After Approval:</span>
+                <span class="detail-value"><strong style="color: {% if remaining_after_approval < 0 %}#dc3545{% else %}#28a745{% endif %};">{{ remaining_after_approval }} PCS</strong></span>
+            </div>
+        </div>
+
+        <!-- Stock Warning -->
+        {% if remaining_after_approval < 0 %}
+        <div class="stock-warning">
+            <strong>⚠️ WARNING:</strong> Insufficient stock! Current stock is {{ current_quantity }} PCS but {{ requisition.quantity_required }} PCS is requested. Remaining would be <strong>{{ remaining_after_approval }} PCS</strong> (negative).
+        </div>
+        {% endif %}
+
+        <!-- Action Section -->
+        <div class="action-section">
+            <h2 style="margin-top: 0; color: #059669;">Action Required</h2>
+            <p>Please review the requisition details above and take action:</p>
+            <div style="text-align: center;">
+                <a href="{{ approval_url }}" class="button btn-approve">✓ Approve</a>
+                <a href="{{ approval_url }}" class="button btn-reject">✗ Reject</a>
+            </div>
+            <p style="font-size: 12px; color: #666; text-align: center; margin-top: 20px;">
+                Click the buttons above or log in to the admin panel to manage this requisition.
+            </p>
+        </div>
+
+        <div class="footer">
+            <p>This is an automated email. Please do not reply. For more information, contact the administration.</p>
+            <p>&copy; 2026 DEYE. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

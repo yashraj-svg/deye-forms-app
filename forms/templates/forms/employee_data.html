@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Data - Deye</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 25px 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            color: #667eea;
+            font-size: 32px;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .back-btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+        }
+
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .section {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #667eea;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .count-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .no-data {
+            color: #999;
+            font-style: italic;
+            padding: 20px;
+            text-align: center;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        th {
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 1px;
+        }
+
+        tbody tr {
+            transition: all 0.2s;
+        }
+
+        tbody tr:hover {
+            background: #f8f9fa;
+            transform: scale(1.01);
+        }
+
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-approved {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-rejected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status-dispatched {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .scrollable {
+            overflow-x: auto;
+        }
+
+        .filters-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .filters-row {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+
+        .filter-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .filter-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .filter-group input,
+        .filter-group select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .filter-group input:focus,
+        .filter-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .filter-btn {
+            padding: 10px 25px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .filter-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .clear-btn {
+            padding: 10px 25px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .clear-btn:hover {
+            background: #5a6268;
+        }
+
+        .export-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .export-btn {
+            padding: 10px 20px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+
+        .export-btn:hover {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+        }
+
+        .export-btn.xlsx {
+            background: #17a2b8;
+        }
+
+        .export-btn.xlsx:hover {
+            background: #138496;
+            box-shadow: 0 5px 15px rgba(23, 162, 184, 0.4);
+        }
+
+        .tab-export {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .tab-export .export-btn {
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+
+        .tab-filters {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .tab-filters-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+
+        .tab-filter-group {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .tab-filter-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+            font-size: 12px;
+        }
+
+        .tab-filter-group input,
+        .tab-filter-group select {
+            width: 100%;
+            padding: 8px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        .tab-filter-btn {
+            padding: 8px 16px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .tab-filter-btn:hover {
+            background: #764ba2;
+        }
+
+        .tab-clear-btn {
+            padding: 8px 16px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 13px;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .tab-clear-btn:hover {
+            background: #5a6268;
+        }
+
+        .duplicate-badge {
+            background: #ff6b6b;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 5px;
+            display: inline-block;
+        }
+        
+        tr.duplicate-row {
+            background: #fff3cd !important;
+            border-left: 4px solid #ffc107;
+        }
+        
+        tr.duplicate-row:hover {
+            background: #ffe69c !important;
+        }
+
+        .edit-btn {
+            padding: 6px 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .edit-btn:hover {
+            background: #764ba2;
+            transform: scale(1.05);
+        }
+
+        .duplicate-info {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+
+        .duplicate-info h3 {
+            color: #856404;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+
+        .duplicate-item {
+            padding: 8px;
+            background: white;
+            margin: 5px 0;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .duplicate-serial {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .duplicate-count {
+            background: #ff6b6b;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            padding: 12px 24px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .tab-btn:hover, .tab-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .section {
+                padding: 20px;
+            }
+
+            th, td {
+                padding: 10px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="{% url 'forms:simple_home' %}" class="back-btn">← Back to Home</a>
+        
+        <div class="header">
+            <h1>📊 My Data Dashboard</h1>
+            <p>Welcome, {{ user.get_full_name|default:user.username }}! View all your submitted forms and requests.</p>
+        </div>
+
+        <!-- Tabs for different form types -->
+        <div class="section">
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab('repairing')">Repairing Forms</button>
+                <button class="tab-btn" onclick="switchTab('inward')">Inward Forms</button>
+                <button class="tab-btn" onclick="switchTab('outward')">Outward Forms</button>
+                <button class="tab-btn" onclick="switchTab('service')">Service Reports</button>
+                <button class="tab-btn" onclick="switchTab('stock-req')">Stock Requisitions</button>
+                <button class="tab-btn" onclick="switchTab('stock-disp')">Stock Dispatched</button>
+            </div>
+
+            <!-- Repairing Forms Tab -->
+            <div id="repairing" class="tab-content active">
+                <h2 class="section-title">
+                    🔧 Repairing Forms
+                    <span class="count-badge">{{ repairing_forms.count }}</span>
+                </h2>
+                
+                <!-- Filters for Repairing -->
+                <div class="tab-filters">
+                    <form method="GET" id="repairing-filter-form">
+                        <input type="hidden" name="tab" value="repairing">
+                        <div class="tab-filters-row">
+                            <div class="tab-filter-group">
+                                <label>From Date</label>
+                                <input type="date" name="repairing_date_from" value="{{ repairing_date_from }}">
+                            </div>
+                            <div class="tab-filter-group">
+                                <label>To Date</label>
+                                <input type="date" name="repairing_date_to" value="{{ repairing_date_to }}">
+                            </div>
+                            <div class="tab-filter-group">
+                                <label>Search</label>
+                                <input type="text" name="repairing_search" placeholder="Case, Customer, Inverter..." value="{{ repairing_search }}">
+                            </div>
+                            <div class="tab-filter-group">
+                                <button type="submit" class="tab-filter-btn">Filter</button>
+                            </div>
+                            <div class="tab-filter-group">
+                                <a href="?tab=repairing" class="tab-clear-btn">Clear</a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="tab-export">
+                    <a href="{% url 'forms:export_employee_data' 'repairing' 'csv' %}?repairing_date_from={{ repairing_date_from }}&repairing_date_to={{ repairing_date_to }}&repairing_search={{ repairing_search }}" class="export-btn">
+                        📄 Export CSV
+                    </a>
+                    <a href="{% url 'forms:export_employee_data' 'repairing' 'xlsx' %}?repairing_date_from={{ repairing_date_from }}&repairing_date_to={{ repairing_date_to }}&repairing_search={{ repairing_search }}" class="export-btn xlsx">
+                        📊 Export Excel
+                    </a>
+                </div>
+                {% if repairing_forms %}
+                <div class="scrollable">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Case Number</th>
+                                <th>Customer</th>
+                                <th>Object</th>
+                                <th>Inverter ID</th>
+                                <th>Repaired By</th>
+                                <th>Tested By</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for form in repairing_forms %}
+                            <tr{% if form.duplicate_count %} class="duplicate-row"{% endif %}>
+                                <td>{{ form.case_number }}</td>
+                                <td>{{ form.customer_abbrev }}</td>
+                                <td>{{ form.repairing_object }}</td>
+                                <td>
+                                    {{ form.inverter_id|truncatewords:3 }}
+                                    {% if form.duplicate_count %}
+                                    <span class="duplicate-badge" title="This serial appears {{ form.duplicate_count }} times">×{{ form.duplicate_count }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ form.repaired_by }}</td>
+                                <td>{{ form.tested_by }}</td>
+                                <td>{{ form.repaired_on_date|date:"d M Y" }}</td>
+                                <td>{{ form.remark|default:"Completed" }}</td>
+                                <td>
+                                    <a href="{% url 'forms:edit_employee_form' 'repairing' form.id %}" class="edit-btn">✏️ Edit</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="no-data">No repairing forms submitted yet.</div>
+                {% endif %}
+            </div>
+
+            <!-- Inward Forms Tab -->
+            <div id="inward" class="tab-content">
+                <h2 class="section-title">
+                    📥 Inward Forms
+                    <span class="count-badge">{{ inward_forms.count }}</span>
+                </h2>
+                
+                <!-- Filters for Inward -->
+                <div class="tab-filters">
+                    <form method="GET" id="inward-filter-form">
+                        <input type="hidden" name="tab" value="inward">
+                        <div class="tab-filters-row">
+                            <div class="tab-filter-group">
+                                <label>From Date</label>
+                                <input type="date" name="inward_date_from" value="{{ inward_date_from }}">
+                            </div>
+                            <div class="tab-filter-group">
+                                <label>To Date</label>
+                                <input type="date" name="inward_date_to" value="{{ inward_date_to }}">
+                            </div>
+                            <div class="tab-filter-group">
+                                <label>Search</label>
+                                <input type="text" name="inward_search" placeholder="Customer, Inverter, AWB..." value="{{ inward_search }}">
+                            </div>
+                            <div class="tab-filter-group">
+                                <button type="submit" class="tab-filter-btn">Filter</button>
+                            </div>
+                            <div class="tab-filter-group">
+                                <a href="?tab=inward" class="tab-clear-btn">Clear</a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="tab-export">
+                    <a href="{% url 'forms:export_employee_data' 'inward' 'csv' %}?inward_date_from={{ inward_date_from }}&inward_date_to={{ inward_date_to }}&inward_search={{ inward_search }}" class="export-btn">
+                        📄 Export CSV
+                    </a>
+                    <a href="{% url 'forms:export_employee_data' 'inward' 'xlsx' %}?inward_date_from={{ inward_date_from }}&inward_date_to={{ inward_date_to }}&inward_search={{ inward_search }}" class="export-btn xlsx">
+                        📊 Export Excel
+                    </a>
+                </div>
+                {% if inward_forms %}
+                <div class="scrollable">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Customer</th>
+                                <th>Inverter ID</th>
+                                <th>From Location</th>
+                                <th>Received By</th>
+                                <th>Reason</th>
+                                <th>AWB/LR</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for form in inward_forms %}
+                            <tr{% if form.duplicate_count %} class="duplicate-row"{% endif %}>
+                                <td>{{ form.customer_name }}</td>
+                                <td>
+                                    {{ form.inverter_id }}
+                                    {% if form.duplicate_count %}
+                                    <span class="duplicate-badge" title="This serial appears {{ form.duplicate_count }} times">×{{ form.duplicate_count }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ form.received_from_location }}, {{ form.received_from_state }}</td>
+                                <td>{{ form.received_by }}</td>
+                                <td>{{ form.reason }}</td>
+                                <td>{{ form.awb_lr_number }}</td>
+                                <td>{{ form.created_at|date:"d M Y" }}</td>
+                                <td>
+                                    <a href="{% url 'forms:edit_employee_form' 'inward' form.id %}" class="edit-btn">✏️ Edit</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="no-data">No inward forms submitted yet.</div>
+                {% endif %}
+            </div>
+
+            <!-- Outward Forms Tab -->
+            <div id="outward" class="tab-content">
+                <h2 class="section-title">
+                    📤 Outward Forms
+                    <span class="count-badge">{{ outward_forms.count }}</span>
+                </h2>
+                
+                <!-- Filters for Outward -->
+                <div class="tab-filters">
+                    <form method="GET" id="outward-filter-form">
+                        <input type="hidden" name="tab" value="outward">
+                        <div class="tab-filters-row">
+                            <div class="tab-filter-group">
+                                <label>From Date</label>
+                                <input type="date" name="outward_date_from" value="{{ outward_date_from }}">
+                            </div>
+                            <div class="tab-filter-group">
+                                <label>To Date</label>
+                                <input type="date" name="outward_date_to" value="{{ outward_date_to }}">
+                            </div>
+                            <div class="tab-filter-group">
+                                <label>Search</label>
+                                <input type="text" name="outward_search" placeholder="Inverter, Company, AWB..." value="{{ outward_search }}">
+                            </div>
+                            <div class="tab-filter-group">
+                                <button type="submit" class="tab-filter-btn">Filter</button>
+                            </div>
+                            <div class="tab-filter-group">
+                                <a href="?tab=outward" class="tab-clear-btn">Clear</a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="tab-export">
+                    <a href="{% url 'forms:export_employee_data' 'outward' 'csv' %}?outward_date_from={{ outward_date_from }}&outward_date_to={{ outward_date_to }}&outward_search={{ outward_search }}" class="export-btn">
+                        📄 Export CSV
+                    </a>
+                    <a href="{% url 'forms:export_employee_data' 'outward' 'xlsx' %}?outward_date_from={{ outward_date_from }}&outward_date_to={{ outward_date_to }}&outward_search={{ outward_search }}" class="export-btn xlsx">
+                        📊 Export Excel
+                    </a>
+                </div>
+                {% if outward_forms %}
+                <div class="scrollable">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Inverter ID</th>
+                                <th>Sent To</th>
+                                <th>Location</th>
+                                <th>Sent By</th>
+                                <th>Approved By</th>
+                                <th>AWB Number</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for form in outward_forms %}
+                            <tr{% if form.duplicate_count %} class="duplicate-row"{% endif %}>
+                                <td>
+                                    {{ form.inverter_id_outward }}
+                                    {% if form.duplicate_count %}
+                                    <span class="duplicate-badge" title="This serial appears {{ form.duplicate_count }} times">×{{ form.duplicate_count }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ form.sent_to_company }}</td>
+                                <td>{{ form.sent_to_district }}, {{ form.sent_to_state }}</td>
+                                <td>{{ form.sent_by }}</td>
+                                <td>{{ form.approved_by }}</td>
+                                <td>{{ form.awb_number }}</td>
+                                <td>{{ form.created_at|date:"d M Y" }}</td>
+                                <td>
+                                    <a href="{% url 'forms:edit_employee_form' 'outward' form.id %}" class="edit-btn">✏️ Edit</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="no-data">No outward forms submitted yet.</div>
+                {% endif %}
+            </div>
+
+            <!-- Service Reports Tab -->
+            <div id="service" class="tab-content">
+                <h2 class="section-title">
+                    🛠️ Service Reports
+                    <span class="count-badge">{{ service_forms.count }}</span>
+                </h2>
+                
+                <!-- Filters for Service -->
+                <div class="tab-filters">
+                    <form method="GET" id="service-filter-form">
+                        <input type="hidden" name="tab" value="service">
+                        <div class="tab-filters-row">
+                            <div class="tab-filter-group">
+                                <label>From Date</label>
+                                <input type="date" name="service_date_from" value="{{ service_date_from }}">
+                            </div>
+                            <div class="tab-filter-group">
+                                <label>To Date</label>
+                                <input type="date" name="service_date_to" value="{{ service_date_to }}">
+                            </div>
+                            <div class="tab-filter-group">
+                                <label>Search</label>
+                                <input type="text" name="service_search" placeholder="Serial, Customer..." value="{{ service_search }}">
+                            </div>
+                            <div class="tab-filter-group">
+                                <button type="submit" class="tab-filter-btn">Filter</button>
+                            </div>
+                            <div class="tab-filter-group">
+                                <a href="?tab=service" class="tab-clear-btn">Clear</a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="tab-export">
+                    <a href="{% url 'forms:export_employee_data' 'service' 'csv' %}?service_date_from={{ service_date_from }}&service_date_to={{ service_date_to }}&service_search={{ service_search }}" class="export-btn">
+                        📄 Export CSV
+                    </a>
+                    <a href="{% url 'forms:export_employee_data' 'service' 'xlsx' %}?service_date_from={{ service_date_from }}&service_date_to={{ service_date_to }}&service_search={{ service_search }}" class="export-btn xlsx">
+                        📊 Export Excel
+                    </a>
+                </div>
+                {% if service_forms %}
+                <div class="scrollable">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Engineer</th>
+                                <th>Customer</th>
+                                <th>Product Type</th>
+                                <th>Serial Number</th>
+                                <th>Service Date</th>
+                                <th>Location</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for form in service_forms %}
+                            <tr{% if form.duplicate_count %} class="duplicate-row"{% endif %}>
+                                <td>{{ form.engineer_first_name }} {{ form.engineer_last_name }}</td>
+                                <td>{{ form.customer_first_name }} {{ form.customer_last_name }}</td>
+                                <td>{{ form.product_type }}</td>
+                                <td>
+                                    {{ form.serial_number }}
+                                    {% if form.duplicate_count %}
+                                    <span class="duplicate-badge" title="This serial appears {{ form.duplicate_count }} times">×{{ form.duplicate_count }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ form.date_of_service|date:"d M Y"|default:"N/A" }}</td>
+                                <td>{{ form.address_city }}, {{ form.address_state }}</td>
+                                <td>{{ form.created_at|date:"d M Y" }}</td>
+                                <td>
+                                    <a href="{% url 'forms:edit_employee_form' 'service' form.id %}" class="edit-btn">✏️ Edit</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="no-data">No service reports submitted yet.</div>
+                {% endif %}
+            </div>
+
+            <!-- Stock Requisitions Tab -->
+            <div id="stock-req" class="tab-content">
+                <h2 class="section-title">
+                    📦 Stock Requisitions
+                    <span class="count-badge">{{ stock_requisitions.count }}</span>
+                </h2>
+                
+                <!-- Filters for Stock Requisitions -->
+                <div class="tab-filters">
+                    <form method="GET" id="stock-req-filter-form">
+                        <input type="hidden" name="tab" value="stock-req">
+                        <div class="tab-filters-row">
+                            <div class="tab-filter-group">
+                                <label>From Date</label>
+                                <input type="date" name="stock_req_date_from" value="{{ stock_req_date_from }}">
+                            </div>
+                            <div class="tab-filter-group">
+                                <label>To Date</label>
+                                <input type="date" name="stock_req_date_to" value="{{ stock_req_date_to }}">
+                            </div>
+                            <div class="tab-filter-group">
+                                <label>Search</label>
+                                <input type="text" name="stock_req_search" placeholder="Serial, Component..." value="{{ stock_req_search }}">
+                            </div>
+                            <div class="tab-filter-group">
+                                <label>Status</label>
+                                <select name="stock_req_status">
+                                    <option value="">All</option>
+                                    <option value="pending" {% if stock_req_status == 'pending' %}selected{% endif %}>Pending</option>
+                                    <option value="approved" {% if stock_req_status == 'approved' %}selected{% endif %}>Approved</option>
+                                    <option value="rejected" {% if stock_req_status == 'rejected' %}selected{% endif %}>Rejected</option>
+                                    <option value="dispatched" {% if stock_req_status == 'dispatched' %}selected{% endif %}>Dispatched</option>
+                                </select>
+                            </div>
+                            <div class="tab-filter-group">
+                                <button type="submit" class="tab-filter-btn">Filter</button>
+                            </div>
+                            <div class="tab-filter-group">
+                                <a href="?tab=stock-req" class="tab-clear-btn">Clear</a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="tab-export">
+                    <a href="{% url 'forms:export_employee_data' 'stock-req' 'csv' %}?stock_req_date_from={{ stock_req_date_from }}&stock_req_date_to={{ stock_req_date_to }}&stock_req_search={{ stock_req_search }}&stock_req_status={{ stock_req_status }}" class="export-btn">
+                        📄 Export CSV
+                    </a>
+                    <a href="{% url 'forms:export_employee_data' 'stock-req' 'xlsx' %}?stock_req_date_from={{ stock_req_date_from }}&stock_req_date_to={{ stock_req_date_to }}&stock_req_search={{ stock_req_search }}&stock_req_status={{ stock_req_status }}" class="export-btn xlsx">
+                        📊 Export Excel
+                    </a>
+                </div>
+                {% if stock_requisitions %}
+                <div class="scrollable">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Serial Number</th>
+                                <th>Component Type</th>
+                                <th>Description</th>
+                                <th>Qty Required</th>
+                                <th>Qty Approved</th>
+                                <th>Required To</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for req in stock_requisitions %}
+                            <tr>
+                                <td>{{ req.serial_number }}</td>
+                                <td>{{ req.component_type }}</td>
+                                <td>{{ req.description|truncatewords:5 }}</td>
+                                <td>{{ req.quantity_required }}</td>
+                                <td>{{ req.approved_quantity|default:"—" }}</td>
+                                <td>{{ req.required_to }}</td>
+                                <td>
+                                    <span class="status-badge status-{{ req.status }}">
+                                        {{ req.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>{{ req.created_at|date:"d M Y" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="no-data">No stock requisitions submitted yet.</div>
+                {% endif %}
+            </div>
+
+            <!-- Stock Dispatched Tab -->
+            <div id="stock-disp" class="tab-content">
+                <h2 class="section-title">
+                    🚚 Stock Dispatched
+                    <span class="count-badge">{{ dispatched_stock.count }}</span>
+                </h2>
+                
+                <!-- Filters for Stock Dispatched -->
+                <div class="tab-filters">
+                    <form method="GET" id="stock-disp-filter-form">
+                        <input type="hidden" name="tab" value="stock-disp">
+                        <div class="tab-filters-row">
+                            <div class="tab-filter-group">
+                                <label>From Date</label>
+                                <input type="date" name="stock_disp_date_from" value="{{ stock_disp_date_from }}">
+                            </div>
+                            <div class="tab-filter-group">
+                                <label>To Date</label>
+                                <input type="date" name="stock_disp_date_to" value="{{ stock_disp_date_to }}">
+                            </div>
+                            <div class="tab-filter-group">
+                                <label>Search</label>
+                                <input type="text" name="stock_disp_search" placeholder="Serial, Tracking..." value="{{ stock_disp_search }}">
+                            </div>
+                            <div class="tab-filter-group">
+                                <button type="submit" class="tab-filter-btn">Filter</button>
+                            </div>
+                            <div class="tab-filter-group">
+                                <a href="?tab=stock-disp" class="tab-clear-btn">Clear</a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="tab-export">
+                    <a href="{% url 'forms:export_employee_data' 'stock-disp' 'csv' %}?stock_disp_date_from={{ stock_disp_date_from }}&stock_disp_date_to={{ stock_disp_date_to }}&stock_disp_search={{ stock_disp_search }}" class="export-btn">
+                        📄 Export CSV
+                    </a>
+                    <a href="{% url 'forms:export_employee_data' 'stock-disp' 'xlsx' %}?stock_disp_date_from={{ stock_disp_date_from }}&stock_disp_date_to={{ stock_disp_date_to }}&stock_disp_search={{ stock_disp_search }}" class="export-btn xlsx">
+                        📊 Export Excel
+                    </a>
+                </div>
+                {% if dispatched_stock %}
+                <div class="scrollable">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Serial Number</th>
+                                <th>Component</th>
+                                <th>Quantity</th>
+                                <th>Engineer</th>
+                                <th>Location</th>
+                                <th>Courier</th>
+                                <th>Tracking</th>
+                                <th>Dispatch Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stock in dispatched_stock %}
+                            <tr>
+                                <td>{{ stock.serial_number }}</td>
+                                <td>{{ stock.component_type }}</td>
+                                <td>{{ stock.quantity_dispatched }}</td>
+                                <td>{{ stock.engineer_name }}</td>
+                                <td>{{ stock.dispatch_location }}</td>
+                                <td>{{ stock.courier_name }}</td>
+                                <td>{{ stock.tracking_number }}</td>
+                                <td>{{ stock.dispatch_date|date:"d M Y" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="no-data">No stock dispatched yet.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(tabName) {
+            // Hide all tabs
+            const tabs = document.querySelectorAll('.tab-content');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            // Deactivate all buttons
+            const buttons = document.querySelectorAll('.tab-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            
+            // Activate selected button
+            event.target.classList.add('active');
+        }
+
+        // Check URL for tab parameter and switch to that tab
+        window.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const activeTab = urlParams.get('tab');
+            
+            if (activeTab) {
+                // Find and activate the correct tab
+                const tabs = document.querySelectorAll('.tab-content');
+                const buttons = document.querySelectorAll('.tab-btn');
+                
+                tabs.forEach(tab => tab.classList.remove('active'));
+                buttons.forEach(btn => btn.classList.remove('active'));
+                
+                const targetTab = document.getElementById(activeTab);
+                if (targetTab) {
+                    targetTab.classList.add('active');
+                    // Find the corresponding button
+                    buttons.forEach((btn, index) => {
+                        if (btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(activeTab)) {
+                            btn.classList.add('active');
+                        }
+                    });
+                }
+            }
+        });
+    </script>
+</body>
+</html>

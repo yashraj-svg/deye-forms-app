@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Dashboard - DEYE</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f8fafc;
+            color: #0f172a;
+            padding: 24px;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .title-section h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+        .subtitle { color: #64748b; font-size: 15px; }
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+        }
+        .stat-label {
+            font-size: 13px;
+            color: #64748b;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+        
+        /* Year Filter Buttons */
+        .year-filters {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+        }
+        .year-filters-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #475569;
+            margin-bottom: 12px;
+        }
+        .year-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .year-btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+            background: white;
+            color: #475569;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .year-btn:hover { background: #f1f5f9; }
+        .year-btn.active {
+            background: linear-gradient(135deg, #2563eb, #7c3aed);
+            color: white;
+            border-color: #2563eb;
+        
+                /* Filter Section */
+                .filter-section {
+                    background: white;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 12px;
+                    padding: 20px;
+                    margin-bottom: 24px;
+                    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+                }
+                .filter-row {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+                    gap: 18px 20px;
+                    align-items: end;
+                }
+                .filter-group {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 10px;
+                }
+                .filter-label {
+                    font-size: 13px;
+                    font-weight: 600;
+                    color: #475569;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                }
+                .filter-select, .filter-input {
+                    padding: 10px 14px;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 10px;
+                    font-size: 14px;
+                    font-weight: 600;
+                    color: #0f172a;
+                    background: #f8fafc;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+                }
+                .filter-select:hover, .filter-input:hover { border-color: #cbd5e1; background: #ffffff; }
+                .filter-select:focus, .filter-input:focus {
+                    outline: none;
+                    border-color: #2563eb;
+                    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+                    background: #ffffff;
+                }
+                .filter-actions {
+                    display: flex;
+                    gap: 10px;
+                    flex-wrap: wrap;
+                }
+                .btn-filter {
+                    padding: 10px 20px;
+                    border-radius: 10px;
+                    font-weight: 700;
+                    font-size: 14px;
+                    cursor: pointer;
+                    border: 1px solid transparent;
+                    transition: all 0.2s;
+                }
+                .btn-apply {
+                    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+                    color: white;
+                    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.25);
+                    border-color: #1d4ed8;
+                }
+                .btn-apply:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(37, 99, 235, 0.32); }
+                .btn-reset {
+                    background: #f8fafc;
+                    color: #0f172a;
+                    border-color: #e2e8f0;
+                    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+                }
+                .btn-reset:hover { background: #e2e8f0; }
+                .active-filters {
+                    margin-bottom: 16px;
+                    display: flex;
+                    gap: 8px;
+                    flex-wrap: wrap;
+                    align-items: center;
+                }
+                .filter-badge {
+                    display: inline-block;
+                    padding: 6px 12px;
+                    border-radius: 6px;
+                    font-size: 13px;
+                    font-weight: 600;
+                }
+        }
+        
+        /* Table */
+        .table-container {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            background: #f8fafc;
+            padding: 14px 16px;
+            text-align: left;
+            font-size: 13px;
+            font-weight: 700;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 14px;
+            color: #0f172a;
+        }
+        tr:hover { background: #f8fafc; }
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .badge-year { background: #dbeafe; color: #1e40af; }
+        .badge-qty { background: #dcfce7; color: #166534; }
+        
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 24px;
+            padding: 16px;
+        }
+        .page-link {
+            padding: 8px 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            color: #475569;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .page-link:hover { background: #f1f5f9; }
+        .page-link.active {
+            background: #2563eb;
+            color: white;
+            border-color: #2563eb;
+        }
+        
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #2563eb, #7c3aed);
+            color: white;
+        }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); }
+        .btn-ghost {
+            background: #f8fafc;
+            color: #0f172a;
+            border-color: #e2e8f0;
+        }
+        .btn-ghost:hover { background: #e2e8f0; }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 24px;
+            color: #64748b;
+        }
+        .empty-state-icon { font-size: 48px; margin-bottom: 16px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <div class="title-section">
+            <h1>📦 Stock Inventory</h1>
+            <div class="subtitle">Track components, parts, and inventory levels</div>
+        </div>
+        <div class="header-actions">
+            <a class="btn btn-ghost" href="{% url 'forms:simple_home' %}">← Back to Home</a>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-label">Total Items</div>
+            <div class="stat-value">{{ total_items|default:0 }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Total Quantity</div>
+            <div class="stat-value">{{ total_quantity|floatformat:0|default:0 }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Component Types</div>
+            <div class="stat-value">{{ component_types|length|default:0 }}</div>
+        </div>
+    </div>
+
+    <!-- Year Filters -->
+    <!-- Advanced Filters -->
+    <div class="filter-section">
+        <form method="GET" action="{% url 'forms:stock' %}" id="filterForm">
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label class="filter-label">📅 Year</label>
+                    <select name="year" class="filter-select" onchange="document.getElementById('filterForm').submit()">
+                        <option value="all" {% if selected_year == 'all' %}selected{% endif %}>All Years</option>
+                        {% for year in years %}
+                            <option value="{{ year }}" {% if selected_year == year|stringformat:'s' %}selected{% endif %}>{{ year }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label class="filter-label">🔧 Component Type</label>
+                    <select name="component" class="filter-select" onchange="document.getElementById('filterForm').submit()">
+                        <option value="all" {% if selected_component == 'all' %}selected{% endif %}>All Components</option>
+                        {% for comp_type in all_component_types %}
+                            <option value="{{ comp_type }}" {% if selected_component == comp_type %}selected{% endif %}>{{ comp_type }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label class="filter-label">🔍 Search</label>
+                    <input type="text" name="search" class="filter-input" placeholder="PCBA SN, Specification..." value="{{ search_query }}" />
+                </div>
+                
+                <div class="filter-group">
+                    <div class="filter-actions">
+                        <button type="submit" class="btn-filter btn-apply">Apply</button>
+                        <a href="{% url 'forms:stock' %}" class="btn-filter btn-reset" style="text-decoration: none; text-align: center;">Reset</a>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Active Filters Display -->
+    {% if selected_year != 'all' or selected_component != 'all' or search_query %}
+    <div class="active-filters">
+        <span style="font-size: 13px; color: #64748b; font-weight: 600;">Active Filters:</span>
+        {% if selected_year != 'all' %}
+            <span class="filter-badge badge-year">Year: {{ selected_year }}</span>
+        {% endif %}
+        {% if selected_component != 'all' %}
+            <span class="filter-badge" style="background: #fef3c7; color: #92400e;">Component: {{ selected_component }}</span>
+        {% endif %}
+        {% if search_query %}
+            <span class="filter-badge" style="background: #fce7f3; color: #9f1239;">Search: "{{ search_query }}"</span>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Stock Table -->
+    <div class="table-container">
+        {% if stock_items %}
+        <table>
+            <thead>
+                <tr>
+                    <th>PCBA SN</th>
+                    <th>Component Type</th>
+                    <th>Specification</th>
+                    <th>Quantity</th>
+                    <th>Years</th>
+                    <th>Remark</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in stock_items %}
+                <tr>
+                    <td><strong>{{ item.pcba_sn_new }}</strong></td>
+                    <td>{{ item.component_type|default:"-" }}</td>
+                    <td>{{ item.specification|truncatewords:10|default:"-" }}</td>
+                    <td><span class="badge badge-qty">{{ item.quantity|floatformat:0 }} PCS</span></td>
+                    <td><span class="badge badge-year">{{ item.years|join:", " }}</span></td>
+                    <td>{{ item.remark|truncatewords:8|default:"-" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <!-- Pagination -->
+        {% if stock_items.has_other_pages %}
+        <div class="pagination">
+            {% if stock_items.has_previous %}
+                <a href="?year={{ selected_year }}&component={{ selected_component }}&search={{ search_query }}&page={{ stock_items.previous_page_number }}" class="page-link">← Previous</a>
+            {% endif %}
+            
+            <span class="page-link active">Page {{ stock_items.number }} of {{ stock_items.paginator.num_pages }}</span>
+            
+            {% if stock_items.has_next %}
+                <a href="?year={{ selected_year }}&component={{ selected_component }}&search={{ search_query }}&page={{ stock_items.next_page_number }}" class="page-link">Next →</a>
+            {% endif %}
+        </div>
+        {% endif %}
+        
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">📭</div>
+            <p>No stock items found. Import data using: <code>python manage.py import_stock_data</code></p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+</body>
+</html>

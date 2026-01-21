@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>DEYE Inverter Service Report</title>
+
+<style>
+/* Header */
+.header {
+  position: sticky;
+  top: 0;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  padding: 18px 60px;
+  z-index: 1000;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.logo-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo-section img {
+  height: 36px;
+}
+
+body {
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  background: #f3f5f7;
+  margin: 0;
+}
+.container {
+  max-width: 1200px;
+  margin: 28px auto;
+  background: #fff;
+  padding: 32px;
+  border-radius: 8px;
+  box-shadow: 0 4px 14px rgba(0,0,0,.08);
+}
+h1 {
+  text-align: center;
+}
+h2 {
+  margin-top: 28px;
+  border-bottom: 2px solid #e0e3e7;
+  padding-bottom: 6px;
+}
+label {
+  display: block;
+  margin-top: 14px;
+  font-weight: 500;
+}
+input, select, textarea {
+  width: 100%;
+  margin-top: 6px;
+  padding: 8px;
+  border: 1px solid #ccd0d5;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+textarea { min-height: 80px; }
+
+/* Hide browser validation popups */
+input:invalid {
+  box-shadow: none;
+}
+
+input::-webkit-validation-bubble-message {
+  display: none;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 14px;
+}
+th, td {
+  border: 1px solid #d0d5da;
+  padding: 6px;
+  text-align: center;
+}
+th {
+  background: #f5f7fa;
+  font-weight: 600;
+}
+
+canvas {
+  width: 100%;
+  height: 150px;
+  border: 1px solid #ccc;
+  background: #fff;
+}
+.sig-actions {
+  margin-top: 6px;
+  display: flex;
+  gap: 8px;
+}
+button {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 4px;
+  background: #1a73e8;
+  color: white;
+  cursor: pointer;
+}
+button:hover { background: #1558b0; }
+.clear-btn {
+  background: #e0e0e0;
+  color: #000;
+}
+.submit-btn {
+  width: 100%;
+  margin-top: 32px;
+  font-size: 16px;
+  padding: 12px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+  <div class="logo-section">
+    <a href="/" style="text-decoration: none;">
+      <img src="https://www.deyeinverter.com/template/en/images/logo.png" alt="DEYE">
+    </a>
+  </div>
+</div>
+
+{% if form_errors %}
+<div style="background:#fdecea;color:#611a15;border:1px solid #f5c6cb;padding:8px 12px;border-radius:6px;margin:12px 0;">
+  <strong>There were errors with your submission:</strong>
+  <ul style="margin:8px 0 0 16px;">
+    {% for field, errors in form_errors.items %}
+      <li><b>{{ field|capfirst }}</b>: {{ errors|join:', ' }}</li>
+    {% endfor %}
+  </ul>
+  <div style="font-size:12px;opacity:.8;">Please correct them and submit again.</div>
+</div>
+{% endif %}
+
+<form class="container" method="post" onsubmit="return saveSignatures()">
+{% csrf_token %}
+
+<h1>DEYE Inverter Service Report</h1>
+
+<!-- Contact Information -->
+<h2>Contact Information</h2>
+<div class="grid-2">
+  <div>
+    <label>Contact No. *</label>
+    <input name="phone_number" required>
+  </div>
+  <div>
+    <label>Email *</label>
+    <input type="email" name="email" required>
+  </div>
+</div>
+
+<!-- Engineer Details -->
+<h2>Engineer Details</h2>
+<div class="grid-2">
+  <div><label>Engineer First Name *</label><input name="engineer_first_name" required></div>
+  <div><label>Engineer Last Name *</label><input name="engineer_last_name" required></div>
+</div>
+
+<!-- Customer Details -->
+<h2>Customer Details</h2>
+<div class="grid-2">
+  <div><label>Customer First Name *</label><input name="customer_first_name" required></div>
+  <div><label>Customer Last Name *</label><input name="customer_last_name" required></div>
+</div>
+<label>Date of Service</label>
+<input type="date" name="date_of_service">
+
+<!-- Address -->
+<h2>Address</h2>
+<label>Street Address *</label><input name="address_street" required>
+<div class="grid-3">
+  <div><label>City</label><input name="address_city"></div>
+  <div><label>State</label><input name="address_state"></div>
+  <div><label>Zip Code</label><input name="address_zip" placeholder="Enter 6-digit pincode" maxlength="6"></div>
+</div>
+
+<!-- Product & Device Information -->
+<h2>Product & Device Information</h2>
+<label>Product Type *</label>
+<select name="product_type" required>
+  <option value="">Select</option>
+  <option>Inverter</option>
+  <option>Battery</option>
+</select>
+
+<div class="grid-2">
+  <div>
+    <label>Inverter Specification</label>
+    <select name="inverter_spec">
+      <option value="">Select</option>
+      <option>1PH - Hybrid</option>
+      <option>3PH - Hybrid</option>
+      <option>1PH - Ongrid</option>
+      <option>3PH - Ongrid</option>
+      <option>All In One - Hybrid</option>
+      <option>Micro Inverter</option>
+    </select>
+  </div>
+  <div>
+    <label>Inverter Rating</label>
+    <select name="inverter_rating">
+      <option value="">Select</option>
+      <option>2.2 KW</option>
+      <option>3 KW</option>
+      <option>3.3 KW</option>
+      <option>4 KW</option>
+      <option>5 KW</option>
+      <option>6 KW</option>
+      <option>8 KW</option>
+      <option>10 KW</option>
+      <option>12 KW</option>
+      <option>15 KW</option>
+      <option>18 KW</option>
+      <option>20 KW</option>
+      <option>25 KW</option>
+      <option>30 KW</option>
+      <option>33 KW</option>
+      <option>35 KW</option>
+      <option>40 KW</option>
+      <option>50 KW</option>
+      <option>60 KW</option>
+      <option>75 KW</option>
+      <option>80 KW</option>
+      <option>100 KW</option>
+      <option>125 KW</option>
+      <option>136 KW</option>
+    </select>
+  </div>
+</div>
+
+<div class="grid-3">
+  <div><label>Inverter Capacity *</label><input name="inverter_capacity" required></div>
+  <div><label>Serial Number *</label><input name="serial_number" required></div>
+  <div><label>LCD Version *</label><input name="lcd_version" required></div>
+</div>
+
+<div class="grid-3">
+  <div><label>MCU Version *</label><input name="mcu_version" required></div>
+  <div><label>PV Capacity (KW) *</label><input name="pv_capacity_kw" required></div>
+  <div><label>No of MPPT *</label><input name="no_of_mppt" required></div>
+</div>
+
+<!-- Component Checks -->
+<h3>DC Side Components</h3>
+<div class="grid-3">
+  <label><input type="checkbox" name="dc_spd"> SPD</label>
+  <label><input type="checkbox" name="dc_switch"> Switch</label>
+  <label><input type="checkbox" name="dc_fuse"> Fuse</label>
+</div>
+
+
+<h3>AC Side Components</h3>
+<div class="grid-3">
+  <label><input type="checkbox" name="ac_spd"> SPD</label>
+  <label><input type="checkbox" name="ac_switch"> Switch</label>
+  <label><input type="checkbox" name="ac_fuse"> Fuse</label>
+</div>
+
+<label>Earthing</label><input name="earthing_panel">
+<label>Panel / Inverter</label><input name="earthing_inverter">
+<label>AC Neutral To Earth</label><input name="earthing_ac_neutral">
+<label>AC Neutral To Earth Voltage (V)</label><input name="ac_neutral_earth_voltage">
+<label>AC Cable Size / Type</label><input name="ac_cable_size">
+
+<!-- Physical Observation -->
+<h2>Physical Observation</h2>
+<label>Physical Observation Details</label>
+<textarea name="physical_observation"></textarea>
+
+<!-- DC Side Measurements -->
+<h2>DC Side Measurements (PV Data)</h2>
+<table>
+<tr>
+  <th>PV</th><th>Voltage (V)</th><th>Current (A)</th>
+  <th>Earthing</th><th>PV Panel</th><th>Observation</th>
+</tr>
+<tr><td>PV1</td><td><input></td><td><input></td><td><input></td><td><input></td><td><input></td></tr>
+<tr><td>PV2</td><td><input></td><td><input></td><td><input></td><td><input></td><td><input></td></tr>
+<tr><td>PV3</td><td><input></td><td><input></td><td><input></td><td><input></td><td><input></td></tr>
+<tr><td>PV4</td><td><input></td><td><input></td><td><input></td><td><input></td><td><input></td></tr>
+<tr><td>PV5</td><td><input></td><td><input></td><td><input></td><td><input></td><td><input></td></tr>
+<tr><td>PV6</td><td><input></td><td><input></td><td><input></td><td><input></td><td><input></td></tr>
+<tr><td>PV7</td><td><input></td><td><input></td><td><input></td><td><input></td><td><input></td></tr>
+<tr><td>PV8</td><td><input></td><td><input></td><td><input></td><td><input></td><td><input></td></tr>
+</table>
+
+<!-- AC Side Measurements -->
+<h2>AC Side Measurements</h2>
+<table>
+<tr><th>Phase</th><th>Voltage (V)</th><th>Current (A)</th><th>Earthing</th></tr>
+<tr><td>R TO N</td><td><input></td><td><input></td><td><input></td></tr>
+<tr><td>Y TO N</td><td><input></td><td><input></td><td><input></td></tr>
+<tr><td>B TO N</td><td><input></td><td><input></td><td><input></td></tr>
+<tr><td>R TO Y</td><td><input></td><td><input></td><td><input></td></tr>
+<tr><td>Y TO B</td><td><input></td><td><input></td><td><input></td></tr>
+<tr><td>B TO R</td><td><input></td><td><input></td><td><input></td></tr>
+<tr><td>N TO PE</td><td><input></td><td><input></td><td><input></td></tr>
+</table>
+
+<!-- Repair Details -->
+<h2>Repair Details</h2>
+<div class="grid-2">
+  <div><label>Inverter</label><input name="repair_inverter"></div>
+  <div><label>Dust</label><input name="repair_dust"></div>
+  <div><label>Cabling</label><input name="repair_cabling"></div>
+  <div><label>Other</label><input name="repair_other"></div>
+</div>
+
+<label>Actual Work Done at Site</label>
+<textarea name="actual_work_done"></textarea>
+
+<label>Cause of Failure</label>
+<textarea name="cause_of_failure"></textarea>
+
+<!-- Battery Information -->
+<h2>Battery Information</h2>
+<div class="grid-3">
+  <div><label>Battery Type</label><input name="battery_type"></div>
+  <div><label>Make</label><input name="battery_make"></div>
+  <div><label>Voltage</label><input name="battery_voltage"></div>
+</div>
+<div class="grid-3">
+  <div><label>Protection</label><input name="battery_protection"></div>
+  <div><label>No. of Battery</label><input id="id_no_of_battery" name="no_of_battery" type="number" min="0" step="1"></div>
+  <div><label>BMS Make</label><input name="battery_bms_make"></div>
+</div>
+<div class="grid-2">
+  <div><label>BMS Model</label><input name="battery_bms_model"></div>
+  <div><label>BMS Ratings</label><input name="battery_bms_ratings"></div>
+</div>
+
+<!-- Final Assessment -->
+<h2>Final Assessment</h2>
+<label>Protocol *</label><input name="protocol" required>
+<label>Conclusion *</label><input name="conclusion" required>
+<label>Customer Ratings</label><input name="customer_ratings">
+<label>Any Suggestions</label><textarea name="suggestions"></textarea>
+
+<!-- Signatures -->
+<h2>Signatures</h2>
+<label>Engineer Signature</label>
+<div class="grid-2">
+  <div>
+    <label style="margin-top: 0; font-size: 0.9em;">Draw Signature</label>
+    <canvas id="engSig" style="border:1px solid #000; width:100%; height:150px;"></canvas>
+    <div class="sig-actions">
+      <button type="button" class="clear-btn" onclick="clearSig('engSig')">Clear</button>
+    </div>
+  </div>
+  <div>
+    <label style="margin-top: 0; font-size: 0.9em;">Or Upload Signature</label>
+    <input type="file" id="engUpload" accept="image/*" onchange="handleEngUpload(event)">
+  </div>
+</div>
+
+<label>Customer Signature</label>
+<div class="grid-2">
+  <div>
+    <label style="margin-top: 0; font-size: 0.9em;">Draw Signature</label>
+    <canvas id="custSig" style="border:1px solid #000; width:100%; height:150px;"></canvas>
+    <div class="sig-actions">
+      <button type="button" class="clear-btn" onclick="clearSig('custSig')">Clear</button>
+    </div>
+  </div>
+  <div>
+    <label style="margin-top: 0; font-size: 0.9em;">Or Upload Signature</label>
+    <input type="file" id="custUpload" accept="image/*" onchange="handleCustUpload(event)">
+  </div>
+</div>
+
+<input type="hidden" id="engData" name="engData">
+<input type="hidden" id="custData" name="custData">
+
+<button class="submit-btn" type="submit">Submit</button>
+
+<script>
+function initCanvas(id){
+  const c = document.getElementById(id);
+  const ctx = c.getContext("2d");
+
+  // Set internal canvas resolution to match CSS size for sharp drawing
+  const style = getComputedStyle(c);
+  c.width = parseInt(style.width);
+  c.height = parseInt(style.height);
+
+  let drawing = false;
+
+  function getPos(event) {
+    const rect = c.getBoundingClientRect();
+    let x, y;
+    if (event.touches) { // Touch event
+      x = event.touches[0].clientX - rect.left;
+      y = event.touches[0].clientY - rect.top;
+    } else { // Mouse event
+      x = event.clientX - rect.left;
+      y = event.clientY - rect.top;
+    }
+    return {x, y};
+  }
+
+  function startDrawing(e) {
+    e.preventDefault();
+    drawing = true;
+    const pos = getPos(e);
+    ctx.beginPath();
+    ctx.moveTo(pos.x, pos.y);
+  }
+
+  function draw(e) {
+    if (!drawing) return;
+    e.preventDefault();
+    const pos = getPos(e);
+    ctx.lineTo(pos.x, pos.y);
+    ctx.strokeStyle = "#000";
+    ctx.lineWidth = 2;
+    ctx.lineCap = "round";
+    ctx.stroke();
+  }
+
+  function stopDrawing(e) {
+    e.preventDefault();
+    drawing = false;
+  }
+
+  // Mouse events
+  c.addEventListener("mousedown", startDrawing);
+  c.addEventListener("mousemove", draw);
+  c.addEventListener("mouseup", stopDrawing);
+  c.addEventListener("mouseout", stopDrawing);
+
+  // Touch events
+  c.addEventListener("touchstart", startDrawing);
+  c.addEventListener("touchmove", draw);
+  c.addEventListener("touchend", stopDrawing);
+  c.addEventListener("touchcancel", stopDrawing);
+}
+
+initCanvas("engSig");
+initCanvas("custSig");
+
+function clearSig(id){
+  const c = document.getElementById(id);
+  const ctx = c.getContext("2d");
+  ctx.clearRect(0, 0, c.width, c.height);
+}
+
+function handleEngUpload(event) {
+  const file = event.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const img = new Image();
+      img.onload = function() {
+        const canvas = document.getElementById('engSig');
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        document.getElementById('engData').value = canvas.toDataURL();
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+}
+
+function handleCustUpload(event) {
+  const file = event.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const img = new Image();
+      img.onload = function() {
+        const canvas = document.getElementById('custSig');
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        document.getElementById('custData').value = canvas.toDataURL();
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+}
+
+// Save signatures before submit
+document.querySelector("form").addEventListener("submit", function(e){
+  document.getElementById("engData").value = document.getElementById("engSig").toDataURL();
+  document.getElementById("custData").value = document.getElementById("custSig").toDataURL();
+});
+
+// Pincode autofill: fill City and State from India Post API
+const pinInput = document.querySelector('input[name="address_zip"]');
+if (pinInput) {
+  pinInput.addEventListener('input', function(e) {
+    const pincode = e.target.value.trim();
+    if (/^\d{6}$/.test(pincode)) {
+      const originalBg = e.target.style.backgroundColor;
+      e.target.style.backgroundColor = '#fffacd';
+      fetch(`https://api.postalpincode.in/pincode/${pincode}`)
+        .then(res => res.json())
+        .then(data => {
+          e.target.style.backgroundColor = originalBg;
+          if (data && data[0] && data[0].Status === 'Success' && data[0].PostOffice) {
+            const po = data[0].PostOffice[0];
+            const cityInput = document.querySelector('input[name="address_city"]');
+            const stateInput = document.querySelector('input[name="address_state"]');
+            if (cityInput && po.District) cityInput.value = po.District;
+            if (stateInput && po.State) stateInput.value = po.State;
+          }
+        })
+        .catch(() => { e.target.style.backgroundColor = originalBg; });
+    }
+  });
+}
+
+// Show success message after redirect with ?success=1
+const serviceParams = new URLSearchParams(window.location.search);
+if (serviceParams.get('success') === '1') {
+  alert('Thank you for filling this form. Your form was submitted successfully.');
+  serviceParams.delete('success');
+  const newUrl = `${window.location.pathname}${serviceParams.toString() ? '?' + serviceParams.toString() : ''}`;
+  window.history.replaceState({}, '', newUrl);
+}
+</script>
+
+<script>
+// Persist form values locally to prevent data loss on validation errors
+(function(){
+  const STORAGE_KEY = 'service_form_data_v1';
+  const form = document.querySelector('form.container');
+  if (!form) return;
+
+  function saveData(){
+    const data = {};
+    const fields = form.querySelectorAll('input[name], select[name], textarea[name]');
+    fields.forEach(el => {
+      if (el.type === 'checkbox' || el.type === 'radio') {
+        data[el.name] = el.checked ? 'on' : '';
+      } else {
+        data[el.name] = el.value;
+      }
+    });
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (_) {}
+  }
+
+  function restoreData(){
+    let raw = null; try { raw = localStorage.getItem(STORAGE_KEY); } catch(_) {}
+    if (!raw) return;
+    let data = null; try { data = JSON.parse(raw); } catch(_) { return; }
+    if (!data) return;
+    const fields = form.querySelectorAll('input[name], select[name], textarea[name]');
+    fields.forEach(el => {
+      const val = data[el.name];
+      if (val === undefined) return;
+      if (el.type === 'checkbox' || el.type === 'radio') {
+        el.checked = (val === 'on');
+      } else {
+        if (!el.value) el.value = val;
+        if (el.tagName === 'SELECT') {
+          for (let i=0;i<el.options.length;i++){
+            if (el.options[i].value === val) { el.value = val; break; }
+          }
+        }
+      }
+    });
+  }
+
+  // Restore on load
+  restoreData();
+  // Save on change
+  form.addEventListener('input', saveData);
+  form.addEventListener('change', saveData);
+  // Clear storage on success
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('success') === '1') {
+    try { localStorage.removeItem(STORAGE_KEY); } catch(_) {}
+  }
+
+  // If there is a validation error for no_of_battery, scroll to it
+  const nobErrorExists = document.querySelector('div[style*="There were errors"][style*="submission"]') &&
+    ({{ form_errors.no_of_battery|default:"''" }} ? true : false);
+  if (nobErrorExists) {
+    const nob = document.getElementById('id_no_of_battery');
+    if (nob) { nob.scrollIntoView({behavior:'smooth', block:'center'}); nob.focus(); }
+  }
+})();
+</script>
+
+</body>
+</html>

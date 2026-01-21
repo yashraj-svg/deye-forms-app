@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Admin Leave Requests</title>
+    <style>
+        body { 
+            margin:0; 
+            font-family: Arial, sans-serif; 
+            background: #f4f6f9; 
+            padding: 20px; 
+        }
+
+        h2 { 
+            text-align: center; 
+            color: #333; 
+            margin-bottom: 20px; 
+        }
+
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            background: #fff; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1); 
+            border-radius: 8px; 
+            overflow: hidden; 
+        }
+
+        th, td { 
+            padding: 12px 14px; 
+            text-align: left; 
+            border-bottom: 1px solid #e1e4e8; 
+            font-size: 14px; 
+            color: #444; 
+            vertical-align: middle;
+        }
+
+        th { 
+            background: #007bff; 
+            color: white; 
+        }
+
+        tr:nth-child(even) { 
+            background: #f9fafb; 
+        }
+
+        form.inline { 
+            display: inline-flex; 
+            gap: 8px; 
+            align-items: center; 
+        }
+
+        select, button { 
+            padding: 6px 8px; 
+            font-size: 13px; 
+        }
+
+        button { 
+            background: #007bff; 
+            color: white; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+        }
+
+        button:hover { 
+            background: #005dc1; 
+        }
+
+        .badge { 
+            padding: 4px 8px; 
+            border-radius: 6px; 
+            font-weight: 600; 
+            font-size: 12px; 
+            display: inline-block;
+        }
+
+        .pending { background: #fff3cd; color: #856404; }
+        .approved { background: #d4edda; color: #155724; }
+        .rejected { background: #f8d7da; color: #721c24; }
+
+        /* Reusable "More" button style */
+        .more-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 16px;
+            border-radius: 999px;
+            border: 1px solid #0b3d91;
+            background: linear-gradient(135deg, #0f5ae0, #0a3e9e);
+            color: #ffffff;
+            font-weight: 700;
+            letter-spacing: 0.2px;
+            box-shadow: 0 10px 20px rgba(15, 90, 224, 0.25);
+            transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+            text-decoration: none;
+            min-height: 32px;
+        }
+
+        .more-btn:hover,
+        .more-btn:focus-visible {
+            background: linear-gradient(135deg, #1e6cff, #0e4ab8);
+            box-shadow: 0 14px 28px rgba(15, 90, 224, 0.35);
+            transform: translateY(-1px);
+            outline: none;
+        }
+
+        .more-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 8px 16px rgba(15, 90, 224, 0.25);
+        }
+
+        .filter-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 16px;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+
+        .filter-group label {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            font-size: 13px;
+            color: #444;
+        }
+
+        .filter-group select {
+            min-width: 180px;
+        }
+
+        .link-reset {
+            color: #0a58ca;
+            text-decoration: none;
+            font-size: 13px;
+        }
+
+        details summary {
+            cursor: pointer;
+            list-style: none;
+        }
+
+        details summary::-webkit-details-marker {
+            display: none;
+        }
+
+        details summary::after {
+            content: '\25BC';
+            font-size: 12px;
+            margin-left: 6px;
+            color: #777;
+        }
+
+        details[open] summary::after {
+            content: '\25B2';
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .btn-report {
+            padding: 8px 12px;
+            border: 1px solid #007bff;
+            background: #007bff;
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 14px;
+            display: inline-block;
+            transition: background 0.2s ease;
+        }
+
+        .btn-report:hover {
+            background: #0056b3;
+        }
+
+        .btn-back {
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            background: #f5f5f5;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn-back:hover {
+            background: #e8e8e8;
+        }
+
+        /* Modern Header Styles */
+        .nav-header {
+            position: sticky;
+            top: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            padding: 18px 60px;
+            z-index: 1000;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+        }
+
+        .logo-section img {
+            height: 36px;
+            object-fit: contain;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="nav-header">
+        <div class="logo-section">
+            <a href="/" style="text-decoration: none;">
+                <img src="https://www.deyeinverter.com/template/en/images/logo.png" alt="DEYE">
+            </a>
+        </div>
+    </div>
+
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <h2 style="margin:0;">Admin Leave / WFH Requests</h2>
+        <div class="header-actions">
+            <a href="{% url 'forms:leave_admin_report' %}" class="btn-report">
+                📊 Reports
+            </a>
+            <button type="button" onclick="history.back();" class="btn-back">
+                Back
+            </button>
+        </div>
+    </div>
+
+    <div class="filter-bar">
+        <form method="get" class="filter-group">
+            <label>
+                Type
+                <select name="type">
+                    <option value="" {% if not type_filter %}selected{% endif %}>All</option>
+                    <option value="leave" {% if type_filter == 'leave' %}selected{% endif %}>Leave</option>
+                    <option value="wfh" {% if type_filter == 'wfh' %}selected{% endif %}>Work From Home</option>
+                </select>
+            </label>
+            <label>
+                Status
+                <select name="status">
+                    <option value="" {% if not status_filter %}selected{% endif %}>All</option>
+                    <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+                    <option value="approved" {% if status_filter == 'approved' %}selected{% endif %}>Approved</option>
+                    <option value="rejected" {% if status_filter == 'rejected' %}selected{% endif %}>Rejected</option>
+                </select>
+            </label>
+            <button type="submit">Apply Filters</button>
+            {% if status_filter or type_filter %}
+                <a class="link-reset" href="{% url 'forms:leave_admin' %}">Clear</a>
+            {% endif %}
+        </form>
+
+        <form method="get" action="{% url 'forms:leave_export_csv' %}" class="inline">
+            <input type="hidden" name="status" value="{{ status_filter|default_if_none:'' }}" />
+            <input type="hidden" name="type" value="{{ type_filter|default_if_none:'' }}" />
+            <button type="submit">Export CSV</button>
+        </form>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Employee</th>
+                <th>Start</th>
+                <th>End</th>
+                <th>Total Days</th>
+                <th>Type</th>
+                <th>Applied</th>
+                <th>Reason</th>
+                <th>Status</th>
+                <th>Last Update</th>
+                <th>Updated By</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for leave in leaves %}
+            <tr>
+                <td>{{ leave.user.get_username }}</td>
+                <td>{{ leave.start_date }} ({{ leave.start_breakdown }})</td>
+                <td>{{ leave.end_date }} ({{ leave.end_breakdown }})</td>
+                <td>{{ leave.total_days }}</td>
+                <td>{{ leave.get_leave_type_display }}</td>
+                <td>{{ leave.applied_at|date:"Y-m-d H:i" }}</td>
+
+                <td>
+                    {% if leave.reason %}
+                        <details>
+                            <summary>{{ leave.reason|truncatechars:40 }}</summary>
+                            <div style="margin-top:6px; color:#555;">{{ leave.reason }}</div>
+                        </details>
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+
+                <td>
+                    <span class="badge {{ leave.status }}">
+                        {{ leave.status|title }}
+                    </span>
+                </td>
+
+                <td>{{ leave.status_changed_at|date:"Y-m-d H:i"|default:"-" }}</td>
+                <td>
+                    {% if leave.status_changed_by %}
+                        {{ leave.status_changed_by.get_username }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+
+                <td>
+                    <form method="post" action="{% url 'forms:update_leave_status' leave.id %}" class="inline">
+                        {% csrf_token %}
+                        <select name="status">
+                            <option value="pending" {% if leave.status == 'pending' %}selected{% endif %}>Pending</option>
+                            <option value="approved" {% if leave.status == 'approved' %}selected{% endif %}>Approved</option>
+                            <option value="rejected" {% if leave.status == 'rejected' %}selected{% endif %}>Rejected</option>
+                        </select>
+                        <button type="submit">Update</button>
+                    </form>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="11" style="text-align:center; padding:16px;">
+                    No leave requests
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+</body>
+</html>

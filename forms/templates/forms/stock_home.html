@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Management - DEYE</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f8fafc;
+            color: #0f172a;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+        .container { max-width: 1200px; width: 100%; }
+        
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+        .header h1 {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, #2563eb, #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .subtitle {
+            color: #64748b;
+            font-size: 16px;
+        }
+        
+        /* Stock Options Grid */
+        .stock-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+        
+        .stock-card {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 32px;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.3s;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            cursor: pointer;
+        }
+        
+        .stock-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
+            border-color: #2563eb;
+        }
+        
+        .stock-card.received:hover { border-color: #2563eb; }
+        .stock-card.remaining:hover { border-color: #7c3aed; }
+        .stock-card.send:hover { border-color: #059669; }
+        .stock-card.dispatched:hover { border-color: #d97706; }
+        
+        .stock-icon {
+            font-size: 56px;
+            margin-bottom: 20px;
+        }
+        
+        .stock-card h2 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+        
+        .stock-card.received h2 { color: #2563eb; }
+        .stock-card.remaining h2 { color: #7c3aed; }
+        .stock-card.send h2 { color: #059669; }
+        .stock-card.dispatched h2 { color: #d97706; }
+        
+        .stock-description {
+            color: #64748b;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        /* Back Button */
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            color: #0f172a;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+        }
+        .back-btn:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+        }
+        
+        .back-container {
+            text-align: center;
+            margin-top: 32px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📦 Stock Management</h1>
+            <p class="subtitle">Select an option to manage your inventory</p>
+        </div>
+        
+        <div class="stock-grid">
+            <!-- Received Stock -->
+            <a href="{% url 'forms:received_stock' %}" class="stock-card received">
+                <div class="stock-icon">📥</div>
+                <h2>Received Stock</h2>
+                <p class="stock-description">View and manage all received inventory items with detailed filtering options</p>
+            </a>
+            
+            <!-- Remaining Stock -->
+            <a href="{% url 'forms:remaining_stock' %}" class="stock-card remaining">
+                <div class="stock-icon">📊</div>
+                <h2>Remaining Stock</h2>
+                <p class="stock-description">Check current stock levels and available inventory</p>
+            </a>
+            
+            <!-- Send Stock -->
+            <a href="{% url 'forms:send_stock' %}" class="stock-card send">
+                <div class="stock-icon">📤</div>
+                <h2>Stock Requisition</h2>
+                <p class="stock-description">Manage outgoing stock and shipment records</p>
+            </a>
+            
+            <!-- Dispatched Stock -->
+            <a href="{% url 'forms:dispatched_stock' %}" class="stock-card dispatched">
+                <div class="stock-icon">🚚</div>
+                <h2>Dispatched Stock</h2>
+                <p class="stock-description">Track dispatched and delivered stock shipments</p>
+            </a>
+        </div>
+        
+        <div class="back-container">
+            <a href="{% url 'forms:simple_home' %}" class="back-btn">← Back to Home</a>
+        </div>
+    </div>
+</body>
+</html>

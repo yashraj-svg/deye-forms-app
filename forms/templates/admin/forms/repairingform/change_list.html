@@ -1,0 +1,514 @@
+{% extends "admin/change_list.html" %}
+{% load static %}
+
+{% block extrahead %}
+  {{ block.super }}
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+  <style>
+    /* Filter dropdown styling - Excel like */
+    .filter-dropdown {
+      position: relative;
+      display: inline-block;
+      margin-left: 8px;
+      cursor: pointer;
+    }
+    
+    .filter-icon {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M3 3h18v2H3V3zm2 4h14v2H5V7zm2 4h10v2H7v-2zm2 4h6v2H9v-2z"/></svg>') no-repeat center;
+      background-size: contain;
+      cursor: pointer;
+      vertical-align: middle;
+      opacity: 0.7;
+      transition: opacity 0.2s;
+    }
+    
+    .filter-dropdown:hover .filter-icon {
+      opacity: 1;
+    }
+    
+    .filter-dropdown.active .filter-icon {
+      opacity: 1;
+      background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%234A90E2"><path d="M3 3h18v2H3V3zm2 4h14v2H5V7zm2 4h10v2H7v-2zm2 4h6v2H9v-2z"/></svg>') no-repeat center;
+    }
+    
+    .filter-menu {
+      display: none;
+      position: absolute;
+      background-color: var(--adm-bg-white);
+      border: 1px solid #999;
+      border-radius: 2px;
+      min-width: 280px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+      z-index: 1000;
+      top: 100%;
+      left: 0;
+      max-height: 500px;
+      overflow-y: auto;
+    }
+    
+    .filter-menu.active {
+      display: block;
+    }
+    
+    .filter-sort {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid #ddd;
+    }
+    
+    .filter-sort-btn {
+      flex: 1;
+      padding: 8px 10px;
+      background: none;
+      border: none;
+      border-right: 1px solid #ddd;
+      color: var(--adm-text);
+      font-size: 12px;
+      cursor: pointer;
+      text-align: left;
+      transition: background-color 0.2s;
+    }
+    
+    .filter-sort-btn:last-child {
+      border-right: none;
+    }
+    
+    .filter-sort-btn:hover {
+      background-color: #f0f0f0;
+    }
+    
+    .filter-search {
+      padding: 8px;
+      border-bottom: 1px solid #ddd;
+      position: sticky;
+      top: 0;
+      background-color: var(--adm-bg-white);
+    }
+    
+    .filter-search input {
+      width: 100%;
+      padding: 6px 8px;
+      border: 1px solid #999;
+      border-radius: 3px;
+      background-color: #fff;
+      color: var(--adm-text);
+      font-size: 12px;
+      box-sizing: border-box;
+    }
+    
+    .filter-search input:focus {
+      outline: none;
+      border-color: #4A90E2;
+      box-shadow: 0 0 3px #4A90E2;
+    }
+    
+    .filter-options {
+      padding: 4px 0;
+      max-height: 320px;
+      overflow-y: auto;
+    }
+    
+    .filter-select-all {
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid #ddd;
+      font-weight: 500;
+    }
+    
+    .filter-select-all input[type="checkbox"] {
+      margin-right: 8px;
+      cursor: pointer;
+      width: 14px;
+      height: 14px;
+    }
+    
+    .filter-select-all label {
+      flex: 1;
+      cursor: pointer;
+      margin: 0;
+      color: var(--adm-text);
+      font-size: 12px;
+    }
+    
+    .filter-option {
+      padding: 6px 12px;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+    
+    .filter-option:hover {
+      background-color: #f0f0f0;
+    }
+    
+    .filter-option input[type="checkbox"] {
+      margin-right: 8px;
+      cursor: pointer;
+      width: 14px;
+      height: 14px;
+    }
+    
+    .filter-option label {
+      flex: 1;
+      cursor: pointer;
+      margin: 0;
+      color: var(--adm-text);
+      font-size: 12px;
+    }
+    
+    .filter-option .count {
+      color: #999;
+      font-size: 11px;
+      margin-left: 8px;
+    }
+    
+    .filter-footer {
+      padding: 8px;
+      border-top: 1px solid #ddd;
+      display: flex;
+      gap: 6px;
+    }
+    
+    .filter-btn {
+      flex: 1;
+      padding: 6px 12px;
+      background-color: #f0f0f0;
+      color: var(--adm-text);
+      border: 1px solid #999;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 500;
+      transition: background-color 0.2s;
+    }
+    
+    .filter-btn:hover {
+      background-color: #e0e0e0;
+    }
+    
+    .filter-btn.ok {
+      background-color: #4A90E2;
+      color: white;
+      border-color: #4A90E2;
+    }
+    
+    .filter-btn.ok:hover {
+      background-color: #357ABD;
+    }
+    
+    .filter-clear-option {
+      padding: 8px 12px;
+      border-top: 1px solid #ddd;
+      color: #4A90E2;
+      font-size: 12px;
+      cursor: pointer;
+      text-align: center;
+      transition: background-color 0.2s;
+    }
+    
+    .filter-clear-option:hover {
+      background-color: #f0f0f0;
+    }
+    
+    #result_list th {
+      position: relative;
+      white-space: nowrap;
+      padding-right: 30px !important;
+    }
+    
+    #result_list th .filter-dropdown {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+    
+    .dataTables_wrapper {
+      margin: 20px 0;
+    }
+    
+    .dataTables_filter, .dataTables_length, .dataTables_info, .dataTables_paginate {
+      color: var(--adm-text) !important;
+    }
+    
+    .dataTables_filter input, .dataTables_length select {
+      background-color: var(--adm-bg-white) !important;
+      color: var(--adm-text) !important;
+      border: 1px solid var(--adm-border) !important;
+      padding: 6px 8px;
+      border-radius: 4px;
+    }
+    
+    .dataTables_paginate .paginate_button {
+      color: var(--adm-link) !important;
+      background: none !important;
+      border: 1px solid var(--adm-border) !important;
+      padding: 4px 8px !important;
+      margin: 0 2px !important;
+      border-radius: 3px !important;
+      cursor: pointer !important;
+    }
+    
+    .dataTables_paginate .paginate_button.current {
+      background-color: var(--adm-primary) !important;
+      color: white !important;
+      border-color: var(--adm-primary) !important;
+    }
+    
+    .dataTables_paginate .paginate_button:hover {
+      background-color: var(--adm-hover-row) !important;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <div class="content-wrapper">
+    {{ block.super }}
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Detach Django Admin's auto-submit/change handlers to prevent table re-render
+      const djq = (window.django && window.django.jQuery) ? window.django.jQuery : null;
+      if (djq) {
+        try {
+          djq('#changelist-form').off('submit');
+          djq('#changelist-form').off('change');
+        } catch (err) { /* ignore */ }
+      }
+      // Prevent auto submit on the changelist form
+      $('#changelist-form').on('submit', function(e) { e.preventDefault(); });
+      // Capture change events from our filter UI before admin handlers
+      const clForm = document.getElementById('changelist-form');
+      if (clForm) {
+        clForm.addEventListener('change', function(e) {
+          const target = e.target;
+          if ($(target).closest('.filter-menu, .filter-dropdown').length) {
+            e.stopPropagation();
+          }
+        }, true);
+      }
+      const table = $('#result_list').DataTable({
+        "paging": true,
+        "pageLength": 25,
+        "searching": true,
+        "ordering": true,
+        "info": true,
+        "lengthChange": true,
+        "dom": "lrtip",
+        "columnDefs": [
+          { "orderable": false, "targets": 0 }
+        ]
+      });
+
+      const headers = $('#result_list thead th');
+      headers.each(function(idx) {
+        if (idx === 0) return;
+        
+        const th = $(this);
+        const headerText = th.text().trim();
+        
+        const filterHTML = `
+          <div class="filter-dropdown" data-column="${idx}">
+            <span class="filter-icon" title="Filter"></span>
+            <div class="filter-menu">
+              <div class="filter-sort">
+                <button class="filter-sort-btn sort-asc" title="Sort ascending">🔤 A → Z</button>
+                <button class="filter-sort-btn sort-desc" title="Sort descending">🔤 Z → A</button>
+              </div>
+              <div class="filter-search">
+                <input type="text" placeholder="Search..." class="filter-search-input">
+              </div>
+              <div class="filter-options">
+                <div class="filter-select-all">
+                  <input type="checkbox" class="filter-select-all-check" id="filter_all_${idx}">
+                  <label for="filter_all_${idx}">Select All</label>
+                </div>
+              </div>
+              <div class="filter-clear-option">Clear Filter from "${headerText}"</div>
+              <div class="filter-footer">
+                <button class="filter-btn ok">OK</button>
+                <button class="filter-btn cancel">Cancel</button>
+              </div>
+            </div>
+          </div>
+        `;
+        
+        th.append(filterHTML);
+        
+        const uniqueValues = getUniqueColumnValues(table, idx);
+        populateFilterOptions(th.find('.filter-options'), uniqueValues, idx, headerText);
+        
+        setupFilterEvents(th, idx, table, headerText);
+      });
+
+      function getUniqueColumnValues(table, columnIdx) {
+        const valueMap = {};
+        table.column(columnIdx, { search: 'applied' }).data().each(function(value) {
+          const v = $('<div>').html(value || '').text().trim();
+          if (v) {
+            valueMap[v] = (valueMap[v] || 0) + 1;
+          }
+        });
+        return Object.keys(valueMap).sort().map(value => ({ value, count: valueMap[value] }));
+      }
+
+      function populateFilterOptions(container, valueObjects, columnIdx, headerText) {
+        const optionsDiv = container.find('.filter-option').length ? container : container;
+        optionsDiv.find('.filter-option').remove();
+        
+        valueObjects.forEach(function(item) {
+          const value = item.value;
+          const count = item.count;
+          const safeId = `filter_${columnIdx}_${value.replace(/[^a-zA-Z0-9]/g, '_')}`;
+          const norm = value.toLowerCase();
+          
+          const option = `
+            <div class="filter-option">
+              <input type="checkbox" class="filter-check" value="${value}" data-norm="${norm}" id="${safeId}" checked>
+              <label for="${safeId}">${value}</label>
+              <span class="count">(${count})</span>
+            </div>
+          `;
+          optionsDiv.append(option);
+        });
+      }
+
+      function setupFilterEvents(th, columnIdx, table, headerText) {
+        const dropdown = th.find('.filter-dropdown');
+        const menu = th.find('.filter-menu');
+        const icon = th.find('.filter-icon');
+        const searchInput = th.find('.filter-search-input');
+        const selectAllCheck = th.find('.filter-select-all-check');
+        const checkboxes = th.find('.filter-check');
+        const sortAscBtn = th.find('.sort-asc');
+        const sortDescBtn = th.find('.sort-desc');
+        const clearFilterOption = th.find('.filter-clear-option');
+        const okBtn = th.find('.filter-footer .ok');
+        const cancelBtn = th.find('.filter-footer .cancel');
+        const optionsContainer = th.find('.filter-options');
+        
+        icon.on('click', function(e) {
+          e.stopPropagation();
+          menu.toggleClass('active');
+          dropdown.toggleClass('active');
+          searchInput.focus();
+        });
+        
+        $(document).on('click', function(e) {
+          if (!dropdown.is(e.target) && dropdown.find(e.target).length === 0) {
+            menu.removeClass('active');
+            dropdown.removeClass('active');
+          }
+        });
+        
+        sortAscBtn.on('click', function(e) {
+          e.preventDefault();
+          const options = optionsContainer.find('.filter-option');
+          const sorted = options.sort(function(a, b) {
+            const aVal = $(a).find('label').text().toLowerCase();
+            const bVal = $(b).find('label').text().toLowerCase();
+            return aVal.localeCompare(bVal);
+          });
+          optionsContainer.find('.filter-option').remove();
+          optionsContainer.append(sorted);
+        });
+        
+        sortDescBtn.on('click', function(e) {
+          e.preventDefault();
+          const options = optionsContainer.find('.filter-option');
+          const sorted = options.sort(function(a, b) {
+            const aVal = $(a).find('label').text().toLowerCase();
+            const bVal = $(b).find('label').text().toLowerCase();
+            return bVal.localeCompare(aVal);
+          });
+          optionsContainer.find('.filter-option').remove();
+          optionsContainer.append(sorted);
+        });
+        
+        searchInput.on('keyup', function() {
+          const query = $(this).val().toLowerCase();
+          th.find('.filter-option').each(function() {
+            const label = $(this).find('label').text().toLowerCase();
+            $(this).toggle(label.includes(query));
+          });
+        });
+        
+        selectAllCheck.on('change', function(e) {
+          e.stopImmediatePropagation();
+          const isChecked = $(this).prop('checked');
+          const currentMenu = $(this).closest('.filter-menu');
+          // Toggle all option checkboxes within this dropdown menu
+          currentMenu.find('.filter-check').prop('checked', isChecked);
+        });
+        
+        checkboxes.on('change', function(e) {
+          e.stopImmediatePropagation();
+          const currentMenu = $(this).closest('.filter-menu');
+          const totalOptions = currentMenu.find('.filter-check').length;
+          const checkedOptions = currentMenu.find('.filter-check:checked').length;
+          currentMenu.find('.filter-select-all-check').prop('checked', totalOptions === checkedOptions);
+        });
+        
+        clearFilterOption.on('click', function(e) {
+          e.stopImmediatePropagation();
+          checkboxes.prop('checked', true);
+          selectAllCheck.prop('checked', true);
+          menu.removeClass('active');
+          dropdown.removeClass('active');
+        });
+        
+        okBtn.on('click', function(e) {
+          e.stopImmediatePropagation();
+          applyFilters(table);
+          menu.removeClass('active');
+          dropdown.removeClass('active');
+        });
+        
+        cancelBtn.on('click', function(e) {
+          e.stopImmediatePropagation();
+          menu.removeClass('active');
+          dropdown.removeClass('active');
+        });
+      }
+
+      function applyFilters(table) {
+        const headers = $('#result_list thead th');
+        const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+        headers.each(function(idx) {
+          if (idx === 0) return;
+          const header = $(this);
+          const totalOptions = header.find('.filter-check').length;
+          const checked = header.find('.filter-check:checked');
+
+          if (checked.length === 0) {
+            table.column(idx).search('^(?!)$', true, false, false);
+          } else if (checked.length === totalOptions) {
+            table.column(idx).search('', true, false, false);
+          } else {
+            const patterns = checked.toArray().map(cb => escapeRegex($(cb).val()));
+            const regex = `^(?:${patterns.join('|')})$`;
+            table.column(idx).search(regex, true, false, false);
+          }
+        });
+
+        table.draw();
+      }
+
+      $(document).on('keydown', function(e) {
+        if (e.key === 'Escape') {
+          $('.filter-menu').removeClass('active');
+          $('.filter-dropdown').removeClass('active');
+        }
+      });
+    });
+  </script>
+{% endblock %}

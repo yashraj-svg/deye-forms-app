@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Inward Tracking Form</title>
+
+<style>
+/* Header */
+.header {
+  position: sticky;
+  top: 0;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  padding: 18px 60px;
+  z-index: 1000;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.logo-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo-section img {
+  height: 36px;
+}
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #f2f4f7;
+  margin: 0;
+  padding: 0;
+}
+.form-container {
+  max-width: 780px;
+  margin: 32px auto;
+  background: #fff;
+  padding: 32px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+h1 {
+  text-align: center;
+  margin-bottom: 6px;
+  font-size: 26px;
+}
+.note {
+  text-align: center;
+  color: #d93025;
+  font-size: 13px;
+  margin-bottom: 20px;
+}
+label {
+  display: block;
+  margin-top: 18px;
+  font-size: 14px;
+  font-weight: 500;
+}
+input, select {
+  width: 100%;
+  margin-top: 6px;
+  padding: 10px;
+  font-size: 14px;
+  border: 1px solid #ccd0d5;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+input:focus, select:focus {
+  outline: none;
+  border-color: #1a73e8;
+}
+button {
+  width: 100%;
+  margin-top: 28px;
+  padding: 12px;
+  background: #1a73e8;
+  color: #fff;
+  font-size: 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+button:hover {
+  background: #1558b0;
+}
+
+/* Conditional field visibility */
+.inverter-only {
+  display: none;
+}
+
+.battery-only {
+  display: none;
+}
+
+.pcb-only {
+  display: none;
+}
+
+/* Hide browser validation popups */
+input:invalid {
+  box-shadow: none;
+}
+
+input::-webkit-validation-bubble-message {
+  display: none;
+}
+
+.inverter-only.show,
+.battery-only.show,
+.pcb-only.show {
+  display: block;
+}
+
+@media (max-width: 600px) {
+  .form-container {
+    margin: 16px;
+    padding: 24px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+  <div class="logo-section">
+    <a href="/" style="text-decoration: none;">
+      <img src="https://www.deyeinverter.com/template/en/images/logo.png" alt="DEYE">
+    </a>
+  </div>
+</div>
+
+<form class="form-container" method="post">
+{% csrf_token %}
+
+<h1>Inward Tracking</h1>
+<div class="note">* Indicates required question</div>
+{% if form_errors %}
+<div style="background:#fdecea;color:#611a15;border:1px solid #f5c6cb;padding:8px 12px;border-radius:6px;margin:12px 0;">
+  <strong>There were errors with your submission:</strong>
+  <ul style="margin:8px 0 0 16px;">
+    {% for field, errors in form_errors.items %}
+      <li><b>{{ field|capfirst }}</b>: {{ errors|join:', ' }}</li>
+    {% endfor %}
+  </ul>
+  <div style="font-size:12px;opacity:.8;">Please correct them and submit again.</div>
+</div>
+{% endif %}
+
+
+
+<label>Customer Abbreviation <span class="req">*</span></label>
+<select name="customer_abbrev" required>
+  <option value="">Select</option>
+  <option>Alternative Energy</option>
+  <option>Aps</option>
+  <option>Arkay Solar</option>
+  <option>Avirat Energy</option>
+  <option>Brither World Engineering Works</option>
+  <option>Ceyone Solar</option>
+  <option>Chetanbhai Trimandir</option>
+  <option>Deye</option>
+  <option>Eco Active Energy & Solution</option>
+  <option>Envest Energy Solutions Llp</option>
+  <option>Evaanta Solar</option>
+  <option>Evvo</option>
+  <option>Ferus Solar Energy Solution</option>
+  <option>Feston</option>
+  <option>Fine Vibes Renewable Pvt Ltd (Cg)</option>
+  <option>Glowx</option>
+  <option>Green Energy</option>
+  <option>Green Era</option>
+  <option>Green Watt Energy</option>
+  <option>Greenedge</option>
+  <option>Gujarat Energy</option>
+  <option>Invergy</option>
+  <option>Jaffins Enterprise</option>
+  <option>Jay Aditya Solar</option>
+  <option>Ksolare</option>
+  <option>Madhav Enterprise</option>
+  <option>Madhya Pradesh Solar9</option>
+  <option>Mindra</option>
+  <option>Mp Engineering</option>
+  <option>Navi Energy</option>
+  <option>Next Tech Solar Energy</option>
+  <option>Nil Electronics</option>
+  <option>Nk Construction</option>
+  <option>Powerone</option>
+  <option>Pushan Renewable Energy Pvt Ltd</option>
+  <option>Radiant Sun Energy</option>
+  <option>Railway Station Dhanera</option>
+  <option>Roshni Solar</option>
+  <option>Rudra Solar</option>
+  <option>Saan Electrical</option>
+  <option>Shantimani Enterprises</option>
+  <option>Smart Solar Bidgely Solution Pvt Ltd</option>
+  <option>Solaryaan</option>
+  <option>Suntech Energy</option>
+  <option>Swami Solar</option>
+  <option>Symbroz Solar  Pvt Ltd</option>
+  <option>Tecnogoods Energy</option>
+  <option>Trambaka Solar  Pvt Ltd</option>
+  <option>Urja Strot</option>
+  <option>Utl</option>
+  <option>Utl Solar</option>
+  <option>Vsole</option>
+  <option>Waaree</option>
+  <option>Water Sun Solar</option>
+  <option>Watthut</option>
+  <option>Yamas Solar</option>
+</select>
+
+<label>Customer Name <span class="req">*</span></label>
+<input type="text" name="customer_name" required>
+
+<label>Received By <span class="req">*</span></label>
+<select name="received_by" required>
+  <option value="">Select</option>
+  <option>Shrikant</option>
+  <option>Rushikesh</option>
+  <option>Sagar K</option>
+  <option>Tanaji</option>
+  <option>Arun</option>
+  <option>Vinayak</option>
+  <option>Nikhil</option>
+  <option>Ramesh</option>
+  <option>Bhuvan</option>
+  <option>Sanjay</option>
+  <option>Sandeep</option>
+  <option>Sagar W</option>
+  <option>Mohit</option>
+  <option>Mukesh</option>
+  <option>Jayesh</option>
+  <option>Kankan</option>
+  <option>Pranav</option>
+  <option>Vishal</option>
+  <option>Vivek</option>
+  <option>Rahul</option>
+  <option>Harihara</option>
+  <option>Ranjan</option>
+  <option>Harpreet</option>
+</select>
+
+
+<label>Inward Object <span class="req">*</span></label>
+<select name="inward_object" id="inwardObject" required>
+  <option value="">Select</option>
+  <option value="Inverter">Inverter</option>
+  <option value="Battery">Battery</option>
+  <option value="PCB">PCB</option>
+</select>
+
+<label>Pincode <span class="req">*</span></label>
+<input type="text" name="pincode" required placeholder="Enter 6-digit pincode">
+<div id="pincode-info" style="font-size:12px;color:#6b7280;margin-top:4px;display:none;"></div>
+
+<label>Received From Location <span class="req">*</span></label>
+<input type="text" name="received_from_location" required readonly style="background-color: #f0f0f0;">
+
+<label>Received From District <span class="req">*</span></label>
+<input type="text" name="received_from_district" required readonly style="background-color: #f0f0f0;">
+
+<label>Received From State <span class="req">*</span></label>
+<select name="received_from_state" required disabled style="background-color: #f0f0f0;">
+  <option value="">Select</option>
+  <option>Andhra Pradesh</option>
+  <option>Arunachal Pradesh</option>
+  <option>Assam</option>
+  <option>Bihar</option>
+  <option>Chhattisgarh</option>
+  <option>Goa</option>
+  <option>Gujarat</option>
+  <option>Haryana</option>
+  <option>Himachal Pradesh</option>
+  <option>Jharkhand</option>
+  <option>Karnataka</option>
+  <option>Kerala</option>
+  <option>Madhya Pradesh</option>
+  <option>Maharashtra</option>
+  <option>Manipur</option>
+  <option>Meghalaya</option>
+  <option>Mizoram</option>
+  <option>Nagaland</option>
+  <option>Odisha</option>
+  <option>Punjab</option>
+  <option>Rajasthan</option>
+  <option>Sikkim</option>
+  <option>Tamil Nadu</option>
+  <option>Telangana</option>
+  <option>Tripura</option>
+  <option>Uttar Pradesh</option>
+  <option>Uttarakhand</option>
+  <option>West Bengal</option>
+  <option>Other - Jammu & Kashmir</option>
+</select>
+
+<div class="inverter-only">
+<label>Inverter ID <span class="req">*</span></label>
+<input type="text" name="inverter_id" required>
+
+<label>Inverter Specifications <span class="req">*</span></label>
+<select name="inverter_specs" required>
+  <option value="">Select</option>
+  <option>1PH - Hybrid</option>
+  <option>3PH - Hybrid</option>
+  <option>1PH - Ongrid</option>
+  <option>3PH - Ongrid</option>
+  <option>All In One - Hybrid</option>
+  <option>Micro Inverter</option>
+</select>
+
+<label>Inverter Ratings</label>
+<select name="inverter_ratings">
+  <option value="">Select</option>
+  <option>2.2 KW</option>
+  <option>3 KW</option>
+  <option>3.3 KW</option>
+  <option>4 KW</option>
+  <option>5 KW</option>
+  <option>6 KW</option>
+  <option>8 KW</option>
+  <option>10 KW</option>
+  <option>12 KW</option>
+  <option>15 KW</option>
+  <option>18 KW</option>
+  <option>20 KW</option>
+  <option>25 KW</option>
+  <option>30 KW</option>
+  <option>33 KW</option>
+  <option>35 KW</option>
+  <option>40 KW</option>
+  <option>50 KW</option>
+  <option>60 KW</option>
+  <option>75 KW</option>
+  <option>80 KW</option>
+  <option>100 KW</option>
+  <option>125 KW</option>
+  <option>136 KW</option>
+</select>
+</div>
+
+<div class="battery-only">
+<label>Battery ID <span class="req">*</span></label>
+<input type="text" name="inverter_id" required>
+
+<label>Battery</label>
+<select name="battery">
+  <option value="">Select</option>
+  <option>RW - L 2.5 Neutral</option>
+  <option>RW - M 5.3 Neutral</option>
+  <option>RW - M 5.3 Pro Neutral (M6)</option>
+  <option>RW - M 6.1 Neutral</option>
+  <option>RW - M 6.1 B Neutral No Remark</option>
+  <option>SE - G 5.1 - Pro B Neutral No Remark</option>
+  <option>AI - W 5.1 Neutral</option>
+  <option>AI - W 5.1 - B Neutral No Remark</option>
+  <option>BOS - GM 5.1 Neutral</option>
+  <option>GB - LM 4.0 Neutral</option>
+  <option>GB - LB Neutral</option>
+  <option>SE - G 5.3</option>
+  <option>SE - G 5.3 Pro</option>
+  <option>SE - F 5</option>
+  <option>Other</option>
+</select>
+
+<label>Case Handled By</label>
+<select name="case_handled_by">
+  <option value="">Select</option>
+  <option>Mr. Rakesh Kumar</option>
+  <option>Mr. Pranav Rajeshbhai Dalwadi</option>
+  <option>Mr. Prajapati Vishal Atmarambhai</option>
+  <option>Mr. Bhuvan D</option>
+  <option>Mr. Jayesh khodabhai Solanki</option>
+  <option>Mr. Mahamadhusen Daud Mahagonde</option>
+  <option>Mr. Ranjan kumar Yadav</option>
+  <option>Mr. Mohit Kumawat</option>
+  <option>Mr. Tirupathi Vasu</option>
+  <option>Mr. Elson Eldo</option>
+  <option>Mr. Arun Hanumantrao Kardile</option>
+  <option>Mr. Sagar Prakash Katkar</option>
+  <option>Mr. Uttam Naskar</option>
+  <option>Mr. Tanaji Sampath Jadhav</option>
+  <option>Mr. Shrikant Chandu Rathod</option>
+  <option>Mr. Rushikesh Mohan Kolape</option>
+  <option>Mr. Sagar LaxmanBhai Wagh</option>
+  <option>Mr. Sanjay Kumar C N</option>
+  <option>Mr. Harihara Vishnu Prabu B</option>
+  <option>Mr. Sandeep Kumar</option>
+  <option>Mr. Harpreet Singh</option>
+  <option>Mr. Kankan Mandal</option>
+  <option>Mr. Mukesh Kumar</option>
+  <option>Mr. Rahul Saini</option>
+  <option>Mr. Anandhu Anil</option>
+</select>
+
+<label>Reason Of Inward</label>
+<select name="reason" required>
+  <option value="">Select</option>
+  <option>Repairing Purpose</option>
+  <option>Replacement Purpose</option>
+</select>
+
+<label>Transportation Mode <span class="req">*</span></label>
+<select name="transportation_mode" required>
+  <option value="">Select</option>
+  <option>Bigship</option>
+  <option>Blue Dart</option>
+  <option>Anjani</option>
+  <option>Other</option>
+</select>
+
+</div>
+
+<div class="inverter-only">
+<label>No of MPPT</label>
+<select name="no_of_mppt">
+  <option value="">Select</option>
+  <option>1</option>
+  <option>2</option>
+  <option>3</option>
+  <option>4</option>
+  <option>5</option>
+  <option>6</option>
+  <option>7</option>
+  <option>8</option>
+</select>
+
+<label>Current/ MPPT</label>
+<select name="current_mppt">
+  <option value="">Select</option>
+  <option>13</option>
+  <option>18</option>
+  <option>20</option>
+  <option>40</option>
+</select>
+
+<label>Case Handled By</label>
+<select name="case_handled_by">
+  <option value="">Select</option>
+  <option>Mr. Rakesh Kumar</option>
+  <option>Mr. Pranav Rajeshbhai Dalwadi</option>
+  <option>Mr. Prajapati Vishal Atmarambhai</option>
+  <option>Mr. Bhuvan D</option>
+  <option>Mr. Jayesh khodabhai Solanki</option>
+  <option>Mr. Mahamadhusen Daud Mahagonde</option>
+  <option>Mr. Ranjan kumar Yadav</option>
+  <option>Mr. Mohit Kumawat</option>
+  <option>Mr. Tirupathi Vasu</option>
+  <option>Mr. Elson Eldo</option>
+  <option>Mr. Arun Hanumantrao Kardile</option>
+  <option>Mr. Sagar Prakash Katkar</option>
+  <option>Mr. Uttam Naskar</option>
+  <option>Mr. Tanaji Sampath Jadhav</option>
+  <option>Mr. Shrikant Chandu Rathod</option>
+  <option>Mr. Rushikesh Mohan Kolape</option>
+  <option>Mr. Sagar LaxmanBhai Wagh</option>
+  <option>Mr. Sanjay Kumar C N</option>
+  <option>Mr. Harihara Vishnu Prabu B</option>
+  <option>Mr. Sandeep Kumar</option>
+  <option>Mr. Harpreet Singh</option>
+  <option>Mr. Kankan Mandal</option>
+  <option>Mr. Mukesh Kumar</option>
+  <option>Mr. Rahul Saini</option>
+  <option>Mr. Anandhu Anil</option>
+</select>
+</div>
+</div>
+
+<div class="inverter-only">
+<label>Reason Of Inward</label>
+<select name="reason" required>
+  <option value="">Select</option>
+  <option>Repairing Purpose</option>
+  <option>Replacement Purpose</option>
+</select>
+
+<label>Transportation Mode <span class="req">*</span></label>
+<select name="transportation_mode" required>
+  <option value="">Select</option>
+  <option>Bigship</option>
+  <option>Blue Dart</option>
+  <option>Anjani</option>
+  <option>Other</option>
+</select>
+
+<label>AWB Number<span class="req">*</span></label>
+<input type="text" name="awb_lr_number" required>
+</div>
+
+<div class="battery-only">
+<label>Case Handled By</label>
+<select name="case_handled_by">
+  <option value="">Select</option>
+  <option>Mr. Rakesh Kumar</option>
+  <option>Mr. Pranav Rajeshbhai Dalwadi</option>
+  <option>Mr. Prajapati Vishal Atmarambhai</option>
+  <option>Mr. Bhuvan D</option>
+  <option>Mr. Jayesh khodabhai Solanki</option>
+  <option>Mr. Mahamadhusen Daud Mahagonde</option>
+  <option>Mr. Ranjan kumar Yadav</option>
+  <option>Mr. Mohit Kumawat</option>
+  <option>Mr. Tirupathi Vasu</option>
+  <option>Mr. Elson Eldo</option>
+  <option>Mr. Arun Hanumantrao Kardile</option>
+  <option>Mr. Sagar Prakash Katkar</option>
+  <option>Mr. Uttam Naskar</option>
+  <option>Mr. Tanaji Sampath Jadhav</option>
+  <option>Mr. Shrikant Chandu Rathod</option>
+  <option>Mr. Rushikesh Mohan Kolape</option>
+  <option>Mr. Sagar LaxmanBhai Wagh</option>
+  <option>Mr. Sanjay Kumar C N</option>
+  <option>Mr. Harihara Vishnu Prabu B</option>
+  <option>Mr. Sandeep Kumar</option>
+  <option>Mr. Harpreet Singh</option>
+  <option>Mr. Kankan Mandal</option>
+  <option>Mr. Mukesh Kumar</option>
+  <option>Mr. Rahul Saini</option>
+  <option>Mr. Anandhu Anil</option>
+</select>
+
+<label>Reason Of Inward</label>
+<select name="reason" required>
+  <option value="">Select</option>
+  <option>Repairing Purpose</option>
+  <option>Replacement Purpose</option>
+</select>
+
+<label>Transportation Mode <span class="req">*</span></label>
+<select name="transportation_mode" required>
+  <option value="">Select</option>
+  <option>Bigship</option>
+  <option>Blue Dart</option>
+  <option>Anjani</option>
+  <option>Other</option>
+</select>
+
+<label>AWB Number <span class="req">*</span></label>
+<input type="text" name="awb_lr_number" required>
+</div>
+
+<div class="pcb-only">
+<label>PCB Serial Number <span class="req">*</span></label>
+<input type="text" name="pcb_serial_number" required>
+
+<label>No of Quantity <span class="req">*</span></label>
+<input type="number" name="no_of_quantity" required min="1">
+
+<label>PCB Ratings</label>
+<select name="pcb_ratings">
+  <option value="">Select</option>
+  <option>2.2 KW</option>
+  <option>3 KW</option>
+  <option>3.3 KW</option>
+  <option>4 KW</option>
+  <option>5 KW</option>
+  <option>6 KW</option>
+  <option>8 KW</option>
+  <option>10 KW</option>
+  <option>12 KW</option>
+  <option>15 KW</option>
+  <option>18 KW</option>
+  <option>20 KW</option>
+  <option>25 KW</option>
+  <option>30 KW</option>
+  <option>33 KW</option>
+  <option>35 KW</option>
+  <option>40 KW</option>
+  <option>50 KW</option>
+  <option>60 KW</option>
+  <option>75 KW</option>
+  <option>80 KW</option>
+  <option>100 KW</option>
+  <option>125 KW</option>
+  <option>136 KW</option>
+</select>
+
+<label>PCB Specifications</label>
+<select name="pcb_specifications">
+  <option value="">Select</option>
+  <option>1PH - Hybrid</option>
+  <option>3PH - Hybrid</option>
+  <option>1PH - Ongrid</option>
+  <option>3PH - Ongrid</option>
+  <option>All In One - Hybrid</option>
+  <option>Micro Inverter</option>
+</select>
+
+<label>Case Handled By</label>
+<select name="case_handled_by">
+  <option value="">Select</option>
+  <option>Mr. Rakesh Kumar</option>
+  <option>Mr. Pranav Rajeshbhai Dalwadi</option>
+  <option>Mr. Prajapati Vishal Atmarambhai</option>
+  <option>Mr. Bhuvan D</option>
+  <option>Mr. Jayesh khodabhai Solanki</option>
+  <option>Mr. Mahamadhusen Daud Mahagonde</option>
+  <option>Mr. Ranjan kumar Yadav</option>
+  <option>Mr. Mohit Kumawat</option>
+  <option>Mr. Tirupathi Vasu</option>
+  <option>Mr. Elson Eldo</option>
+  <option>Mr. Arun Hanumantrao Kardile</option>
+  <option>Mr. Sagar Prakash Katkar</option>
+  <option>Mr. Uttam Naskar</option>
+  <option>Mr. Tanaji Sampath Jadhav</option>
+  <option>Mr. Shrikant Chandu Rathod</option>
+  <option>Mr. Rushikesh Mohan Kolape</option>
+  <option>Mr. Sagar LaxmanBhai Wagh</option>
+  <option>Mr. Sanjay Kumar C N</option>
+  <option>Mr. Harihara Vishnu Prabu B</option>
+  <option>Mr. Sandeep Kumar</option>
+  <option>Mr. Harpreet Singh</option>
+  <option>Mr. Kankan Mandal</option>
+  <option>Mr. Mukesh Kumar</option>
+  <option>Mr. Rahul Saini</option>
+  <option>Mr. Anandhu Anil</option>
+</select>
+
+<label>Transportation Mode <span class="req">*</span></label>
+<select name="transportation_mode" required>
+  <option value="">Select</option>
+  <option>Bigship</option>
+  <option>Blue Dart</option>
+  <option>Anjani</option>
+  <option>Other</option>
+</select>
+
+<label>AWB Number <span class="req">*</span></label>
+<input type="text" name="awb_lr_number" required>
+</div>
+
+<button type="submit">Submit</button>
+
+</form>
+
+<script>
+// Toggle conditional fields based on Inward Object selection
+function toggleInwardFields() {
+  const inwardObject = document.querySelector('#inwardObject').value;
+  const inverterFields = document.querySelectorAll('.inverter-only');
+  const batteryFields = document.querySelectorAll('.battery-only');
+  const pcbFields = document.querySelectorAll('.pcb-only');
+  const inverterInputs = document.querySelectorAll('.inverter-only input, .inverter-only select, .inverter-only textarea');
+  const batteryInputs = document.querySelectorAll('.battery-only input, .battery-only select, .battery-only textarea');
+  const pcbInputs = document.querySelectorAll('.pcb-only input, .pcb-only select, .pcb-only textarea');
+
+  function setRequired(nodes, shouldRequire) {
+    nodes.forEach((el) => {
+      if (!el) return;
+      if (shouldRequire) {
+        el.setAttribute('required', 'required');
+      } else {
+        el.removeAttribute('required');
+      }
+    });
+  }
+
+  function setDisabled(nodes, shouldDisable) {
+    nodes.forEach((el) => {
+      if (!el) return;
+      // Don't disable the pincode/state/district/location shared fields here
+      el.disabled = shouldDisable;
+      if (shouldDisable) {
+        // Clear values so they don't interfere if re-enabled later accidentally
+        if (el.tagName === 'SELECT') {
+          el.selectedIndex = 0;
+        } else if (el.type === 'checkbox' || el.type === 'radio') {
+          el.checked = false;
+        } else {
+          el.value = '';
+        }
+      }
+    });
+  }
+  
+  inverterFields.forEach(field => {
+    field.classList.remove('show');
+  });
+  batteryFields.forEach(field => {
+    field.classList.remove('show');
+  });
+  pcbFields.forEach(field => {
+    field.classList.remove('show');
+  });
+  
+  if (inwardObject === 'Inverter') {
+    inverterFields.forEach(field => {
+      field.classList.add('show');
+    });
+  } else if (inwardObject === 'Battery') {
+    batteryFields.forEach(field => {
+      field.classList.add('show');
+    });
+  } else if (inwardObject === 'PCB') {
+    pcbFields.forEach(field => {
+      field.classList.add('show');
+    });
+  }
+
+  // Only require fields for the active object
+  setRequired(inverterInputs, inwardObject === 'Inverter');
+  setRequired(batteryInputs, inwardObject === 'Battery');
+  setRequired(pcbInputs, inwardObject === 'PCB');
+
+  // Disable hidden section inputs to avoid duplicate-name collisions in POST
+  setDisabled(inverterInputs, inwardObject !== 'Inverter');
+  setDisabled(batteryInputs, inwardObject !== 'Battery');
+  setDisabled(pcbInputs, inwardObject !== 'PCB');
+}
+
+document.querySelector('#inwardObject').addEventListener('change', toggleInwardFields);
+
+// Pincode autofill functionality (original behavior) + show city/state line
+document.querySelector('input[name="pincode"]').addEventListener('input', function(e) {
+  const pincode = e.target.value.trim();
+  const info = document.getElementById('pincode-info');
+  if (pincode.length === 6 && /^\d{6}$/.test(pincode)) {
+    const originalBg = e.target.style.backgroundColor;
+    e.target.style.backgroundColor = '#fffacd';
+    fetch(`https://api.postalpincode.in/pincode/${pincode}`)
+      .then(response => response.json())
+      .then(data => {
+        e.target.style.backgroundColor = originalBg;
+        if (data && data[0] && data[0].Status === 'Success' && data[0].PostOffice) {
+          const postOffice = data[0].PostOffice[0];
+
+          // Autofill State
+          const stateSelect = document.querySelector('select[name="received_from_state"]');
+          if (stateSelect && postOffice.State) {
+            stateSelect.disabled = false;
+            for (let option of stateSelect.options) {
+              if (option.value.toLowerCase() === postOffice.State.toLowerCase()) {
+                stateSelect.value = option.value;
+                break;
+              }
+            }
+            stateSelect.disabled = true;
+          }
+
+          // Autofill District
+          const districtInput = document.querySelector('input[name="received_from_district"]');
+          if (districtInput && postOffice.District) {
+            districtInput.value = postOffice.District;
+          }
+
+          // Autofill Location with Area/City info
+          const locationInput = document.querySelector('input[name="received_from_location"]');
+          if (locationInput) {
+            const area = postOffice.Name || '';
+            const region = postOffice.Region || '';
+            locationInput.value = area + (region && region !== area ? ', ' + region : '');
+          }
+
+          // Show City/State hint
+          if (info) {
+            info.style.display = 'block';
+            const city = postOffice.District || postOffice.Name || '-';
+            const state = postOffice.State || '-';
+            info.textContent = `City: ${city}  |  State: ${state}`;
+          }
+        } else {
+          if (info) { info.style.display = 'block'; info.textContent = 'Pincode not found'; info.style.color = '#b91c1c'; }
+        }
+      })
+      .catch(error => {
+        e.target.style.backgroundColor = originalBg;
+        if (info) { info.style.display = 'block'; info.textContent = 'Error fetching pincode data'; info.style.color = '#b91c1c'; }
+      });
+  } else {
+    if (info) { info.style.display = 'none'; info.textContent = ''; }
+  }
+});
+
+// Enable disabled fields before form submission
+document.querySelector('form').addEventListener('submit', function(e) {
+  document.querySelector('select[name="received_from_state"]').disabled = false;
+});
+
+// Show success message after redirect with ?success=1
+const inwardParams = new URLSearchParams(window.location.search);
+if (inwardParams.get('success') === '1') {
+  alert('Thank you for filling this form. Your form was submitted successfully.');
+  inwardParams.delete('success');
+  const newUrl = `${window.location.pathname}${inwardParams.toString() ? '?' + inwardParams.toString() : ''}`;
+  window.history.replaceState({}, '', newUrl);
+}
+</script>
+
+</body>
+</html>

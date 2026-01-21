@@ -1,0 +1,16 @@
+{% for profile in profiles %}
+    <div style="display: flex; flex-direction: column; align-items: center; width: 100%;">
+        <div class="node level-director">
+            <div class="node-name">{{ profile.user.get_full_name|default_if_none:profile.user.username }}</div>
+            <div class="node-title">{{ profile.designation }}{% if profile.location %} – {{ profile.location }}{% endif %}</div>
+        </div>
+        {% if manager_map and manager_map|has_key:profile.user.id %}
+            <div class="vertical-connector" style="height: 40px;"></div>
+            <div class="children" style="width: 100%; justify-content: center; flex-wrap: wrap; gap: 32px;">
+                {% for child in manager_map[profile.user.id] %}
+                    {% include "Include/hierarchy_recursive.html" with profiles=child|make_list manager_map=manager_map %}
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+{% endfor %}

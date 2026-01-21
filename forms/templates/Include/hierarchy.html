@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deye Organizational Hierarchy</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #667eea;
+            --primary-dark: #764ba2;
+            --secondary: #FF6B6B;
+            --secondary-dark: #FF8E53;
+            --success: #52b788;
+            --success-dark: #40916c;
+            --info: #4361ee;
+            --info-dark: #3a0ca3;
+            --bg-light: #FAFBFC;
+            --text-dark: #1a1a1a;
+            --text-gray: #4a5568;
+            --text-light: #6b7280;
+            --border-light: rgba(0, 0, 0, 0.06);
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+            --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.12);
+        }
+
+        /* Logo Header */
+        .nav-header {
+            position: sticky;
+            top: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-light);
+            padding: 18px 60px;
+            z-index: 1000;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+        }
+
+        .logo-section img {
+            height: 36px;
+            object-fit: contain;
+        }
+        
+        body { 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            min-height: 100vh;
+            padding: 0 20px 40px;
+        }
+        
+        .header {
+            text-align: center;
+            margin: 40px 0;
+        }
+        
+        h1 { 
+            color: white;
+            font-size: 2.5em;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin-bottom: 12px;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        
+        .subtitle {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 16px;
+            font-weight: 500;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: var(--shadow-lg);
+            padding: 50px 40px;
+            margin: 0 auto;
+            max-width: 1400px;
+            overflow-x: auto;
+        }
+        
+        .tree {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+        
+        .node {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 18px 24px;
+            margin: 10px auto;
+            border-radius: 12px;
+            text-align: center;
+            min-width: 220px;
+            box-shadow: var(--shadow-md);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 2px solid transparent;
+        }
+        
+        .node:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .node-name {
+            font-weight: 700;
+            font-size: 15px;
+            margin-bottom: 6px;
+        }
+        
+        .node-title {
+            font-size: 13px;
+            opacity: 0.95;
+            font-weight: 500;
+        }
+        
+        .level-director {
+            background: linear-gradient(90deg, #2b6cb0 0%, #5536d7 100%);
+            color: white;
+            border-color: rgba(255, 255, 255, 0.2);
+            width: 95%;
+            max-width: none;
+            min-width: 600px;
+            margin: 0 auto 32px auto;
+            font-size: 1.1em;
+            box-shadow: 0 6px 24px rgba(43,108,176,0.10);
+        }
+        
+        .level-manager {
+            background: linear-gradient(135deg, var(--success) 0%, var(--success-dark) 100%);
+            color: white;
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        .level-engineer {
+            background: linear-gradient(135deg, var(--info) 0%, var(--info-dark) 100%);
+            color: white;
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        .level-secondary {
+            background: linear-gradient(90deg, #ff8177 0%, #ff867a 50%, #ff8c7f 100%);
+            color: white;
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 16px rgba(255, 130, 120, 0.10);
+        }
+        
+        .third-level {
+            background: linear-gradient(90deg, #3a7bd5 0%, #3a6073 100%);
+            color: white;
+            border-color: rgba(255, 255, 255, 0.2);
+            position: relative;
+        }
+        .third-level::after {
+            content: '\25B6'; /* Unicode right arrow */
+            position: absolute;
+            right: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 18px;
+            opacity: 0.8;
+        }
+        
+        .children {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 40px 32px;
+            margin-top: 32px;
+            width: 100%;
+        }
+        
+        .manager-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 20px;
+        }
+        
+        .engineer-group {
+            display: none;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 24px;
+            max-width: 1000px;
+            animation: fadeIn 0.4s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .engineer-group.active {
+            display: flex;
+        }
+        
+        .connector {
+            width: 3px;
+            height: 32px;
+            background: linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 100%);
+            margin: 0 auto 8px auto;
+            display: none;
+            border-radius: 2px;
+        }
+        
+        .connector.active {
+            display: block;
+        }
+        
+        .vertical-connector {
+            width: 2px;
+            height: 32px;
+            background: linear-gradient(180deg, #2b6cb0 0%, #5536d7 100%);
+            margin: 0 auto 16px auto;
+            border-radius: 2px;
+        }
+        .vertical-connector.secondary {
+            background: linear-gradient(180deg, #ff8177 0%, #ff8c7f 100%);
+        }
+        
+        .level-section {
+            margin: 40px 0;
+        }
+        
+        .expandable {
+            cursor: pointer;
+            position: relative;
+            user-select: none;
+        }
+        .expandable:hover {
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+        .expandable::after {
+            content: '▶';
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 14px;
+            opacity: 0.8;
+            transition: transform 0.3s ease;
+        }
+        .expandable.expanded::after {
+            content: '▼';
+            transform: translateY(-50%) rotate(90deg);
+        }
+        
+        .no-team::after {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .nav-header {
+                padding: 14px 20px;
+            }
+
+            .logo-section img {
+                height: 32px;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            .container {
+                padding: 30px 20px;
+                border-radius: 16px;
+            }
+
+            .node {
+                min-width: 180px;
+                padding: 14px 18px;
+            }
+
+            .children {
+                gap: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+        {% load form_filters %}
+    <div class="nav-header">
+        <div class="logo-section">
+            <a href="/" style="text-decoration: none;">
+                <img src="https://www.deyeinverter.com/template/en/images/logo.png" alt="DEYE">
+            </a>
+        </div>
+    </div>
+    
+    <div class="header">
+        <h1>🏢 Deye India Organizational Hierarchy</h1>
+        <p class="subtitle">Technical & Service Division - Organizational Structure</p>
+    </div>
+    
+    <div class="container">
+        <div class="tree">
+            {% include "Include/hierarchy_recursive.html" with profiles=top_level manager_map=manager_map %}
+        </div>
+    </div>
+</body>
+</html>

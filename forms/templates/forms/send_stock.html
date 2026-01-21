@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Requisition - DEYE</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f8fafc;
+            color: #0f172a;
+            padding: 24px;
+        }
+        .container { max-width: 700px; margin: 0 auto; }
+        
+        /* Header */
+        .header {
+            margin-bottom: 32px;
+        }
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #059669, #10b981);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .subtitle {
+            color: #64748b;
+            font-size: 15px;
+        }
+        
+        /* Form Container */
+        .form-container {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 32px;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+        }
+        
+        /* Form Group */
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #475569;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #0f172a;
+            background: #f8fafc;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        
+        .form-control:hover { border-color: #cbd5e1; background: #ffffff; }
+        .form-control:focus {
+            outline: none;
+            border-color: #059669;
+            box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
+            background: #ffffff;
+        }
+        
+        textarea.form-control {
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        /* Error Messages */
+        .errorlist {
+            list-style: none;
+            padding: 0;
+            margin-bottom: 12px;
+        }
+        .errorlist li {
+            background: #fee2e2;
+            border-left: 4px solid #dc2626;
+            color: #991b1b;
+            padding: 10px 12px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+        
+        /* Success Message */
+        .success-message {
+            background: #dcfce7;
+            border-left: 4px solid #16a34a;
+            color: #166534;
+            padding: 14px 16px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        /* Buttons */
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 28px;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn-submit {
+            background: linear-gradient(135deg, #059669, #047857);
+            color: white;
+            box-shadow: 0 6px 20px rgba(5, 150, 105, 0.25);
+            flex: 1;
+        }
+        .btn-submit:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 24px rgba(5, 150, 105, 0.32);
+        }
+        
+        .btn-back {
+            background: #f8fafc;
+            color: #0f172a;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+        }
+        .btn-back:hover { background: #e2e8f0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📤 Stock Requisition</h1>
+            <p class="subtitle">Submit a new stock requisition request</p>
+        </div>
+        
+        <div class="form-container">
+            {% if success_message %}
+            <div class="success-message">✓ {{ success_message }}</div>
+            {% endif %}
+            
+            <form method="POST">
+                {% csrf_token %}
+                
+                <!-- Header Fields: Engineer Name & Required To -->
+                <div class="form-group">
+                    <label for="{{ header_form.manager_name.id_for_label }}">Engineer Name</label>
+                    {{ header_form.manager_name }}
+                    {% if header_form.manager_name.errors %}
+                        <ul class="errorlist">
+                            {% for error in header_form.manager_name.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="{{ header_form.required_to.id_for_label }}">Required To (Abbreviation)</label>
+                    {{ header_form.required_to }}
+                    {% if header_form.required_to.errors %}
+                        <ul class="errorlist">
+                            {% for error in header_form.required_to.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+
+                <!-- Items Formset -->
+                {{ item_formset.management_form }}
+                <div id="items-container">
+                    {% for form in item_formset.forms %}
+                    <div class="item-row" style="padding:16px; border:1px solid #e2e8f0; border-radius:10px; margin-bottom:16px; background:#fdfdfd;">
+                        <div class="form-group">
+                            <label for="{{ form.serial_number.id_for_label }}">Serial Number</label>
+                            {{ form.serial_number }}
+                            <div class="sn-suggestions" style="position: relative;">
+                                <div class="sn-suggestions-list" style="position: absolute; top: 8px; left: 0; right: 0; z-index: 20; background: white; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 8px 24px rgba(15,23,42,0.12); display: none; max-height: 260px; overflow-y: auto;"></div>
+                            </div>
+                            <small class="sn-helper" style="display:block; color:#64748b; margin-top:6px;">Start typing to see suggestions from Received Stock.</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="{{ form.component_type.id_for_label }}">Type of Component</label>
+                            {{ form.component_type }}
+                        </div>
+                        <div class="form-group">
+                            <label for="{{ form.description.id_for_label }}">Description of Component</label>
+                            {{ form.description }}
+                        </div>
+                        <div class="form-group">
+                            <label for="{{ form.quantity_required.id_for_label }}">No. of Quantity Required</label>
+                            {{ form.quantity_required }}
+                        </div>
+                        {% if form.DELETE %}
+                        <div class="form-group" style="display:none;">{{ form.DELETE }}</div>
+                        {% endif %}
+                        <button type="button" class="btn btn-back remove-item">Remove</button>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Empty form template for JS add -->
+                <template id="empty-form-template">
+                    <div class="item-row" style="padding:16px; border:1px solid #e2e8f0; border-radius:10px; margin-bottom:16px; background:#fdfdfd;">
+                        <div class="form-group">
+                            <label for="id_form-__prefix__-serial_number">Serial Number</label>
+                            <input type="text" name="form-__prefix__-serial_number" id="id_form-__prefix__-serial_number" class="form-control serial-number-input" placeholder="Enter PCBA Serial Number" />
+                            <div class="sn-suggestions" style="position: relative;">
+                                <div class="sn-suggestions-list" style="position: absolute; top: 8px; left: 0; right: 0; z-index: 20; background: white; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 8px 24px rgba(15,23,42,0.12); display: none; max-height: 260px; overflow-y: auto;"></div>
+                            </div>
+                            <small class="sn-helper" style="display:block; color:#64748b; margin-top:6px;">Start typing to see suggestions from Received Stock.</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="id_form-__prefix__-component_type">Type of Component</label>
+                            <select name="form-__prefix__-component_type" id="id_form-__prefix__-component_type" class="form-control">
+                                {% for value,label in item_formset.empty_form.fields.component_type.choices %}
+                                    <option value="{{ value }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="id_form-__prefix__-description">Description of Component</label>
+                            <textarea name="form-__prefix__-description" id="id_form-__prefix__-description" class="form-control" rows="3" placeholder="Enter component description"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="id_form-__prefix__-quantity_required">No. of Quantity Required</label>
+                            <input type="number" name="form-__prefix__-quantity_required" id="id_form-__prefix__-quantity_required" class="form-control" min="1" placeholder="Enter quantity required" />
+                        </div>
+                        <input type="checkbox" name="form-__prefix__-DELETE" id="id_form-__prefix__-DELETE" style="display:none;" />
+                        <button type="button" class="btn btn-back remove-item">Remove</button>
+                    </div>
+                </template>
+
+                <div class="button-group">
+                    <button type="button" id="add-item" class="btn btn-back">+ Add Item</button>
+                </div>
+                
+                <!-- Buttons -->
+                <div class="button-group">
+                    <a href="{% url 'forms:stock' %}" class="btn btn-back">← Back</a>
+                    <button type="submit" class="btn btn-submit">Submit Requisition</button>
+                </div>
+            </form>
+        </div>
+        
+        <script>
+        (function() {
+            // Handle add/remove item rows with formset management
+            const itemsContainer = document.getElementById('items-container');
+            const addBtn = document.getElementById('add-item');
+            const totalInput = document.getElementById('id_form-TOTAL_FORMS');
+
+            function attachRowEvents(row) {
+                const snInput = row.querySelector('.serial-number-input');
+                const compSelect = row.querySelector('select');
+                const descInput = row.querySelector('textarea');
+                const list = row.querySelector('.sn-suggestions-list');
+                const helper = row.querySelector('.sn-helper');
+                let timer = null;
+
+                function setComponentType(value) {
+                    let found = false;
+                    for (const opt of compSelect.options) {
+                        if (opt.value === value || opt.text === value) { opt.selected = true; found = true; break; }
+                    }
+                    if (!found) {
+                        for (const opt of compSelect.options) {
+                            if (opt.value === 'Other') { opt.selected = true; break; }
+                        }
+                    }
+                }
+
+                function hideList() { list.style.display = 'none'; list.innerHTML = ''; }
+
+                function showSuggestions(items) {
+                    if (!items.length) { hideList(); return; }
+                    list.innerHTML = items.map(it => `
+                        <div class="suggest-item" data-sn="${it.pcba_sn_new}" data-type="${it.component_type}" data-spec="${it.specification}" style="padding:10px 12px; border-bottom:1px solid #f1f5f9; cursor:pointer;">
+                            <div style="font-weight:700; color:#0f172a;">${it.pcba_sn_new}</div>
+                            <div style="font-size:12px; color:#64748b;">${it.component_type || '-'} • ${it.specification || '-'}</div>
+                        </div>
+                    `).join('');
+                    list.style.display = 'block';
+                    Array.from(list.querySelectorAll('.suggest-item')).forEach(el => {
+                        el.addEventListener('click', () => {
+                            const sn = el.getAttribute('data-sn');
+                            const type = el.getAttribute('data-type');
+                            const spec = el.getAttribute('data-spec');
+                            snInput.value = sn;
+                            setComponentType(type);
+                            descInput.value = spec || '';
+                            hideList();
+                        });
+                    });
+                }
+
+                function fetchSuggestions(q) {
+                    fetch(`{% url 'forms:stock_serial_search' %}?q=${encodeURIComponent(q)}`, { credentials: 'same-origin' })
+                        .then(r => r.json())
+                        .then(data => showSuggestions(data.results || []))
+                        .catch(() => hideList());
+                }
+
+                function fetchDetails(sn) {
+                    fetch(`{% url 'forms:stock_serial_details' %}?sn=${encodeURIComponent(sn)}`, { credentials: 'same-origin' })
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.found) {
+                                setComponentType(data.component_type || '');
+                                descInput.value = data.specification || '';
+                                if (helper) helper.textContent = `Matched ${data.pcba_sn_new} • Year ${data.year}`;
+                            }
+                        }).catch(() => {});
+                }
+
+                snInput.addEventListener('input', () => {
+                    const q = snInput.value.trim();
+                    if (timer) clearTimeout(timer);
+                    if (!q) { hideList(); return; }
+                    timer = setTimeout(() => fetchSuggestions(q), 150);
+                });
+                snInput.addEventListener('blur', () => { setTimeout(hideList, 200); });
+                snInput.addEventListener('change', () => {
+                    const sn = snInput.value.trim();
+                    if (sn) fetchDetails(sn);
+                });
+
+                const removeBtn = row.querySelector('.remove-item');
+                if (removeBtn) {
+                    removeBtn.addEventListener('click', () => {
+                        const del = row.querySelector('input[type="checkbox"][name$="-DELETE"]');
+                        if (del) del.checked = true;
+                        row.style.display = 'none';
+                    });
+                }
+            }
+
+            // Attach events to existing rows
+            Array.from(itemsContainer.querySelectorAll('.item-row')).forEach(attachRowEvents);
+
+            addBtn.addEventListener('click', () => {
+                const tmpl = document.getElementById('empty-form-template').innerHTML;
+                const index = parseInt(totalInput.value, 10);
+                const html = tmpl.replace(/__prefix__/g, index);
+                const div = document.createElement('div');
+                div.innerHTML = html;
+                const row = div.firstElementChild;
+                itemsContainer.appendChild(row);
+                totalInput.value = index + 1;
+                attachRowEvents(row);
+            });
+        })();
+        </script>
+    </div>
+</body>
+</html>
+

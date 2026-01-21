@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Deye Registration</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            height: 100vh;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .register-container {
+            background: #ffffff;
+            width: 100%;
+            max-width: 450px;
+            padding: 40px;
+            border-radius: 14px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .register-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .register-header h2 {
+            margin: 0;
+            font-size: 26px;
+            color: #222;
+            margin-bottom: 8px;
+        }
+
+        .register-header p {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: #333;
+            font-size: 14px;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        input[type="date"] {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        input[type="text"]:focus,
+        input[type="email"]:focus,
+        input[type="password"]:focus,
+        input[type="date"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            background-color: #f8faff;
+        }
+
+        .help-text {
+            font-size: 12px;
+            color: #999;
+            margin-top: 4px;
+        }
+
+        .error-list {
+            background: #fee;
+            color: #c33;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 13px;
+            list-style: none;
+        }
+
+        .error-list li {
+            padding: 4px 0;
+        }
+
+        .form-errors {
+            background: #fff3cd;
+            color: #856404;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 13px;
+        }
+
+        .form-errors ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .form-errors li {
+            padding: 4px 0;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .login-link {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .login-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s;
+        }
+
+        .login-link a:hover {
+            color: #764ba2;
+            text-decoration: underline;
+        }
+
+        .required {
+            color: #e74c3c;
+        }
+
+        @media (max-width: 480px) {
+            .register-container {
+                padding: 25px;
+            }
+
+            .register-header h2 {
+                font-size: 22px;
+            }
+        }
+
+        /* Modern Header Styles */
+        .nav-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            padding: 18px 60px;
+            z-index: 1000;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+        }
+
+        .logo-section img {
+            height: 36px;
+            object-fit: contain;
+        }
+
+        body {
+            padding-top: 72px;
+        }
+    </style>
+</head>
+<body>
+    <div class="nav-header">
+        <div class="logo-section">
+            <a href="/" style="text-decoration: none;">
+                <img src="https://www.deyeinverter.com/template/en/images/logo.png" alt="DEYE">
+            </a>
+        </div>
+    </div>
+
+    <div class="register-container">
+        <div class="register-header">
+            <h2>🏢 Deye</h2>
+            <p>Create Your Account</p>
+        </div>
+
+        {% if errors %}
+            <div class="form-errors">
+                <ul>
+                    {% for field, messages in errors.items %}
+                        {% for message in messages %}
+                            <li><strong>{{ field }}:</strong> {{ message }}</li>
+                        {% endfor %}
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
+        <form method="POST" novalidate>
+            {% csrf_token %}
+
+            <!-- First Name -->
+            <div class="form-group">
+                <label for="{{ form.first_name.id_for_label }}">
+                    First Name <span class="required">*</span>
+                </label>
+                {{ form.first_name }}
+                {% if form.first_name.errors %}
+                    <ul class="error-list">
+                        {% for error in form.first_name.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+
+            <!-- Last Name -->
+            <div class="form-group">
+                <label for="{{ form.last_name.id_for_label }}">
+                    Last Name <span class="required">*</span>
+                </label>
+                {{ form.last_name }}
+                {% if form.last_name.errors %}
+                    <ul class="error-list">
+                        {% for error in form.last_name.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+
+            <!-- Email -->
+            <div class="form-group">
+                <label for="{{ form.email.id_for_label }}">
+                    Email Address <span class="required">*</span>
+                </label>
+                {{ form.email }}
+                {% if form.email.errors %}
+                    <ul class="error-list">
+                        {% for error in form.email.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+
+            <!-- Date of Birth -->
+            <div class="form-group">
+                <label for="{{ form.date_of_birth.id_for_label }}">
+                    Date of Birth <span class="required">*</span>
+                </label>
+                {{ form.date_of_birth }}
+                <div class="help-text">{{ form.date_of_birth.help_text }}</div>
+                {% if form.date_of_birth.errors %}
+                    <ul class="error-list">
+                        {% for error in form.date_of_birth.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+
+            <!-- Phone (Optional) -->
+            <div class="form-group">
+                <label for="{{ form.phone.id_for_label }}">
+                    Phone Number
+                </label>
+                {{ form.phone }}
+                {% if form.phone.errors %}
+                    <ul class="error-list">
+                        {% for error in form.phone.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+
+            <!-- Department (Optional) -->
+            <div class="form-group">
+                <label for="{{ form.department.id_for_label }}">
+                    Department
+                </label>
+                {{ form.department }}
+                {% if form.department.errors %}
+                    <ul class="error-list">
+                        {% for error in form.department.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+
+            <!-- Password -->
+            <div class="form-group">
+                <label for="{{ form.password.id_for_label }}">
+                    Password <span class="required">*</span>
+                </label>
+                {{ form.password }}
+                <div class="help-text">{{ form.password.help_text }}</div>
+                {% if form.password.errors %}
+                    <ul class="error-list">
+                        {% for error in form.password.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+
+            <!-- Confirm Password -->
+            <div class="form-group">
+                <label for="{{ form.password_confirm.id_for_label }}">
+                    Confirm Password <span class="required">*</span>
+                </label>
+                {{ form.password_confirm }}
+                {% if form.password_confirm.errors %}
+                    <ul class="error-list">
+                        {% for error in form.password_confirm.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit">Create Account</button>
+        </form>
+
+        <div class="login-link">
+            Already have an account? <a href="{% url 'login' %}">Sign In</a>
+        </div>
+    </div>
+</body>
+</html>

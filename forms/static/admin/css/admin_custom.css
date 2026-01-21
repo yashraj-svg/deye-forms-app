@@ -1,0 +1,1090 @@
+/* ================================================
+   MODERN ADMIN PANEL - PURPLE GRADIENT THEME
+   Matching the style of employee_data.html
+   ================================================ */
+
+:root {
+    --primary-purple: #667eea;
+    --secondary-purple: #764ba2;
+    --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --text-dark: #1a1a1a;
+    --text-gray: #666;
+    --border-light: #e0e0e0;
+    --hover-bg: #f8f9fa;
+    --white: #ffffff;
+}
+
+/* ================================================
+   GLOBAL STYLES
+   ================================================ */
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif !important;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    min-height: 100vh;
+}
+
+/* ================================================
+   HEADER / TOP BAR
+   ================================================ */
+
+#header {
+    background: var(--gradient) !important;
+    border-bottom: none !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2) !important;
+    padding: 15px 20px !important;
+}
+
+#branding h1,
+#branding h1 a:link,
+#branding h1 a:visited {
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    font-size: 28px !important;
+    letter-spacing: 0.5px !important;
+}
+
+#user-tools {
+    color: #ffffff !important;
+    font-weight: 500 !important;
+}
+
+#user-tools a {
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    border-bottom: 2px solid transparent !important;
+    transition: all 0.3s !important;
+}
+
+#user-tools a:hover {
+    border-bottom-color: #ffffff !important;
+    text-decoration: none !important;
+}
+
+/* ================================================
+   BREADCRUMBS
+   ================================================ */
+
+.breadcrumbs {
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(10px) !important;
+    border-radius: 12px !important;
+    padding: 12px 20px !important;
+    margin: 20px !important;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1) !important;
+    border: none !important;
+}
+
+.breadcrumbs a {
+    color: var(--primary-purple) !important;
+    font-weight: 600 !important;
+    text-decoration: none !important;
+}
+
+.breadcrumbs a:hover {
+    color: var(--secondary-purple) !important;
+}
+
+/* ================================================
+   CONTENT CONTAINERS
+   ================================================ */
+
+#content {
+    background: transparent !important;
+    padding: 0 20px 40px !important;
+}
+
+#content-main {
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(10px) !important;
+    border-radius: 15px !important;
+    padding: 30px !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1) !important;
+}
+
+.module {
+    background: var(--white) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05) !important;
+    border: 1px solid var(--border-light) !important;
+    margin-bottom: 25px !important;
+}
+
+/* ================================================
+   TABLES
+   ================================================ */
+
+#changelist {
+    background: transparent !important;
+}
+
+#result_list,
+.results {
+    background: var(--white) !important;
+    border-radius: 12px !important;
+    overflow: hidden !important;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05) !important;
+}
+
+#result_list thead th {
+    background: var(--gradient) !important;
+    color: var(--white) !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    font-size: 12px !important;
+    letter-spacing: 1px !important;
+    padding: 15px !important;
+    border: none !important;
+}
+
+#result_list tbody tr {
+    transition: all 0.2s !important;
+}
+
+#result_list tbody tr:hover {
+    background: var(--hover-bg) !important;
+    transform: scale(1.005) !important;
+}
+
+#result_list tbody td {
+    padding: 15px !important;
+    border-bottom: 1px solid var(--border-light) !important;
+    color: var(--text-dark) !important;
+}
+
+#result_list tbody th {
+    padding: 15px !important;
+    font-weight: 500 !important;
+}
+
+/* Alternating row colors - remove default */
+#result_list tbody tr.row1 {
+    background: var(--white) !important;
+}
+
+#result_list tbody tr.row2 {
+    background: var(--white) !important;
+}
+
+/* ================================================
+   BUTTONS
+   ================================================ */
+
+.button,
+input[type="submit"],
+input[type="button"],
+.submit-row input,
+a.button {
+    background: var(--gradient) !important;
+    color: var(--white) !important;
+    border: none !important;
+    padding: 12px 25px !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    transition: all 0.3s !important;
+    text-decoration: none !important;
+    display: inline-block !important;
+}
+
+.button:hover,
+input[type="submit"]:hover,
+input[type="button"]:hover,
+.submit-row input:hover,
+a.button:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4) !important;
+}
+
+.button:active,
+input[type="submit"]:active {
+    transform: translateY(0) !important;
+}
+
+/* Delete button */
+.deletelink,
+.deletelink-box a {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+}
+
+.deletelink:hover,
+.deletelink-box a:hover {
+    box-shadow: 0 5px 15px rgba(239, 68, 68, 0.4) !important;
+}
+
+/* Default button (secondary) */
+.default,
+input[type="submit"].default {
+    background: var(--gradient) !important;
+}
+
+/* Cancel/Back links */
+.cancel-link {
+    color: var(--primary-purple) !important;
+    font-weight: 600 !important;
+    text-decoration: none !important;
+    padding: 10px 20px !important;
+    transition: all 0.3s !important;
+}
+
+.cancel-link:hover {
+    color: var(--secondary-purple) !important;
+}
+
+/* ================================================
+   FORMS
+   ================================================ */
+
+.form-row {
+    padding: 15px 0 !important;
+    border-bottom: 1px solid var(--border-light) !important;
+}
+
+.form-row:last-child {
+    border-bottom: none !important;
+}
+
+label {
+    color: var(--text-dark) !important;
+    font-weight: 600 !important;
+    font-size: 14px !important;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"],
+input[type="url"],
+textarea,
+select {
+    border: 2px solid var(--border-light) !important;
+    border-radius: 8px !important;
+    padding: 10px 15px !important;
+    font-size: 14px !important;
+    transition: border-color 0.3s !important;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="number"]:focus,
+input[type="date"]:focus,
+input[type="time"]:focus,
+input[type="datetime-local"]:focus,
+input[type="url"]:focus,
+textarea:focus,
+select:focus {
+    border-color: var(--primary-purple) !important;
+    outline: none !important;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+}
+
+/* ================================================
+   LINKS
+   ================================================ */
+
+a:link,
+a:visited {
+    color: var(--primary-purple) !important;
+    text-decoration: none !important;
+    font-weight: 500 !important;
+}
+
+a:hover {
+    color: var(--secondary-purple) !important;
+    text-decoration: underline !important;
+}
+
+/* ================================================
+   FILTERS (SIDEBAR)
+   ================================================ */
+
+#changelist-filter {
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(10px) !important;
+    border-radius: 15px !important;
+    padding: 20px !important;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1) !important;
+    border: 1px solid var(--border-light) !important;
+}
+
+#changelist-filter h2 {
+    color: var(--text-dark) !important;
+    font-weight: 700 !important;
+    margin-bottom: 15px !important;
+    padding-bottom: 10px !important;
+    border-bottom: 3px solid var(--primary-purple) !important;
+}
+
+#changelist-filter h3 {
+    color: var(--text-gray) !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    margin-top: 15px !important;
+}
+
+#changelist-filter li {
+    padding: 8px 0 !important;
+}
+
+#changelist-filter a {
+    color: var(--text-dark) !important;
+    transition: all 0.2s !important;
+}
+
+#changelist-filter a:hover {
+    color: var(--primary-purple) !important;
+    padding-left: 5px !important;
+}
+
+#changelist-filter li.selected a {
+    color: var(--primary-purple) !important;
+    font-weight: 700 !important;
+}
+
+/* ================================================
+   SEARCH BAR
+   ================================================ */
+
+#toolbar {
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(10px) !important;
+    border-radius: 12px !important;
+    padding: 15px 20px !important;
+    margin-bottom: 20px !important;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05) !important;
+    border: 1px solid var(--border-light) !important;
+}
+
+#toolbar form input[type="text"],
+#searchbar {
+    border: 2px solid var(--border-light) !important;
+    border-radius: 8px !important;
+    padding: 10px 15px !important;
+    font-size: 14px !important;
+    min-width: 300px !important;
+}
+
+#toolbar form input[type="submit"] {
+    margin-left: 10px !important;
+}
+
+/* ================================================
+   PAGINATION
+   ================================================ */
+
+.paginator {
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(10px) !important;
+    border-radius: 12px !important;
+    padding: 15px 20px !important;
+    margin-top: 20px !important;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05) !important;
+    border: 1px solid var(--border-light) !important;
+    text-align: center !important;
+}
+
+.paginator a:link,
+.paginator a:visited {
+    background: var(--gradient) !important;
+    color: var(--white) !important;
+    padding: 8px 15px !important;
+    border-radius: 6px !important;
+    margin: 0 3px !important;
+    display: inline-block !important;
+    font-weight: 600 !important;
+}
+
+.paginator a:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 3px 10px rgba(102, 126, 234, 0.3) !important;
+    text-decoration: none !important;
+}
+
+.paginator .this-page {
+    background: var(--white) !important;
+    color: var(--primary-purple) !important;
+    padding: 8px 15px !important;
+    border-radius: 6px !important;
+    border: 2px solid var(--primary-purple) !important;
+    font-weight: 700 !important;
+    margin: 0 3px !important;
+    display: inline-block !important;
+}
+
+/* ================================================
+   OBJECT TOOLS (Action buttons)
+   ================================================ */
+
+.object-tools {
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(10px) !important;
+    border-radius: 12px !important;
+    padding: 15px 20px !important;
+    margin-bottom: 20px !important;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05) !important;
+    border: 1px solid var(--border-light) !important;
+}
+
+.object-tools li {
+    background: transparent !important;
+    border-radius: 0 !important;
+}
+
+.object-tools a:link,
+.object-tools a:visited {
+    background: var(--gradient) !important;
+    color: var(--white) !important;
+    padding: 10px 20px !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+}
+
+.object-tools a:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4) !important;
+}
+
+/* ================================================
+   ACTIONS DROPDOWN
+   ================================================ */
+
+.actions {
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(10px) !important;
+    border-radius: 12px !important;
+    padding: 15px 20px !important;
+    margin-bottom: 15px !important;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05) !important;
+    border: 1px solid var(--border-light) !important;
+}
+
+.actions select {
+    border: 2px solid var(--border-light) !important;
+    border-radius: 8px !important;
+    padding: 10px 15px !important;
+}
+
+.actions button[type="submit"] {
+    background: var(--gradient) !important;
+}
+
+/* ================================================
+   MESSAGES / ALERTS
+   ================================================ */
+
+.messagelist {
+    margin: 20px !important;
+}
+
+.messagelist li {
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(10px) !important;
+    border-radius: 12px !important;
+    padding: 15px 20px !important;
+    margin-bottom: 15px !important;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1) !important;
+    border-left: 5px solid var(--primary-purple) !important;
+}
+
+.messagelist .success {
+    border-left-color: #10b981 !important;
+    background: rgba(16, 185, 129, 0.1) !important;
+}
+
+.messagelist .warning {
+    border-left-color: #f59e0b !important;
+    background: rgba(245, 158, 11, 0.1) !important;
+}
+
+.messagelist .error {
+    border-left-color: #ef4444 !important;
+    background: rgba(239, 68, 68, 0.1) !important;
+}
+
+/* ================================================
+   DASHBOARD (INDEX PAGE)
+   ================================================ */
+
+.dashboard .module {
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(10px) !important;
+    border-radius: 15px !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1) !important;
+    border: none !important;
+    transition: all 0.3s !important;
+}
+
+.dashboard .module:hover {
+    transform: translateY(-5px) !important;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15) !important;
+}
+
+.dashboard .module h2 {
+    background: var(--gradient) !important;
+    color: var(--white) !important;
+    padding: 15px 20px !important;
+    border-radius: 15px 15px 0 0 !important;
+    font-weight: 700 !important;
+}
+
+.dashboard .module caption {
+    padding: 15px 20px !important;
+    font-weight: 600 !important;
+    color: var(--text-dark) !important;
+}
+
+.dashboard #content {
+    width: 100% !important;
+}
+
+.dashboard #content-main {
+    width: 100% !important;
+}
+
+/* ================================================
+   FIELD SPECIFIC STYLES
+   ================================================ */
+
+.aligned label {
+    font-weight: 600 !important;
+    color: var(--text-dark) !important;
+}
+
+.aligned .help {
+    color: var(--text-gray) !important;
+    font-size: 13px !important;
+}
+
+/* ================================================
+   RESPONSIVE
+   ================================================ */
+
+@media (max-width: 768px) {
+    #content-main {
+        padding: 15px !important;
+        margin: 10px !important;
+    }
+    
+    .breadcrumbs {
+        margin: 10px !important;
+    }
+    
+    #result_list {
+        font-size: 12px !important;
+    }
+    
+    #result_list thead th,
+    #result_list tbody td {
+        padding: 10px !important;
+    }
+}
+
+/* ================================================
+   CUSTOM ENHANCEMENTS
+   ================================================ */
+
+/* Smooth scrolling */
+html {
+    scroll-behavior: smooth !important;
+}
+
+/* Focus ring */
+*:focus {
+    outline: 2px solid var(--primary-purple) !important;
+    outline-offset: 2px !important;
+}
+
+/* Selection color */
+::selection {
+    background: var(--primary-purple) !important;
+    color: var(--white) !important;
+}
+
+/* ================================================
+   IMAGE PREVIEW STYLES (for repairing forms)
+   ================================================ */
+
+.repairing-image-preview {
+    max-width: 200px;
+    max-height: 200px;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.repairing-image-preview:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.image-placeholder {
+    width: 200px;
+    height: 150px;
+    background: var(--hover-bg);
+    border: 2px dashed var(--border-light);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-gray);
+    font-style: italic;
+}
+
+    border: 1px solid rgba(99, 102, 241, 0.15);
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.14);
+    color: var(--adm-text);
+    margin: 0 20px 20px 20px;
+}
+
+.breadcrumbs a { color: var(--adm-link); }
+.breadcrumbs a:hover { color: var(--adm-link-hover); }
+
+#content-main h1 {
+    color: var(--adm-primary);
+    font-weight: 700;
+}
+
+/* Sidebar / nav */
+#sidebar {
+    background: rgba(30, 27, 75, 0.92);
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 8px 0 24px rgba(15, 23, 42, 0.25);
+}
+
+#content-related h3, #content-related h2 {
+    color: #c7d2fe;
+}
+
+#content-related a { color: #e0e7ff; }
+#content-related a:hover { color: #f5f3ff; }
+
+#nav-sidebar .module caption {
+    color: #c7d2fe;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    padding: 10px 14px;
+}
+
+/* Turn sidebar items into pill buttons */
+#nav-sidebar .model-forms li,
+#nav-sidebar .app-forms .model,
+#nav-sidebar .app-auth .model,
+#nav-sidebar .app-model .model,
+#nav-sidebar .app-forms .current-model,
+#nav-sidebar .app-auth .current-model {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+#nav-sidebar .model-forms li a,
+#nav-sidebar .app-forms .model a,
+#nav-sidebar .app-model .model a,
+#nav-sidebar .app-auth .model a,
+#nav-sidebar .app-forms .current-model a,
+#nav-sidebar a.model,
+#nav-sidebar a.section {
+    display: block;
+    margin: 6px 10px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.16), rgba(99, 102, 241, 0.18));
+    color: #e0e7ff;
+    font-weight: 600;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    transition: all 0.2s ease;
+}
+
+#nav-sidebar .model-forms li a:hover,
+#nav-sidebar .app-forms .model a:hover,
+#nav-sidebar .app-model .model a:hover,
+#nav-sidebar .app-auth .model a:hover,
+#nav-sidebar a.model:hover,
+#nav-sidebar a.section:hover {
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.26), rgba(99, 102, 241, 0.32));
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.22);
+    transform: translateY(-1px);
+}
+
+/* Active/current item */
+#nav-sidebar .current-model a,
+#nav-sidebar .current-app .section a,
+#nav-sidebar .current-app .model a {
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.45), rgba(99, 102, 241, 0.55));
+    border-color: rgba(255, 255, 255, 0.14);
+    color: #ffffff;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.28);
+}
+
+/* Plus “Add” links align with pill look */
+#nav-sidebar .model-forms .addlink,
+#nav-sidebar .app-forms .addlink,
+#nav-sidebar .app-auth .addlink,
+#nav-sidebar .app-model .addlink {
+    color: #bbf7d0;
+    font-weight: 700;
+    margin-left: 6px;
+}
+
+/* Force Add button text to white */
+.addlink, .addlink:link, .addlink:visited, .addlink:active {
+    color: #fff !important;
+}
+.addlink:hover {
+    color: #fff !important;
+    text-shadow: 0 1px 4px #764ba2;
+}
+
+#nav-sidebar .toggle-nav-sidebar { color: #c7d2fe; }
+
+/* Improve table display */
+#result_list {
+    font-size: 14px;
+    line-height: 1.6;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+#result_list td {
+    padding: 12px 10px;
+    vertical-align: middle;
+    word-wrap: break-word;
+    white-space: normal;
+    color: var(--adm-text);
+    background: rgba(255, 255, 255, 0.94);
+}
+
+/* First column highlight */
+#result_list tbody td:first-child {
+    color: #FFFFFF !important;
+    font-weight: 600;
+    background: var(--adm-gradient);
+}
+
+#result_list tbody td:first-child a {
+    color: #FFFFFF !important;
+    text-decoration: none;
+}
+
+#result_list tbody td:first-child a:hover {
+    text-decoration: underline;
+}
+
+/* Second & third columns inherit normal text color for readability */
+#result_list tbody tr td:nth-child(2),
+#result_list tbody tr td:nth-child(3) {
+    color: var(--adm-text);
+    font-weight: 600;
+}
+
+#result_list tbody tr td:nth-child(2) a,
+#result_list tbody tr td:nth-child(3) a {
+    color: var(--adm-link);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+#result_list tbody tr td:nth-child(2) a:hover,
+#result_list tbody tr td:nth-child(3) a:hover {
+    text-decoration: underline;
+}
+
+/* Table headers */
+#result_list th {
+    background: var(--adm-gradient);
+    color: #FFFFFF;
+    padding: 14px 10px;
+    font-weight: 600;
+    font-size: 13px;
+    text-align: left;
+    white-space: nowrap;
+    border: none;
+}
+
+/* Image preview */
+.image-preview-cell img,
+.signature-cell img {
+    max-height: 60px;
+    border-radius: 6px;
+    border: 1px solid var(--adm-border);
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.image-preview-cell img:hover,
+.signature-cell img:hover {
+    transform: scale(1.1);
+}
+
+.signature-cell {
+    text-align: center;
+    padding: 4px !important;
+}
+
+/* Form rows */
+.form-row {
+    margin-bottom: 12px;
+    clear: both;
+    padding: 8px 0;
+    float: left;
+    margin-right: 30px;
+}
+
+.form-row label {
+    color: var(--adm-text);
+    font-weight: 500;
+}
+
+.form-row input,
+.form-row textarea,
+.form-row select {
+    border-radius: 6px;
+    border: 1px solid var(--adm-border);
+    padding: 8px 10px;
+    background-color: var(--adm-bg-white);
+    color: var(--adm-text);
+}
+
+.form-row textarea {
+    min-height: 80px;
+    max-height: 150px;
+    resize: vertical;
+    font-family: monospace;
+    font-size: 12px;
+}
+
+.form-row input:focus,
+.form-row textarea:focus,
+.form-row select:focus {
+    border-color: var(--adm-primary);
+    box-shadow: 0 0 0 3px var(--adm-focus-shadow);
+    outline: none;
+}
+
+/* Readonly fields */
+.readonly {
+    background-color: var(--adm-bg-light);
+    border-radius: 6px;
+    padding: 8px 10px;
+    border: 1px solid var(--adm-border);
+    color: var(--adm-text-secondary);
+}
+
+/* Fieldsets */
+fieldset {
+    border: 1px solid var(--adm-border);
+    border-radius: 8px;
+    background: var(--adm-bg-white);
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+fieldset h2 {
+    color: var(--adm-primary);
+    border-bottom: 2px solid var(--adm-secondary);
+    padding-bottom: 8px;
+    font-size: 14px;
+}
+
+fieldset legend {
+    color: var(--adm-text);
+}
+
+/* Links */
+#result_list a {
+    color: var(--adm-link);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+#result_list a:hover {
+    color: var(--adm-link-hover);
+    text-decoration: underline;
+}
+
+/* Badges */
+.badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 14px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.badge-success {
+    background-color: #E6F4EC;
+    color: #2F6B4F;
+}
+
+.badge-warning {
+    background-color: #FFF3D6;
+    color: #8A6D1D;
+}
+
+.badge-danger {
+    background-color: #F6E0E0;
+    color: #8B2C2C;
+}
+
+/* Submit row */
+.submit-row {
+    background: var(--adm-gradient);
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.submit-row input {
+    background: #FFFFFF;
+    color: var(--adm-primary);
+    border: none;
+    padding: 10px 22px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.submit-row input:hover {
+    background: var(--adm-primary);
+    color: #FFFFFF;
+}
+
+@media (prefers-color-scheme: dark) {
+    .submit-row input {
+        background: var(--adm-bg-white);
+        color: var(--adm-primary);
+    }
+    
+    .submit-row input:hover {
+        background: var(--adm-primary);
+        color: #FFFFFF;
+    }
+}
+
+/* Filter sidebar */
+#changelist-filter {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 12px;
+    padding: 16px;
+    border: 1px solid rgba(99, 102, 241, 0.15);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+}
+
+#changelist-filter h2 {
+    color: var(--adm-primary);
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 15px;
+    border-bottom: 2px solid var(--adm-primary);
+    padding-bottom: 8px;
+}
+
+#changelist-filter h3 {
+    background: var(--adm-hover-row);
+    color: var(--adm-text);
+    font-size: 13px;
+    font-weight: 600;
+    margin: 15px 0 8px;
+    padding: 8px 10px;
+    border-radius: 6px;
+}
+
+#changelist-filter ul {
+    list-style: none;
+    padding: 0;
+}
+
+#changelist-filter li {
+    margin: 6px 0;
+}
+
+#changelist-filter a {
+    color: var(--adm-text);
+    text-decoration: none;
+    padding: 6px 8px;
+    display: block;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+#changelist-filter a:hover {
+    background-color: var(--adm-hover-row);
+    color: var(--adm-link);
+    font-weight: 500;
+}
+
+#changelist-filter a.selected {
+    background-color: var(--adm-primary);
+    color: #FFFFFF;
+    font-weight: 600;
+}
+
+/* Toolbar & Search */
+#toolbar {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(99, 102, 241, 0.12);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+}
+
+#searchbar {
+    padding: 10px 12px;
+    border: 1px solid var(--adm-border);
+    border-radius: 6px;
+    font-size: 13px;
+    max-width: 300px;
+    background-color: var(--adm-bg-white);
+    color: var(--adm-text);
+}
+
+#searchbar:focus {
+    border-color: var(--adm-primary);
+    box-shadow: 0 0 0 3px var(--adm-focus-shadow);
+    outline: none;
+}
+
+#searchbar::placeholder {
+    color: var(--adm-text-secondary);
+    opacity: 0.7;
+}
+
+/* Image modal */
+.image-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: none;
+    z-index: 1000;
+}
+
+.image-modal img {
+    max-width: 90%;
+    max-height: 90%;
+    margin: 5% auto;
+    display: block;
+    border-radius: 10px;
+}
+
+/* Hide default sort arrows from Django/DataTables headers so only our filter icon shows */
+#result_list thead th.sorting:before,
+#result_list thead th.sorting:after,
+#result_list thead th.sorting_asc:before,
+#result_list thead th.sorting_asc:after,
+#result_list thead th.sorting_desc:before,
+#result_list thead th.sorting_desc:after,
+#result_list thead th.sorted .sortremove {
+    display: none !important;
+    content: none !important;
+}

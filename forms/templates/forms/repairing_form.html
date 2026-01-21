@@ -1,0 +1,715 @@
+<style>
+  /* Header */
+  .header {
+    position: sticky;
+    top: 0;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    padding: 18px 60px;
+    z-index: 1000;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  }
+
+  .logo-section {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-section img {
+    height: 36px;
+  }
+
+  .gf-page {
+    max-width: 720px;
+    margin: 40px auto;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #f0f2f5;
+    padding: 24px 12px;
+  }
+  .gf-card {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.16);
+    padding: 32px 32px 24px;
+    margin-bottom: 16px;
+  }
+  .gf-title {
+    font-size: 28px;
+    font-weight: 500;
+    margin-bottom: 8px;
+  }
+  .gf-subtitle {
+    font-size: 14px;
+    color: #5f6368;
+    margin-bottom: 16px;
+  }
+  .gf-required-note {
+    font-size: 12px;
+    color: #d93025;
+  }
+  .gf-section-title {
+    font-size: 18px;
+    font-weight: 500;
+    margin-bottom: 12px;
+  }
+  .gf-field {
+    margin-bottom: 24px;
+  }
+  .gf-label {
+    display: block;
+    font-size: 14px;
+    margin-bottom: 4px;
+  }
+  .gf-label .req {
+    color: #d93025;
+    margin-left: 4px;
+  }
+  .gf-input,
+  .gf-select,
+  .gf-textarea {
+    width: 100%;
+    box-sizing: border-box;
+    border: none;
+    border-bottom: 1px solid #dadce0;
+    padding: 8px 4px 6px;
+    font-size: 14px;
+    outline: none;
+    background: transparent;
+  }
+  .gf-input:focus,
+  .gf-select:focus,
+  .gf-textarea:focus {
+    border-bottom: 2px solid #1a73e8;
+  }
+  .gf-textarea {
+    resize: vertical;
+    min-height: 80px;
+  }
+  .gf-helper {
+    font-size: 12px;
+    color: #5f6368;
+    margin-top: 2px;
+  }
+  .gf-checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 4px;
+  }
+
+  /* Hide browser validation popups */
+  input:invalid {
+    box-shadow: none;
+  }
+  
+  input::-webkit-validation-bubble-message {
+    display: none;
+  }
+  .gf-checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+  }
+  .gf-checkbox-item input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+  }
+  .gf-actions {
+    text-align: left;
+    margin-top: 16px;
+  }
+  .gf-submit {
+    background: #1a73e8;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 10px 24px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .gf-submit:hover {
+    background: #1557b0;
+  }
+  @media (max-width: 600px) {
+    .gf-card {
+      padding: 20px 16px 16px;
+    }
+  }
+</style>
+
+<div class="header">
+  <div class="logo-section">
+    <a href="/" style="text-decoration: none;">
+      <img src="https://www.deyeinverter.com/template/en/images/logo.png" alt="DEYE">
+    </a>
+  </div>
+</div>
+
+<div class="gf-page">
+  <div class="gf-card">
+    <div class="gf-title">Repairing Form</div>
+    <div class="gf-subtitle">Please fill all required fields carefully for each repairing case.</div>
+    <div class="gf-required-note">* Indicates required question</div>
+  </div>
+
+  {% if form_errors %}
+  <div style="background:#fdecea;color:#611a15;border:1px solid #f5c6cb;padding:8px 12px;border-radius:6px;margin:12px 0;">
+    <strong>There were errors with your submission:</strong>
+    <ul style="margin:8px 0 0 16px;">
+      {% for field, errors in form_errors.items %}
+        <li><b>{{ field|capfirst }}</b>: {{ errors|join:', ' }}</li>
+      {% endfor %}
+    </ul>
+    <div style="font-size:12px;opacity:.8;">Please correct them and submit again.</div>
+  </div>
+  {% endif %}
+
+  <form id="repairing-form" method="POST" class="gf-card">
+    {% csrf_token %}
+
+    <!-- Basic Details -->
+    <div class="gf-section-title">Basic Details</div>
+
+    <div class="gf-field">
+      <label class="gf-label" for="id_customer_abbrev">
+        Customer Abbreviation <span class="req">*</span>
+      </label>
+      <select class="gf-select" id="id_customer_abbrev" name="customer_abbrev" required>
+        <option value="">Select</option>
+        <option>Alternative Energy</option>
+        <option>Aps</option>
+        <option>Arkay Solar</option>
+        <option>Avirat Energy</option>
+        <option>Brither World Engineering Works</option>
+        <option>Ceyone Solar</option>
+        <option>Chetanbhai Trimandir</option>
+        <option>Deye</option>
+        <option>Eco Active Energy & Solution</option>
+        <option>Envest Energy Solutions Llp</option>
+        <option>Evaanta Solar</option>
+        <option>Evvo</option>
+        <option>Ferus Solar Energy Solution</option>
+        <option>Feston</option>
+        <option>Fine Vibes Renewable Pvt Ltd (Cg)</option>
+        <option>Glowx</option>
+        <option>Green Energy</option>
+        <option>Green Era</option>
+        <option>Green Watt Energy</option>
+        <option>Greenedge</option>
+        <option>Gujarat Energy</option>
+        <option>Invergy</option>
+        <option>Jaffins Enterprise</option>
+        <option>Jay Aditya Solar</option>
+        <option>Ksolare</option>
+        <option>Madhav Enterprise</option>
+        <option>Madhya Pradesh Solar9</option>
+        <option>Mindra</option>
+        <option>Mp Engineering</option>
+        <option>Navi Energy</option>
+        <option>Next Tech Solar Energy</option>
+        <option>Nil Electronics</option>
+        <option>Nk Construction</option>
+        <option>Powerone</option>
+        <option>Pushan Renewable Energy Pvt Ltd</option>
+        <option>Radiant Sun Energy</option>
+        <option>Railway Station Dhanera</option>
+        <option>Roshni Solar</option>
+        <option>Rudra Solar</option>
+        <option>Saan Electrical</option>
+        <option>Shantimani Enterprises</option>
+        <option>Smart Solar Bidgely Solution Pvt Ltd</option>
+        <option>Solaryaan</option>
+        <option>Suntech Energy</option>
+        <option>Swami Solar</option>
+        <option>Symbroz Solar  Pvt Ltd</option>
+        <option>Tecnogoods Energy</option>
+        <option>Trambaka Solar  Pvt Ltd</option>
+        <option>Urja Strot</option>
+        <option>Utl</option>
+        <option>Utl Solar</option>
+        <option>Vsole</option>
+        <option>Waaree</option>
+        <option>Water Sun Solar</option>
+        <option>Watthut</option>
+        <option>Yamas Solar</option>
+      </select>
+    </div>
+
+    <div class="gf-field inverter-only" style="display:none;">
+      <label class="gf-label" for="id_case_number">Case Number (Optional)</label>
+      <input type="text" class="gf-input" id="id_case_number" name="case_number" maxlength="8">
+    </div>
+
+    <div class="gf-field">
+      <label class="gf-label" for="id_repairing_object">
+        Repairing Object <span class="req">*</span>
+      </label>
+      <select class="gf-select" id="id_repairing_object" name="repairing_object" required>
+        <option value="">Select</option>
+        <option value="Inverter">Inverter</option>
+        <option value="PCB">PCB</option>
+        <option value="Battery">Battery</option>
+      </select>
+    </div>
+
+    <div class="gf-field inverter-only" style="display:none;">
+      <label class="gf-label" for="id_inverter_id">Inverter ID</label>
+      <input type="text" class="gf-input" id="id_inverter_id" name="inverter_id">
+    </div>
+
+    <div class="gf-field inverter-only" style="display:none;">
+      <label class="gf-label" for="id_inverter_spec">
+        Inverter <span class="req">*</span>
+      </label>
+      <select class="gf-select" id="id_inverter_spec" name="inverter_spec">
+        <option value="">Select</option>
+        <option>1PH - Hybrid</option>
+        <option>3PH - Hybrid</option>
+        <option>1PH - Ongrid</option>
+        <option>3PH - Ongrid</option>
+        <option>All In One - Hybrid</option>
+        <option>Other</option>
+      </select>
+    </div>
+
+    <div class="gf-field inverter-only" style="display:none;">
+      <label class="gf-label" for="id_inverter_rating">Inverter </label>
+      <select class="gf-select" id="id_inverter_rating" name="inverter_rating">
+        <option value="">Select</option>
+        <option>2.2 KW</option>
+        <option>3 KW</option>
+        <option>3.3 KW</option>
+        <option>4 KW</option>
+        <option>5 KW</option>
+        <option>6 KW</option>
+        <option>8 KW</option>
+        <option>10 KW</option>
+        <option>12 KW</option>
+        <option>15 KW</option>
+        <option>18 KW</option>
+        <option>20 KW</option>
+        <option>25 KW</option>
+        <option>30 KW</option>
+        <option>33 KW</option>
+        <option>35 KW</option>
+        <option>40 KW</option>
+        <option>50 KW</option>
+        <option>60 KW</option>
+        <option>75 KW</option>
+        <option>80 KW</option>
+        <option>100 KW</option>
+        <option>125 KW</option>
+        <option>136 KW</option>
+      </select>
+    </div>
+
+    <div class="gf-field battery-only" style="display:none;">
+      <label class="gf-label" for="id_battery_id">Battery ID</label>
+      <input type="text" class="gf-input" id="id_battery_id" name="battery_id">
+    </div>
+
+    <div class="gf-field battery-only" style="display:none;">
+      <label class="gf-label" for="id_battery_model">Battery Model</label>
+      <select class="gf-select" id="id_battery_model" name="battery_model">
+        <option value="">Select</option>
+        <option>RW - L 2.5 Neutral</option>
+        <option>RW - M 5.3 Neutral</option>
+        <option>RW - M 5.3 Pro Neutral (M6)</option>
+        <option>RW - M 6.1 Neutral</option>
+        <option>RW - M 6.1 B Neutral No Remark</option>
+        <option>SE - G 5.1 - Pro B Neutral No Remark</option>
+        <option>AI - W 5.1 Neutral</option>
+        <option>AI - W 5.1 - B Neutral No Remark</option>
+        <option>BOS - GM 5.1 Neutral</option>
+        <option>GB - LM 4.0 Neutral</option>
+        <option>GB - LB Neutral</option>
+        <option>SE - G 5.3</option>
+        <option>SE - G 5.3 Pro</option>
+        <option>SE - F 5</option>
+        <option>Other</option>
+      </select>
+    </div>
+
+    <div class="gf-field pcb-only" style="display:none;">
+      <label class="gf-label" for="id_pcb_serial_number">PCB Serial Number</label>
+      <input type="text" class="gf-input" id="id_pcb_serial_number" name="pcb_serial_number">
+    </div>
+
+    <div class="gf-field pcb-only" style="display:none;">
+      <label class="gf-label" for="id_pcb_specifications">PCB Specifications</label>
+      <select class="gf-select" id="id_pcb_specifications" name="pcb_specifications">
+        <option value="">Select</option>
+        <option>1PH - Hybrid</option>
+        <option>3PH - Hybrid</option>
+        <option>1PH - Ongrid</option>
+        <option>3PH - Ongrid</option>
+        <option>All In One - Hybrid</option>
+        <option>Other</option>
+      </select>
+    </div>
+
+    <div class="gf-field pcb-only" style="display:none;">
+      <label class="gf-label" for="id_pcb_rating">PCB Rating</label>
+      <select class="gf-select" id="id_pcb_rating" name="pcb_rating">
+        <option value="">Select</option>
+        <option>2.2 KW</option>
+        <option>3 KW</option>
+        <option>3.3 KW</option>
+        <option>4 KW</option>
+        <option>5 KW</option>
+        <option>6 KW</option>
+        <option>8 KW</option>
+        <option>10 KW</option>
+        <option>12 KW</option>
+        <option>15 KW</option>
+        <option>18 KW</option>
+        <option>20 KW</option>
+        <option>25 KW</option>
+        <option>30 KW</option>
+        <option>33 KW</option>
+        <option>35 KW</option>
+        <option>40 KW</option>
+        <option>50 KW</option>
+        <option>60 KW</option>
+        <option>75 KW</option>
+        <option>80 KW</option>
+        <option>100 KW</option>
+        <option>125 KW</option>
+        <option>136 KW</option>
+      </select>
+    </div>
+
+    <!-- Fault Section -->
+    <div class="gf-section-title" style="margin-top: 24px;">Fault Details</div>
+
+    <div class="gf-field inverter-only" style="display:none;">
+      <label class="gf-label">
+        Fault Problems (select all that apply)
+      </label>
+      <div class="gf-checkbox-group">
+        <label class="gf-checkbox-item">
+          <input type="checkbox" id="igbt_board" name="fault_problems" value="IGBT Board">
+          <span>IGBT Board</span>
+        </label>
+        <label class="gf-checkbox-item">
+          <input type="checkbox" id="igbt_board" name="fault_problems" value="IGBT Board">
+          <span>Main Board</span>
+        </label>
+        <label class="gf-checkbox-item">
+          <input type="checkbox" id="relay_board" name="fault_problems" value="Relay Board">
+          <span>Relay Board</span>
+        </label>
+        <label class="gf-checkbox-item">
+          <input type="checkbox" id="control_board" name="fault_problems" value="Control Board">
+          <span>Control Board</span>
+        </label>
+        <label class="gf-checkbox-item">
+          <input type="checkbox" id="display_board" name="fault_problems" value="Display Board">
+          <span>Display Board</span>
+        </label>
+        <label class="gf-checkbox-item">
+          <input type="checkbox" id="power_board" name="fault_problems" value="Power Board">
+          <span>Power Board</span>
+        </label>
+        <label class="gf-checkbox-item">
+          <input type="checkbox" id="generation_relay" name="fault_problems" value="Generation Relay">
+          <span>Generation Relay</span>
+        </label>
+        <label class="gf-checkbox-item">
+          <input type="checkbox" id="grid_relay" name="fault_problems" value="Grid Relay">
+          <span>Grid Relay</span>
+        </label>
+        <label class="gf-checkbox-item">
+          <input type="checkbox" id="load_relay" name="fault_problems" value="Load Relay">
+          <span>Load Relay</span>
+        </label>
+        <label class="gf-checkbox-item">
+          <input type="checkbox" id="communication_card" name="fault_problems" value="Communication Card">
+          <span>Communication Card</span>
+        </label>
+        <label class="gf-checkbox-item">
+          <input type="checkbox" id="other_fault" name="fault_problems" value="Other">
+          <span>Other</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="gf-field battery-only" style="display:none;">
+      <label class="gf-label">
+        Fault Problems (select all that apply)
+      </label>
+      <div class="gf-checkbox-group">
+        <label class="gf-checkbox-item">
+          <input type="checkbox" id="cables_connectors" name="fault_problems" value="Cables and connectors">
+          <span>Cables and connectors</span>
+        </label>
+        <label class="gf-checkbox-item">
+          <input type="checkbox" id="bms_fault" name="fault_problems" value="BMS">
+          <span>BMS</span>
+        </label>
+        <label class="gf-checkbox-item">
+          <input type="checkbox" id="battery_other_fault" name="fault_problems" value="Other">
+          <span>Other</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="gf-field pcb-only" style="display:none;">
+      <label class="gf-label">
+        Fault Problems (select all that apply)
+      </label>
+      <div class="gf-checkbox-group">
+        <label class="gf-checkbox-item">
+          <input type="checkbox" id="pcb_igbt_board" name="fault_problems" value="IGBT Board">
+          <span>IGBT Board</span>
+        </label>
+        <label class="gf-checkbox-item">
+          <input type="checkbox" id="pcb_relay_board" name="fault_problems" value="Relay Board">
+          <span>Relay Board</span>
+        </label>
+        <label class="gf-checkbox-item">
+          <input type="checkbox" id="pcb_control_board" name="fault_problems" value="Control Board">
+          <span>Control Board</span>
+        </label>
+        <label class="gf-checkbox-item">
+          <input type="checkbox" id="pcb_display_board" name="fault_problems" value="Display Board">
+          <span>Display Board</span>
+        </label>
+        <label class="gf-checkbox-item">
+          <input type="checkbox" id="pcb_power_board" name="fault_problems" value="Power Board">
+          <span>Power Board</span>
+        </label>
+        <label class="gf-checkbox-item">
+          <input type="checkbox" id="pcb_generation_relay" name="fault_problems" value="Generation Relay">
+          <span>Generation Relay</span>
+        </label>
+        <label class="gf-checkbox-item">
+          <input type="checkbox" id="pcb_grid_relay" name="fault_problems" value="Grid Relay">
+          <span>Grid Relay</span>
+        </label>
+        <label class="gf-checkbox-item">
+          <input type="checkbox" id="pcb_communication_card" name="fault_problems" value="Communication Card">
+          <span>Communication Card</span>
+        </label>
+        <label class="gf-checkbox-item">
+          <input type="checkbox" id="pcb_load_relay" name="fault_problems" value="Load Relay">
+          <span>Load Relay</span>
+        </label>
+        <label class="gf-checkbox-item">
+          <input type="checkbox" id="pcb_main_board" name="fault_problems" value="Main Board">
+          <span>Main Board</span>
+        </label>
+        <label class="gf-checkbox-item">
+          <input type="checkbox" id="pcb_other_fault" name="fault_problems" value="Other">
+          <span>Other</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="gf-field inverter-only battery-only pcb-only" style="display:none;">
+      <label class="gf-label" for="id_fault_description">
+        Fault Description <span class="req">*</span>
+      </label>
+      <textarea class="gf-textarea" id="id_fault_description" name="fault_description"></textarea>
+    </div>
+
+    <div class="gf-field inverter-only battery-only pcb-only" style="display:none;">
+      <label class="gf-label" for="id_fault_location">
+        Fault Location <span class="req">*</span>
+      </label>
+      <input type="text" class="gf-input" id="id_fault_location" name="fault_location">
+    </div>
+
+    <!-- Repair Info -->
+    <div class="gf-section-title" style="margin-top: 24px;">Repair Information</div>
+
+    <div class="gf-field inverter-only battery-only pcb-only" style="display:none;">
+      <label class="gf-label" for="id_repair_content">
+        Repair Content <span class="req">*</span>
+      </label>
+      <textarea class="gf-textarea" id="id_repair_content" name="repair_content"></textarea>
+    </div>
+
+    <div class="gf-field inverter-only battery-only pcb-only" style="display:none;">
+      <label class="gf-label" for="id_repaired_by">
+        Repaired By <span class="req">*</span>
+      </label>
+      <select class="gf-select" id="id_repaired_by" name="repaired_by">
+        <option value="">Select</option>
+        <option>Shrikant</option>
+        <option>Rushikesh</option>
+        <option>Sagar K</option>
+        <option>Tanaji</option>
+        <option>Arun</option>
+        <option>Vinayak</option>
+        <option>Nikhil</option>
+        <option>Ramesh</option>
+        <option>Bhuvan</option>
+        <option>Sanjay</option>
+        <option>Sandeep</option>
+        <option>Sagar W</option>
+        <option>Mohit</option>
+        <option>Mukesh</option>
+        <option>Jayesh</option>
+        <option>Kankan</option>
+        <option>Pranav</option>
+        <option>Vishal</option>
+        <option>Vivek</option>
+        <option>Rahul</option>
+        <option>Harihara</option>
+        <option>Ranjan</option>
+        <option>Harpreet</option>
+      </select>
+    </div>
+
+    <div class="gf-field inverter-only battery-only pcb-only" style="display:none;">
+      <label class="gf-label" for="id_Tested_by">
+        Tested By <span class="req">*</span>
+      </label>
+      <select class="gf-select" id="id_Tested_by" name="Tested_by">
+        <option value="">Select</option>
+        <!-- same options as above -->
+        <option>Shrikant</option>
+        <option>Rushikesh</option>
+        <option>Sagar K</option>
+        <option>Tanaji</option>
+        <option>Arun</option>
+        <option>Vinayak</option>
+        <option>Nikhil</option>
+        <option>Ramesh</option>
+        <option>Bhuvan</option>
+        <option>Sanjay</option>
+        <option>Sandeep</option>
+        <option>Sagar W</option>
+        <option>Mohit</option>
+        <option>Mukesh</option>
+        <option>Jayesh</option>
+        <option>Kankan</option>
+        <option>Pranav</option>
+        <option>Vishal</option>
+        <option>Vivek</option>
+        <option>Rahul</option>
+        <option>Harihara</option>
+        <option>Ranjan</option>
+        <option>Harpreet</option>
+      </select>
+    </div>
+
+    <div class="gf-field">
+      <label class="gf-label" for="id_repaired_on_date">
+        Repaired On (Date) <span class="req">*</span>
+      </label>
+      <input type="date" class="gf-input" id="id_repaired_on_date" name="repaired_on_date" required>
+    </div>
+
+    <!-- Repaired location and final status removed per request -->
+
+    <div class="gf-actions">
+      <button type="submit" class="gf-submit">Submit</button>
+    </div>
+  </form>
+</div>
+
+<script>
+  (function() {
+    // Disable browser's native validation popups completely
+    const form = document.querySelector('form');
+    if (form) {
+      form.addEventListener('invalid', function(e) {
+        e.preventDefault();
+      }, true);
+    }
+
+    // Disable validation bubbles on all inputs
+    document.querySelectorAll('input, select, textarea').forEach(el => {
+      el.addEventListener('invalid', function(e) {
+        e.preventDefault();
+      });
+    });
+
+    const objectSelect = document.getElementById('id_repairing_object');
+    const inverterOnlyFields = document.querySelectorAll('.inverter-only:not(.battery-only):not(.pcb-only)');
+    const batteryOnlyFields = document.querySelectorAll('.battery-only:not(.inverter-only):not(.pcb-only)');
+    const pcbOnlyFields = document.querySelectorAll('.pcb-only:not(.inverter-only):not(.battery-only)');
+    const sharedFields = document.querySelectorAll('.inverter-only.battery-only.pcb-only');
+
+    function setRequired(nodes, shouldRequire) {
+      nodes.forEach((el) => {
+        if (!el) return;
+        const input = el.querySelector('input, select, textarea');
+        if (!input) return;
+        // Don't set required on case_number - it's optional
+        if (input.name === 'case_number') return;
+        // Don't set required on fault_problems checkboxes - they're optional
+        if (input.name === 'fault_problems' || input.type === 'checkbox') return;
+        if (shouldRequire) input.setAttribute('required', 'required');
+        else input.removeAttribute('required');
+      });
+    }
+
+    function setDisabled(nodes, shouldDisable) {
+      nodes.forEach((el) => {
+        const inputs = el.querySelectorAll('input, select, textarea');
+        inputs.forEach((input) => {
+          input.disabled = shouldDisable;
+          if (shouldDisable) {
+            if (input.tagName === 'SELECT') input.selectedIndex = 0;
+            else if (input.type === 'checkbox' || input.type === 'radio') input.checked = false;
+            else input.value = '';
+          }
+        });
+      });
+    }
+
+    function toggleFields() {
+      const value = objectSelect.value;
+      const isInverter = value === 'Inverter';
+      const isBattery = value === 'Battery';
+      const isPcb = value === 'PCB';
+
+      inverterOnlyFields.forEach((el) => {
+        el.style.display = isInverter ? 'block' : 'none';
+      });
+
+      batteryOnlyFields.forEach((el) => {
+        el.style.display = isBattery ? 'block' : 'none';
+      });
+
+      pcbOnlyFields.forEach((el) => {
+        el.style.display = isPcb ? 'block' : 'none';
+      });
+
+      sharedFields.forEach((el) => {
+        el.style.display = (isInverter || isBattery || isPcb) ? 'block' : 'none';
+      });
+
+      // Manage required attributes based on visibility
+      setRequired(inverterOnlyFields, isInverter);
+      setRequired(batteryOnlyFields, isBattery);
+      setRequired(pcbOnlyFields, isPcb);
+      setRequired(sharedFields, isInverter || isBattery || isPcb);
+
+      // Disable hidden section inputs so their blanks don't override posted data
+      setDisabled(inverterOnlyFields, !isInverter);
+      setDisabled(batteryOnlyFields, !isBattery);
+      setDisabled(pcbOnlyFields, !isPcb);
+    }
+
+    objectSelect.addEventListener('change', toggleFields);
+    toggleFields();
+
+    // Show success message after redirect with ?success=1
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('success') === '1') {
+      alert('Thank you for filling this form. Your form was submitted successfully.');
+      // Clean up the URL to avoid repeat alerts on refresh
+      params.delete('success');
+      const newUrl = `${window.location.pathname}${params.toString() ? '?' + params.toString() : ''}`;
+      window.history.replaceState({}, '', newUrl);
+    }
+  })();
+</script>

@@ -1,0 +1,967 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block title %}Deye Admin Panel{% endblock %}
+
+{% block branding %}
+<h1 id="site-name"><a href="{% url 'admin:index' %}">⚙️ Deye Admin Panel</a></h1>
+{% endblock %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <style>
+    /* ================================================
+       MATCHING MY DATA INTERFACE STYLING
+       ================================================ */
+    
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+    
+    body {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif !important;
+        min-height: 100vh;
+        padding: 20px;
+    }
+    
+    /* ================================================
+       HEADER
+       ================================================ */
+    #header {
+        background: white !important;
+        padding: 25px 30px !important;
+        border-radius: 15px !important;
+        margin-bottom: 30px !important;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1) !important;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    #branding h1, #branding h1 a:link, #branding h1 a:visited {
+        color: #667eea !important;
+        font-weight: 700 !important;
+        font-size: 32px !important;
+        margin-bottom: 5px !important;
+    }
+    
+    #user-tools {
+        color: #666 !important;
+        font-size: 16px !important;
+    }
+    
+    #user-tools a {
+        color: #667eea !important;
+        font-weight: 600 !important;
+        text-decoration: none !important;
+        margin: 0 10px !important;
+    }
+    
+    #user-tools a:hover {
+        color: #764ba2 !important;
+        text-decoration: underline !important;
+    }
+    
+    /* ================================================
+       BREADCRUMBS
+       ================================================ */
+    .breadcrumbs {
+        background: white !important;
+        border-radius: 12px !important;
+        padding: 12px 20px !important;
+        margin: 0 0 20px 0 !important;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05) !important;
+        border: none !important;
+    }
+    
+    .breadcrumbs a {
+        color: #667eea !important;
+        font-weight: 600 !important;
+        text-decoration: none !important;
+    }
+    
+    .breadcrumbs a:hover {
+        color: #764ba2 !important;
+    }
+    
+    /* ================================================
+       CONTENT CONTAINERS
+       ================================================ */
+    #content {
+        padding: 0 !important;
+    }
+    
+    #content-main {
+        background: white !important;
+        border-radius: 15px !important;
+        padding: 30px !important;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1) !important;
+        margin: 0 !important;
+    }
+    
+    /* Page titles - make bold and styled */
+    #content h1,
+    #content-main h1,
+    .content-title,
+    h1 {
+        color: #667eea !important;
+        font-weight: 700 !important;
+        font-size: 28px !important;
+        margin-bottom: 20px !important;
+    }
+    
+    /* Page subtitle/description text */
+    #content h2:not(.module h2):not(#changelist-filter h2),
+    #content-main h2:not(.module h2) {
+        color: #667eea !important;
+        font-weight: 600 !important;
+        font-size: 18px !important;
+    }
+    
+    /* Purple background header section for change pages */
+    #content > h1,
+    body > #container > #content > h1 {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: white !important;
+        font-weight: 700 !important;
+        padding: 20px 30px !important;
+        margin: 0 0 20px 0 !important;
+        border-radius: 12px !important;
+        font-size: 20px !important;
+    }
+    
+    .module {
+        background: white !important;
+        border-radius: 15px !important;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1) !important;
+        border: none !important;
+        margin-bottom: 25px !important;
+        overflow: hidden !important;
+    }
+    
+    .module h2, .module caption {
+        background: white !important;
+        color: #333 !important;
+        font-size: 24px !important;
+        padding: 20px 30px 15px !important;
+        border-bottom: 3px solid #667eea !important;
+        font-weight: 700 !important;
+    }
+    
+    /* ================================================
+       BUTTONS - MATCHING MY DATA STYLE
+       ================================================ */
+    .button, 
+    input[type="submit"], 
+    input[type="button"],
+    .submit-row input,
+    a.button,
+    .addlink,
+    .changelink,
+    .object-tools a {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: white !important;
+        border: none !important;
+        padding: 12px 25px !important;
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+        cursor: pointer !important;
+        transition: all 0.3s !important;
+        text-decoration: none !important;
+        display: inline-block !important;
+        font-size: 14px !important;
+    }
+    
+    .button:hover,
+    input[type="submit"]:hover,
+    input[type="button"]:hover,
+    .submit-row input:hover,
+    a.button:hover,
+    .addlink:hover,
+    .changelink:hover,
+    .object-tools a:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4) !important;
+    }
+    
+    /* Delete/Remove buttons - Red */
+    .deletelink,
+    .deletelink-box a,
+    input[type="submit"][value*="Delete"],
+    input[type="submit"][name="_delete"] {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+    }
+    
+    .deletelink:hover,
+    .deletelink-box a:hover {
+        box-shadow: 0 5px 15px rgba(239, 68, 68, 0.4) !important;
+    }
+    
+    /* Save buttons - Keep purple gradient */
+    input[type="submit"][value="Save"],
+    input[type="submit"][name="_save"],
+    input[type="submit"][name="_continue"],
+    input[type="submit"][name="_addanother"] {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    }
+    
+    /* Secondary actions - Gray */
+    .cancel-link,
+    a[href*="cancel"] {
+        background: #6c757d !important;
+        color: white !important;
+        padding: 10px 20px !important;
+        border-radius: 8px !important;
+        text-decoration: none !important;
+        font-weight: 600 !important;
+        transition: all 0.3s !important;
+    }
+    
+    .cancel-link:hover {
+        background: #5a6268 !important;
+    }
+    
+    /* ================================================
+       TABLES - MATCHING MY DATA STYLE EXACTLY
+       ================================================ */
+    #changelist {
+        background: transparent !important;
+    }
+    
+    #result_list,
+    .results table {
+        background: white !important;
+        border-radius: 0 !important;
+        overflow: visible !important;
+        box-shadow: none !important;
+        border: none !important;
+        border-collapse: separate !important;
+        border-spacing: 0 !important;
+        width: 100% !important;
+    }
+    
+    /* Table header - solid purple gradient like My Data */
+    #result_list thead th {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: white !important;
+        font-weight: 600 !important;
+        text-transform: uppercase !important;
+        font-size: 11px !important;
+        letter-spacing: 1px !important;
+        padding: 15px 12px !important;
+        border: none !important;
+        border-right: none !important;
+        text-align: left !important;
+        vertical-align: middle !important;
+    }
+    
+    /* Apply same style to ALL table headers */
+    table thead th,
+    table thead td,
+    .module table thead th,
+    .results table thead th,
+    thead th,
+    thead td {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: white !important;
+        font-weight: 600 !important;
+        text-transform: uppercase !important;
+        font-size: 11px !important;
+        letter-spacing: 1px !important;
+        padding: 15px 12px !important;
+        border: none !important;
+        text-align: left !important;
+    }
+    
+    /* Ensure links in headers are white */
+    #result_list thead th a,
+    table thead th a,
+    thead th a {
+        color: white !important;
+        text-decoration: none !important;
+    }
+    
+    #result_list thead th a:hover,
+    table thead th a:hover,
+    thead th a:hover {
+        color: white !important;
+        text-decoration: underline !important;
+    }
+    
+    /* Sort icons should be white */
+    .sortremove::after,
+    .ascending::after,
+    .descending::after {
+        color: white !important;
+    }
+    
+    /* Remove borders between header cells */
+    #result_list thead th:first-child {
+        border-radius: 0 !important;
+    }
+    
+    #result_list thead th:last-child {
+        border-radius: 0 !important;
+    }
+    
+    /* Table body styling */
+    #result_list tbody tr {
+        transition: all 0.2s !important;
+        border-bottom: 1px solid #e0e0e0 !important;
+        background: white !important;
+    }
+    
+    #result_list tbody tr:hover {
+        background: #f8f9fa !important;
+        transform: none !important;
+    }
+    
+    #result_list tbody tr:last-child {
+        border-bottom: none !important;
+    }
+    
+    #result_list tbody td,
+    #result_list tbody th {
+        padding: 15px 12px !important;
+        border: none !important;
+        border-bottom: 1px solid #e0e0e0 !important;
+        color: #1a1a1a !important;
+        font-size: 14px !important;
+        font-weight: 400 !important;
+        vertical-align: middle !important;
+    }
+    
+    #result_list tbody th {
+        font-weight: 500 !important;
+    }
+    
+    /* Make all table body text visible and blue for links */
+    table tbody td,
+    table tbody th,
+    .results table tbody td,
+    .results table tbody th {
+        color: #1a1a1a !important;
+        background: white !important;
+    }
+    
+    /* Force dark text color for all table cells */
+    #result_list tbody td,
+    #result_list tbody th,
+    table tbody td,
+    table tbody th,
+    .results tbody td,
+    .results tbody th {
+        color: #1a1a1a !important;
+        background: white !important;
+    }
+    
+    /* Links in table body should be blue/purple */
+    table tbody td a,
+    table tbody th a,
+    #result_list tbody td a,
+    #result_list tbody th a {
+        color: #667eea !important;
+        text-decoration: none !important;
+        font-weight: 500 !important;
+    }
+    
+    table tbody td a:hover,
+    table tbody th a:hover,
+    #result_list tbody td a:hover,
+    #result_list tbody th a:hover {
+        color: #764ba2 !important;
+        text-decoration: underline !important;
+    }
+    
+    /* Override any Django default light gray text */
+    .field-employee,
+    .field-employee a,
+    td.field-employee,
+    th.field-employee {
+        color: #1a1a1a !important;
+    }
+    
+    .field-employee a {
+        color: #667eea !important;
+        font-weight: 500 !important;
+    }
+    
+    .field-employee a:hover {
+        color: #764ba2 !important;
+    }
+    
+    /* Remove alternating colors */
+    #result_list tbody tr.row1,
+    #result_list tbody tr.row2 {
+        background: white !important;
+    }
+    
+    table tbody tr.row1,
+    table tbody tr.row2 {
+        background: white !important;
+    }
+    
+    table tbody tr.row1 td,
+    table tbody tr.row2 td,
+    table tbody tr.row1 th,
+    table tbody tr.row2 th {
+        background: white !important;
+        color: #1a1a1a !important;
+    }
+    
+    /* Hide checkbox column header */
+    #result_list thead th.action-checkbox-column {
+        width: 40px !important;
+        padding: 15px 10px !important;
+    }
+    
+    /* Style checkboxes */
+    #result_list tbody td.action-checkbox,
+    #result_list thead th.action-checkbox-column {
+        text-align: center !important;
+    }
+    
+    input[type="checkbox"] {
+        width: 18px !important;
+        height: 18px !important;
+        cursor: pointer !important;
+    }
+    
+    /* Links in tables */
+    #result_list tbody td a,
+    #result_list tbody th a {
+        color: #667eea !important;
+        text-decoration: none !important;
+        font-weight: 500 !important;
+    }
+    
+    #result_list tbody td a:hover,
+    #result_list tbody th a:hover {
+        color: #764ba2 !important;
+        text-decoration: underline !important;
+    }
+    
+    /* Adjust table container */
+    .results {
+        overflow-x: auto !important;
+        margin-top: 20px !important;
+    }
+    
+    /* Remove extra spacing */
+    #changelist-form {
+        padding: 0 !important;
+    }
+    
+    /* ================================================
+       FORMS - MATCHING MY DATA STYLE
+       ================================================ */
+    .form-row {
+        padding: 15px 0 !important;
+        border-bottom: 1px solid #e0e0e0 !important;
+    }
+    
+    .form-row:last-child {
+        border-bottom: none !important;
+    }
+    
+    label {
+        color: #333 !important;
+        font-weight: 600 !important;
+        font-size: 14px !important;
+        margin-bottom: 8px !important;
+        display: block !important;
+    }
+    
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="number"],
+    input[type="date"],
+    input[type="time"],
+    input[type="datetime-local"],
+    input[type="url"],
+    textarea,
+    select {
+        border: 2px solid #e0e0e0 !important;
+        border-radius: 8px !important;
+        padding: 10px 15px !important;
+        font-size: 14px !important;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+        transition: border-color 0.3s !important;
+        width: 100% !important;
+        max-width: 500px !important;
+    }
+    
+    input[type="text"]:focus,
+    input[type="email"]:focus,
+    input[type="password"]:focus,
+    input[type="number"]:focus,
+    input[type="date"]:focus,
+    input[type="time"]:focus,
+    input[type="datetime-local"]:focus,
+    input[type="url"]:focus,
+    textarea:focus,
+    select:focus {
+        border-color: #667eea !important;
+        outline: none !important;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+    }
+    
+    /* Match font in all text elements */
+    body, td, th, input, select, textarea, button {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif !important;
+    }
+    
+    /* ================================================
+       FILTERS & SEARCH - MATCHING MY DATA STYLE
+       ================================================ */
+    #changelist-filter {
+        background: white !important;
+        border-radius: 15px !important;
+        padding: 20px !important;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05) !important;
+        border: 1px solid #e0e0e0 !important;
+        max-width: 280px !important;
+    }
+    
+    #changelist-filter h2 {
+        color: #333 !important;
+        font-weight: 700 !important;
+        margin-bottom: 15px !important;
+        padding-bottom: 10px !important;
+        border-bottom: 3px solid #667eea !important;
+        font-size: 16px !important;
+    }
+    
+    #changelist-filter h3 {
+        color: #666 !important;
+        font-weight: 600 !important;
+        font-size: 12px !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.5px !important;
+        margin-top: 15px !important;
+        margin-bottom: 8px !important;
+    }
+    
+    #changelist-filter li {
+        padding: 6px 0 !important;
+        font-size: 13px !important;
+    }
+    
+    #changelist-filter a {
+        color: #333 !important;
+        transition: all 0.2s !important;
+        text-decoration: none !important;
+        font-size: 13px !important;
+    }
+    
+    #changelist-filter a:hover {
+        color: #667eea !important;
+        padding-left: 5px !important;
+    }
+    
+    #changelist-filter li.selected a {
+        color: #667eea !important;
+        font-weight: 700 !important;
+    }
+    
+    /* ================================================
+       SIDEBAR NAVIGATION - COLLAPSIBLE MENU
+       ================================================ */
+    #content-related {
+        width: 260px !important;
+        margin-left: 20px !important;
+    }
+    
+    /* Hide default Django navigation in sidebar */
+    #content-related .module:not(#recent-actions-module) {
+        display: none !important;
+    }
+    
+    #content-related ul:not(.nav-subitems ul) {
+        display: none !important;
+    }
+    
+    /* Hide app_list in sidebar */
+    #content-related .app-forms,
+    #content-related .app-auth,
+    #content-related .model-dispatchedstock,
+    #content-related .model-inwardform,
+    #content-related .model-leavereport,
+    #content-related .model-leaverequest,
+    #content-related .model-outwardform,
+    #content-related .model-repairingform,
+    #content-related .model-servicereportform,
+    #content-related .model-stockitem,
+    #content-related .model-stockrequisition,
+    #content-related .model-upcomingevent,
+    .app-list,
+    #content-related table {
+        display: none !important;
+    }
+    
+    #recent-actions-module h2 {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: white !important;
+        padding: 15px !important;
+        border-radius: 12px 12px 0 0 !important;
+        font-size: 16px !important;
+        font-weight: 700 !important;
+        margin: 0 !important;
+        text-transform: none !important;
+        letter-spacing: normal !important;
+    }
+    
+    #recent-actions-module {
+        padding: 0 !important;
+        background: white !important;
+        border-radius: 12px !important;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1) !important;
+        display: block !important;
+    }
+    
+    /* Main category buttons */
+    .nav-category {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: white !important;
+        font-size: 14px !important;
+        font-weight: 600 !important;
+        padding: 12px 15px !important;
+        margin: 10px !important;
+        border-radius: 8px !important;
+        cursor: pointer !important;
+        border: none !important;
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        transition: all 0.3s ease !important;
+        box-shadow: 0 4px 6px rgba(102, 126, 234, 0.3) !important;
+        width: calc(100% - 20px) !important;
+        text-align: left !important;
+    }
+    
+    .nav-category:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 12px rgba(102, 126, 234, 0.4) !important;
+    }
+    
+    .nav-category::after {
+        content: '▼' !important;
+        font-size: 12px !important;
+        transition: transform 0.3s ease !important;
+    }
+    
+    .nav-category.active::after {
+        transform: rotate(-180deg) !important;
+    }
+    
+    /* Sub-items container */
+    .nav-subitems {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease;
+        margin: 0 10px 5px 10px;
+    }
+    
+    .nav-subitems.active {
+        max-height: 1000px;
+    }
+    
+    .nav-subitems a {
+        display: block !important;
+        padding: 10px 15px 10px 25px !important;
+        color: #667eea !important;
+        font-size: 13px !important;
+        text-decoration: none !important;
+        border-left: 3px solid transparent !important;
+        transition: all 0.2s ease !important;
+        background: #f8f9ff !important;
+        margin-bottom: 2px !important;
+        word-wrap: break-word !important;
+        white-space: normal !important;
+        line-height: 1.5 !important;
+        border-radius: 5px !important;
+    }
+    
+    .nav-subitems a:hover {
+        background: #e8edff !important;
+        border-left-color: #667eea !important;
+        padding-left: 30px !important;
+        color: #764ba2 !important;
+        font-weight: 600 !important;
+    }
+    
+    .module h2,
+    .module caption,
+    #content-related h2,
+    #content-related h3 {
+        font-size: 11px !important;
+        padding: 8px 12px !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.5px !important;
+        word-wrap: break-word !important;
+        white-space: normal !important;
+        line-height: 1.4 !important;
+    }
+    
+    /* Sidebar links */
+    #content-related a {
+        font-size: 13px !important;
+        padding: 8px 12px !important;
+        display: block !important;
+        word-wrap: break-word !important;
+        white-space: normal !important;
+        line-height: 1.5 !important;
+    }
+    
+    /* Filter sidebar specific */
+    #changelist-filter ul {
+        list-style: none !important;
+        padding-left: 0 !important;
+    }
+    
+    /* Search bar */
+    #toolbar {
+        background: white !important;
+        border-radius: 12px !important;
+        padding: 15px 20px !important;
+        margin-bottom: 20px !important;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05) !important;
+        border: 1px solid #e0e0e0 !important;
+    }
+    
+    #toolbar form input[type="text"],
+    #searchbar {
+        border: 2px solid #e0e0e0 !important;
+        border-radius: 8px !important;
+        padding: 10px 15px !important;
+        font-size: 14px !important;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+        min-width: 300px !important;
+    }
+    
+    #toolbar form input[type="text"]:focus {
+        border-color: #667eea !important;
+        outline: none !important;
+    }
+    
+    #toolbar label {
+        font-size: 14px !important;
+        margin-right: 10px !important;
+    }
+    
+    /* ================================================
+       PAGINATION - MATCHING MY DATA STYLE
+       ================================================ */
+    .paginator {
+        background: white !important;
+        border-radius: 12px !important;
+        padding: 15px 20px !important;
+        margin-top: 20px !important;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05) !important;
+        border: 1px solid #e0e0e0 !important;
+        text-align: center !important;
+    }
+    
+    .paginator a:link,
+    .paginator a:visited {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: white !important;
+        padding: 8px 15px !important;
+        border-radius: 6px !important;
+        margin: 0 3px !important;
+        display: inline-block !important;
+        font-weight: 600 !important;
+        text-decoration: none !important;
+    }
+    
+    .paginator a:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 3px 10px rgba(102, 126, 234, 0.3) !important;
+    }
+    
+    .paginator .this-page {
+        background: white !important;
+        color: #667eea !important;
+        padding: 8px 15px !important;
+        border-radius: 6px !important;
+        border: 2px solid #667eea !important;
+        font-weight: 700 !important;
+        margin: 0 3px !important;
+        display: inline-block !important;
+    }
+    
+    /* ================================================
+       ACTIONS - MATCHING MY DATA STYLE
+       ================================================ */
+    .actions {
+        background: white !important;
+        border-radius: 12px !important;
+        padding: 15px 20px !important;
+        margin-bottom: 15px !important;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05) !important;
+        border: 1px solid #e0e0e0 !important;
+    }
+    
+    .actions select {
+        border: 2px solid #e0e0e0 !important;
+        border-radius: 8px !important;
+        padding: 10px 15px !important;
+    }
+    
+    .actions button[type="submit"] {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        margin-left: 10px !important;
+    }
+    
+    /* ================================================
+       MESSAGES - MATCHING MY DATA STYLE
+       ================================================ */
+    .messagelist {
+        margin: 0 0 20px 0 !important;
+    }
+    
+    .messagelist li {
+        background: white !important;
+        border-radius: 12px !important;
+        padding: 15px 20px !important;
+        margin-bottom: 15px !important;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1) !important;
+        border-left: 5px solid #667eea !important;
+    }
+    
+    .messagelist .success {
+        border-left-color: #10b981 !important;
+        background: rgba(16, 185, 129, 0.05) !important;
+    }
+    
+    .messagelist .warning {
+        border-left-color: #f59e0b !important;
+        background: rgba(245, 158, 11, 0.05) !important;
+    }
+    
+    .messagelist .error {
+        border-left-color: #ef4444 !important;
+        background: rgba(239, 68, 68, 0.05) !important;
+    }
+    
+    /* ================================================
+       DASHBOARD - MATCHING MY DATA STYLE
+       ================================================ */
+    .dashboard .module {
+        background: white !important;
+        border-radius: 15px !important;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1) !important;
+        border: none !important;
+        transition: all 0.3s !important;
+        margin-bottom: 25px !important;
+    }
+    
+    .dashboard .module:hover {
+        transform: translateY(-5px) !important;
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15) !important;
+    }
+    
+    .dashboard .module h2 {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: white !important;
+        padding: 15px 20px !important;
+        border-radius: 15px 15px 0 0 !important;
+        font-weight: 700 !important;
+        font-size: 18px !important;
+        border: none !important;
+    }
+    
+    .dashboard .module caption {
+        padding: 15px 20px !important;
+        font-weight: 600 !important;
+        color: #333 !important;
+        background: white !important;
+        border: none !important;
+    }
+    
+    /* ================================================
+       OBJECT TOOLS - MATCHING MY DATA STYLE
+       ================================================ */
+    .object-tools {
+        margin: 0 0 20px 0 !important;
+        padding: 0 !important;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+    
+    .object-tools li {
+        background: transparent !important;
+        border-radius: 0 !important;
+        margin-left: 10px !important;
+    }
+    
+    /* ================================================
+       LINKS - MATCHING MY DATA STYLE
+       ================================================ */
+    a:link,
+    a:visited {
+        color: #667eea !important;
+        text-decoration: none !important;
+        font-weight: 500 !important;
+    }
+    
+    a:hover {
+        color: #764ba2 !important;
+        text-decoration: underline !important;
+    }
+    
+    /* ================================================
+       RESPONSIVE
+       ================================================ */
+    @media (max-width: 768px) {
+        body {
+            padding: 10px;
+        }
+        
+        #content-main {
+            padding: 15px !important;
+        }
+        
+        #result_list thead th,
+        #result_list tbody td {
+            padding: 10px !important;
+        }
+    }
+  </style>
+  <link rel="stylesheet" href="{% static 'admin/css/admin_custom.css' %}?v=2026012115484523">
+{% endblock %}
+
+{% block sidebar %}
+<div id="content-related">
+    <div class="module" id="recent-actions-module">
+        <h2>Quick Navigation</h2>
+        <div class="nav-category" onclick="toggleCategory('forms')">
+            Forms
+        </div>
+        <div class="nav-subitems active" id="forms-subitems">
+            <a href="/admin/forms/inwardform/">Inward Forms</a>
+            <a href="/admin/forms/outwardform/">Outward Forms</a>
+            <a href="/admin/forms/repairingform/">Repairing Forms</a>
+            <a href="/admin/forms/servicereportform/">Service Report Forms</a>
+            <a href="/admin/forms/stockrequisition/">Stock Requisitions</a>
+            <a href="/admin/forms/dispatchedstock/">Dispatched Stock</a>
+            <a href="/admin/forms/leaverequest/">Leave Requests</a>
+            <a href="/admin/forms/leavereport/">Leave Reports</a>
+            <a href="/admin/forms/upcomingevent/">Upcoming Events</a>
+        </div>
+    </div>
+</div>
+<script>
+function toggleCategory(category) {
+    const subitems = document.getElementById(category + '-subitems');
+    const button = event.currentTarget;
+    subitems.classList.toggle('active');
+    button.classList.toggle('active');
+}
+</script>
+{% endblock %}

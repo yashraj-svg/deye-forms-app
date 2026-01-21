@@ -1,0 +1,25 @@
+# Add this to forms/models.py after StockRequisition model
+
+class DispatchedStock(models.Model):
+    requisition = models.ForeignKey(StockRequisition, on_delete=models.CASCADE, related_name='dispatches')
+    serial_number = models.CharField(max_length=100, db_index=True)
+    component_type = models.CharField(max_length=100)
+    quantity_dispatched = models.IntegerField()
+    engineer_name = models.CharField(max_length=200)
+    dispatch_location = models.CharField(max_length=100)
+    dispatch_date = models.DateField()
+    courier_name = models.CharField(max_length=100)
+    tracking_number = models.CharField(max_length=100)
+    dispatch_remarks = models.TextField(blank=True, null=True)
+    dispatched_by = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'dispatched_stock'
+        verbose_name = 'Dispatched Stock'
+        verbose_name_plural = 'Dispatched Stock'
+        ordering = ['-dispatch_date', '-created_at']
+    
+    def __str__(self):
+        return f"Dispatch: {self.serial_number} - {self.component_type} ({self.quantity_dispatched}) to {self.dispatch_location}"

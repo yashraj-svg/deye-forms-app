@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leave Management - Deye</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #667eea;
+            --primary-dark: #764ba2;
+            --secondary: #FF6B6B;
+            --bg-light: #FAFBFC;
+            --text-dark: #1a1a1a;
+            --text-light: #6b7280;
+            --border-light: rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.12);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-light);
+            margin: 0;
+            padding: 0;
+        }
+
+        .header {
+            position: sticky;
+            top: 0;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-light);
+            padding: 18px 60px;
+            z-index: 1000;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-section img {
+            height: 36px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 100px auto;
+            background: white;
+            padding: 50px 40px;
+            border-radius: 20px;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border-light);
+            text-align: center;
+        }
+
+        h2 {
+            margin-bottom: 12px;
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--text-dark);
+            letter-spacing: -0.02em;
+        }
+
+        .subtitle {
+            color: var(--text-light);
+            font-size: 15px;
+            margin-bottom: 40px;
+        }
+
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 16px 24px;
+            font-size: 16px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            text-decoration: none;
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-request {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-request:hover {
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .btn-history {
+            background: linear-gradient(135deg, var(--secondary) 0%, #FF8E53 100%);
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+        }
+
+        .btn-history:hover {
+            box-shadow: 0 8px 24px rgba(255, 107, 107, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .back-link {
+            display: block;
+            margin-top: 24px;
+            color: var(--primary);
+            font-weight: 600;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .back-link:hover {
+            color: var(--primary-dark);
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 14px 20px;
+            }
+
+            .container {
+                margin: 60px 20px;
+                padding: 36px 24px;
+            }
+
+            h2 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="logo-section">
+        <a href="/">
+            <img src="https://www.deyeinverter.com/template/en/images/logo.png" alt="DEYE">
+        </a>
+    </div>
+</div>
+
+<div class="container">
+    <h2>Leave Management</h2>
+    <p class="subtitle">Manage your leave requests and view history</p>
+
+    <div class="btn-group">
+        <a href="{% url 'forms:apply_leave' %}" class="btn btn-request">
+            🌴 Request Leave
+        </a>
+
+        <a href="{% url 'forms:leave_history' %}" class="btn btn-history">
+            📋 View Leave History
+        </a>
+    </div>
+
+    <a href="/" class="back-link">← Back to Home</a>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Employee Leave Statistics</title>
+    <style>
+        body { 
+            margin:0; 
+            font-family: Arial, sans-serif; 
+            background: #f4f6f9; 
+            padding: 20px; 
+        }
+
+        h2 { 
+            text-align: center; 
+            color: #333; 
+            margin-bottom: 20px; 
+        }
+
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            background: #fff; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1); 
+            border-radius: 8px; 
+            overflow: hidden; 
+        }
+
+        th, td { 
+            padding: 12px 14px; 
+            text-align: center; 
+            border-bottom: 1px solid #e1e4e8; 
+            font-size: 14px; 
+            color: #444; 
+            vertical-align: middle;
+        }
+
+        th { 
+            background: #007bff; 
+            color: white; 
+            font-weight: 600;
+        }
+
+        tr:nth-child(even) { 
+            background: #f9fafb; 
+        }
+
+        tr:hover {
+            background: #f0f0f0;
+        }
+
+        .stat-box {
+            padding: 12px;
+            border-radius: 4px;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .approved {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .rejected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .taken {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .remaining {
+            background: #e7f3ff;
+            color: #0b5394;
+        }
+
+        .summary {
+            background: #f0f0f0;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .summary h3 {
+            margin-top: 0;
+            color: #333;
+        }
+
+        .summary p {
+            margin: 8px 0;
+            font-size: 15px;
+            color: #555;
+        }
+
+        /* Modern Header Styles */
+        .nav-header {
+            position: sticky;
+            top: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            padding: 18px 60px;
+            z-index: 1000;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+        }
+
+        .logo-section img {
+            height: 36px;
+            object-fit: contain;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="nav-header">
+        <div class="logo-section">
+            <a href="/" style="text-decoration: none;">
+                <img src="https://www.deyeinverter.com/template/en/images/logo.png" alt="DEYE">
+            </a>
+        </div>
+    </div>
+
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <h2 style="margin:0;">Employee Leave Statistics - {{ current_year }}</h2>
+        <button type="button" onclick="history.back();" style="padding:8px 12px; border:1px solid #ccc; background:#f5f5f5; border-radius:6px; cursor:pointer;">
+            Back
+        </button>
+    </div>
+
+    <div class="summary">
+        <h3>Summary</h3>
+        <p>This report shows leave statistics for all employees in the current year.</p>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Employee</th>
+                <th>Total Requests</th>
+                <th>Total Approved Days</th>
+                <th>Total Rejected</th>
+                <th>Total Taken ({{ current_year }})</th>
+                <th>Remaining Days</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in report_data %}
+            <tr>
+                <td style="text-align: left; font-weight: 500;">{{ item.username }}</td>
+                <td>{{ item.total_requests }}</td>
+                <td>
+                    <span class="stat-box approved">
+                        {{ item.total_approved|floatformat:1 }}
+                    </span>
+                </td>
+                <td>{{ item.total_rejected }}</td>
+                <td>
+                    <span class="stat-box taken">
+                        {{ item.total_taken|floatformat:1 }}
+                    </span>
+                </td>
+                <td>
+                    <span class="stat-box remaining">
+                        {{ item.remaining|floatformat:1 }}
+                    </span>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" style="text-align:center; padding:16px;">
+                    No leave data available.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+</body>
+</html>

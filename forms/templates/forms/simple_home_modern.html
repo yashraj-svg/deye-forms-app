@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deye - Energy Solutions Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #FAFBFC;
+            color: #1a1a1a;
+            overflow-x: hidden;
+        }
+
+        /* ========== HEADER ========== */
+        .header {
+            position: sticky;
+            top: 0;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            padding: 18px 60px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            box-shadow: 0 2px 40px rgba(0, 0, 0, 0.02);
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-section img {
+            height: 36px;
+        }
+
+        .user-greeting {
+            font-size: 15px;
+            font-weight: 500;
+            color: #4a5568;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        /* ========== HERO SECTION ========== */
+        .hero-section {
+            position: relative;
+            min-height: 75vh;
+            display: flex;
+            align-items: center;
+            padding: 100px 60px 80px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            overflow: hidden;
+        }
+
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("https://www.deyeinverter.com/template/en/images/about-4-1-1.jpg");
+            background-size: cover;
+            background-position: center;
+            opacity: 0.15;
+            mix-blend-mode: overlay;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+            display: flex;
+            gap: 60px;
+            align-items: center;
+        }
+
+        .hero-text {
+            flex: 1;
+        }
+
+        .hero-text h1 {
+            font-size: 56px;
+            font-weight: 800;
+            color: white;
+            line-height: 1.1;
+            margin-bottom: 24px;
+            letter-spacing: -0.02em;
+        }
+
+        .hero-text p {
+            font-size: 19px;
+            color: rgba(255, 255, 255, 0.9);
+            line-height: 1.6;
+            margin-bottom: 40px;
+            font-weight: 400;
+        }
+
+        .nav-cards {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .nav-card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 24px;
+            border-radius: 16px;
+            text-decoration: none;
+            color: white;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .nav-card:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .nav-card-icon {
+            width: 48px;
+            height: 48px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .nav-card-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .nav-card-desc {
+            font-size: 13px;
+            opacity: 0.85;
+            line-height: 1.4;
+        }
+
+        /* ========== ABOUT SECTION ========== */
+        .about-section {
+            padding: 120px 60px;
+            background: #FAFBFC;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 70px;
+        }
+
+        .section-tag {
+            display: inline-block;
+            padding: 6px 16px;
+            background: #E6EFFF;
+            color: #3366FF;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            margin-bottom: 16px;
+        }
+
+        .section-title {
+            font-size: 44px;
+            font-weight: 800;
+            color: #1a1a1a;
+            margin-bottom: 20px;
+            letter-spacing: -0.02em;
+        }
+
+        .section-subtitle {
+            font-size: 18px;
+            color: #6b7280;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        .about-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
+        }
+
+        .about-card {
+            background: white;
+            padding: 36px;
+            border-radius: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            transition: all 0.3s ease;
+        }
+
+        .about-card:hover {
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+            transform: translateY(-4px);
+            border-color: rgba(102, 126, 234, 0.3);
+        }
+
+        .about-card-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 16px;
+        }
+
+        .about-card-text {
+            font-size: 15px;
+            color: #4a5568;
+            line-height: 1.7;
+        }
+
+        /* ========== EVENTS SECTION ========== */
+        .events-section {
+            padding: 120px 60px;
+            background: linear-gradient(135deg, #f6f8ff 0%, #f1f5ff 100%);
+        }
+
+        .events-section .section-tag {
+            background: #FFE8E6;
+            color: #FF6B6B;
+        }
+
+        .events-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 28px;
+        }
+
+        .event-card {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            transition: all 0.3s ease;
+        }
+
+        .event-card:hover {
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+            transform: translateY(-4px);
+        }
+
+        .event-card-header {
+            background: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%);
+            padding: 24px;
+            color: white;
+        }
+
+        .event-date {
+            font-size: 14px;
+            font-weight: 600;
+            opacity: 0.95;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .event-title {
+            font-size: 22px;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .event-body {
+            padding: 24px;
+        }
+
+        .event-location {
+            font-size: 14px;
+            color: #6b7280;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .event-desc {
+            font-size: 15px;
+            color: #4a5568;
+            line-height: 1.6;
+        }
+
+        .events-empty {
+            text-align: center;
+            padding: 60px 40px;
+            background: white;
+            border-radius: 20px;
+            border: 2px dashed rgba(0, 0, 0, 0.1);
+        }
+
+        .events-empty-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+
+        .events-empty-text {
+            font-size: 16px;
+            color: #6b7280;
+        }
+
+        /* ========== FOOTER ========== */
+        footer {
+            background: #1a1a1a;
+            color: rgba(255, 255, 255, 0.7);
+            padding: 40px 60px;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        /* ========== RESPONSIVE ========== */
+        @media (max-width: 968px) {
+            .header {
+                padding: 16px 30px;
+            }
+
+            .hero-content {
+                flex-direction: column;
+                padding: 60px 30px;
+            }
+
+            .hero-text h1 {
+                font-size: 40px;
+            }
+
+            .nav-cards {
+                grid-template-columns: 1fr;
+            }
+
+            .about-section,
+            .events-section {
+                padding: 80px 30px;
+            }
+
+            .section-title {
+                font-size: 32px;
+            }
+        }
+
+        /* Smooth scroll */
+        html {
+            scroll-behavior: smooth;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+    <div class="logo-section">
+        <img src="https://www.deyeinverter.com/template/en/images/logo.png" alt="DEYE">
+    </div>
+    <div class="user-greeting">
+        <div class="user-avatar">{{ request.user.username|slice:":1"|upper }}</div>
+        <span>Hello, {{ request.user.username }}!</span>
+    </div>
+</div>
+
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="hero-content">
+        <div class="hero-text">
+            <h1>Welcome to Deye Energy Solutions</h1>
+            <p>Empowering the future with innovative solar PV and energy storage systems. Manage your workspace efficiently.</p>
+        </div>
+        <div class="nav-cards">
+            <a href="{% url 'forms:select_form' %}" class="nav-card">
+                <div class="nav-card-icon">📝</div>
+                <div class="nav-card-title">Forms</div>
+                <div class="nav-card-desc">Access and submit forms</div>
+            </a>
+            <a href="{% url 'forms:calculator' %}" class="nav-card">
+                <div class="nav-card-icon">🧮</div>
+                <div class="nav-card-title">Calculator</div>
+                <div class="nav-card-desc">Freight rate comparison</div>
+            </a>
+            <a href="{% url 'forms:stock' %}" class="nav-card">
+                <div class="nav-card-icon">📦</div>
+                <div class="nav-card-title">Stock</div>
+                <div class="nav-card-desc">View inventory dashboard</div>
+            </a>
+            <a href="/leave/" class="nav-card">
+                <div class="nav-card-icon">🌴</div>
+                <div class="nav-card-title">Request Leave</div>
+                <div class="nav-card-desc">Submit leave applications</div>
+            </a>
+            <a href="/leave/admin/" class="nav-card">
+                <div class="nav-card-icon">👥</div>
+                <div class="nav-card-title">Leave Admin</div>
+                <div class="nav-card-desc">Manage leave requests</div>
+            </a>
+            <a href="/admin/" class="nav-card">
+                <div class="nav-card-icon">⚙️</div>
+                <div class="nav-card-title">Admin Panel</div>
+                <div class="nav-card-desc">System administration</div>
+            </a>
+            <a href="/hierarchy/" class="nav-card">
+                <div class="nav-card-icon">🏢</div>
+                <div class="nav-card-title">Hierarchy</div>
+                <div class="nav-card-desc">View org structure</div>
+            </a>
+            <a href="{% url 'forms:my_data' %}" class="nav-card">
+                <div class="nav-card-icon">📊</div>
+                <div class="nav-card-title">My Data</div>
+                <div class="nav-card-desc">View your submissions</div>
+            </a>
+            {% if user.is_superuser %}
+            <a href="{% url 'forms:team_data' %}" class="nav-card">
+                <div class="nav-card-icon">👥</div>
+                <div class="nav-card-title">Team Data</div>
+                <div class="nav-card-desc">View all submissions</div>
+            </a>
+            {% elif user.profile.team_members.exists %}
+            <a href="{% url 'forms:team_data' %}" class="nav-card">
+                <div class="nav-card-icon">👥</div>
+                <div class="nav-card-title">Team Data</div>
+                <div class="nav-card-desc">View team submissions</div>
+            </a>
+            {% endif %}
+            <a href="/accounts/login/" class="nav-card">
+                <div class="nav-card-icon">🚪</div>
+                <div class="nav-card-title">Logout</div>
+                <div class="nav-card-desc">Sign out securely</div>
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- About Section -->
+<section class="about-section" id="about">
+    <div class="container">
+        <div class="section-header">
+            <div class="section-tag">About Us</div>
+            <h2 class="section-title">Leading Energy Innovation</h2>
+            <p class="section-subtitle">Founded in 2000, we're committed to delivering world-class energy solutions across 140+ countries</p>
+        </div>
+
+        <div class="about-cards">
+            <div class="about-card">
+                <div class="about-card-title">The Company</div>
+                <div class="about-card-text">
+                    Ningbo Deye Technology Co., Ltd. is a comprehensive technology manufacturing enterprise that integrates R&D, design, production, sales, and service. Listed on the Shanghai Stock Exchange (Stock Code: 605117.SH) in April 2021, Deye has entered a new phase of accelerated growth.
+                </div>
+            </div>
+
+            <div class="about-card">
+                <div class="about-card-title">Global Reach</div>
+                <div class="about-card-text">
+                    After years of dedicated development, Deye's inverter and ESS businesses have established industry-leading R&D capabilities and scale advantages, offering complete solar PV and energy storage solutions. Our products are now sold in over 140 countries and regions globally.
+                </div>
+            </div>
+
+            <div class="about-card">
+                <div class="about-card-title">Product Excellence</div>
+                <div class="about-card-text">
+                    Deye's core product line includes 1kW-136kW string inverters, 3kW-80kW energy storage inverters, and 300W-2.2kW microinverters. We've developed a comprehensive energy IoT ecosystem, anchored by Deye Cloud App, to optimize our smart energy solutions.
+                </div>
+            </div>
+
+            <div class="about-card">
+                <div class="about-card-title">Complete Solutions</div>
+                <div class="about-card-text">
+                    As a one-stop provider of solar PV and ESS solutions, Deye expands its self-developed battery product line across residential, commercial, industrial, and public utility sectors. We're committed to providing energy storage solutions that deliver outstanding safety, superior compatibility, and scalable flexibility.
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Events Section -->
+<section class="events-section" id="events">
+    <div class="container">
+        <div class="section-header">
+            <div class="section-tag">What's Happening</div>
+            <h2 class="section-title">Upcoming Events</h2>
+            <p class="section-subtitle">Stay updated with our latest events and activities</p>
+        </div>
+
+        {% if events %}
+        <div class="events-grid">
+            {% for event in events %}
+            <div class="event-card">
+                <div class="event-card-header">
+                    <div class="event-date">
+                        📅 {{ event.event_date|date:"F d, Y" }}
+                    </div>
+                    <h3 class="event-title">{{ event.title }}</h3>
+                </div>
+                <div class="event-body">
+                    <div class="event-location">
+                        📍 {{ event.location }}
+                    </div>
+                    <div class="event-desc">{{ event.description }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="events-empty">
+            <div class="events-empty-icon">📅</div>
+            <div class="events-empty-text">No upcoming events at the moment. Check back soon!</div>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Footer -->
+<footer>
+    <p>&copy; 2026 Deye Web App. All rights reserved. | <a href="/admin/">Admin</a></p>
+</footer>
+
+</body>
+</html>

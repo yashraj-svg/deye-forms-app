@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Request for Leave</title>
+  <style>
+    body {
+        margin: 0;
+        font-family: "Segoe UI", Roboto, Arial, sans-serif;
+        background: linear-gradient(180deg, #f4f6f9, #eef1f5);
+        min-height: 100vh;
+        color: #333;
+    }
+
+    /* Header */
+    .header {
+        display: flex;
+        align-items: center;
+        padding: 14px 32px;
+        background-color: #fff;
+        border-bottom: 1px solid #e3e6ea;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+    }
+
+    .header-title img {
+        height: 40px;
+        object-fit: contain;
+    }
+
+    /* Main container */
+    .page-container {
+        max-width: 520px;
+        margin: 50px auto;
+        background: #fff;
+        padding: 32px 40px;
+        border-radius: 14px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+        animation: fadeIn 0.4s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    h2 {
+        font-size: 22px;
+        color: #222;
+    }
+
+    label {
+        font-weight: 600;
+        font-size: 14px;
+        color: #444;
+        display: block;
+        margin-bottom: 6px;
+        margin-top: 6px;
+    }
+
+    input[type="text"],
+    input[type="date"],
+    textarea,
+    select {
+        width: 100%;
+        padding: 11px 12px;
+        border: 1.8px solid #d0d5dd;
+        border-radius: 8px;
+        font-size: 14px;
+        margin-bottom: 18px;
+        background-color: #fff;
+        transition: all 0.25s ease;
+    }
+
+    input:focus,
+    textarea:focus,
+    select:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15);
+        outline: none;
+    }
+
+    textarea {
+        resize: vertical;
+        min-height: 110px;
+    }
+
+    select {
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg width='14' height='10' viewBox='0 0 14 10' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l6 6 6-6' stroke='%23666' stroke-width='2' fill='none'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 14px center;
+        background-size: 12px;
+        cursor: pointer;
+    }
+
+    button[type="submit"] {
+        margin-top: 10px;
+        background: linear-gradient(135deg, #007bff, #0056b3);
+        color: #fff;
+        font-size: 16px;
+        padding: 13px 0;
+        width: 100%;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        box-shadow: 0 10px 20px rgba(0, 123, 255, 0.25);
+    }
+
+    button[type="submit"]:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 14px 28px rgba(0, 123, 255, 0.35);
+    }
+
+    button[type="button"] {
+        font-size: 13px;
+        padding: 8px 14px;
+        border: 1px solid #d0d5dd;
+        background: #f8f9fb;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.2s ease, border-color 0.2s ease;
+    }
+
+    button[type="button"]:hover {
+        background: #eef1f5;
+        border-color: #c4c9d1;
+    }
+
+    /* Success message */
+    .success-box {
+        padding: 12px 14px;
+        margin-bottom: 18px;
+        border: 1px solid #b6dfc2;
+        background: #e6f4ea;
+        color: #1e7e34;
+        border-radius: 8px;
+        font-size: 14px;
+    }
+
+    .error-box {
+        padding: 12px 14px;
+        margin-bottom: 18px;
+        border: 1px solid #f5c2c7;
+        background: #f8d7da;
+        color: #842029;
+        border-radius: 8px;
+        font-size: 14px;
+    }
+
+    /* Reusable "More" button style */
+    .more-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 10px 16px;
+        border-radius: 999px;
+        border: 1px solid #0b3d91;
+        background: linear-gradient(135deg, #0f5ae0, #0a3e9e);
+        color: #ffffff;
+        font-weight: 700;
+        letter-spacing: 0.2px;
+        box-shadow: 0 10px 20px rgba(15, 90, 224, 0.25);
+        transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+        text-decoration: none;
+    }
+
+    .more-btn:hover,
+    .more-btn:focus-visible {
+        background: linear-gradient(135deg, #1e6cff, #0e4ab8);
+        box-shadow: 0 14px 28px rgba(15, 90, 224, 0.35);
+        transform: translateY(-1px);
+        outline: none;
+    }
+
+    .more-btn:active {
+        transform: translateY(0);
+        box-shadow: 0 8px 16px rgba(15, 90, 224, 0.25);
+    }
+
+    @media (max-width: 600px) {
+        .page-container {
+            margin: 20px;
+            padding: 24px;
+        }
+    }
+</style>
+
+</head>
+<body>
+
+    <!-- Header -->
+    <div class="header">
+        <div class="header-title">
+            <a href="/">
+                <img src="https://www.deyeinverter.com/template/en/images/logo.png" alt="DEYE Logo">
+            </a>
+        </div>
+    </div>
+
+    <style>
+    body {
+        margin: 0;
+        font-family: "Segoe UI", Roboto, Arial, sans-serif;
+        min-height: 100vh;
+        background:
+            radial-gradient(circle at 10% 10%, rgba(0, 123, 255, 0.08), transparent 40%),
+            radial-gradient(circle at 90% 20%, rgba(0, 123, 255, 0.06), transparent 35%),
+            linear-gradient(180deg, #f4f6f9, #eef1f5);
+        color: #333;
+    }
+</style>
+
+
+    <!-- Main Content -->
+    <div class="page-container">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <h2 style="margin:0;">Leave Application</h2>
+            <button type="button" onclick="history.back();" style="padding:8px 12px; border:1px solid #ccc; background:#f5f5f5; border-radius:6px; cursor:pointer;">Back</button>
+        </div>
+
+        {% if success %}
+        <div style="padding:12px 14px; margin-bottom:16px; border:1px solid #c3e6cb; background:#d4edda; color:#155724; border-radius:6px;">
+            Your request is successfully sent. Please wait for admin's decision. Thank you.
+        </div>
+        {% endif %}
+
+        {% if error %}
+        <div class="error-box">
+            {{ error }}
+        </div>
+        {% endif %}
+
+        {% if remaining is not None %}
+        <div class="success-box" style="border:1px solid #cce5ff; background:#e9f3ff; color:#084298;">
+            Remaining paid leave this year: {{ remaining }} days.
+        </div>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+
+            <label for="leave_type">Type</label>
+            <select id="leave_type" name="leave_type" required>
+                <option value="">Select...</option>
+                <option value="leave">Leave</option>
+                <option value="wfh">Work From Home</option>
+            </select>
+
+            <label for="start_date">Start Date</label>
+            <input type="date" id="start_date" name="start_date" required>
+
+            <label for="start_breakdown">Start Day Portion</label>
+            <select id="start_breakdown" name="start_breakdown">
+                <option value="full">Full Day</option>
+                <option value="half">Half Day</option>
+            </select>
+
+            <label for="end_date">End Date</label>
+            <input type="date" id="end_date" name="end_date" required>
+
+            <label for="end_breakdown">End Day Portion</label>
+            <select id="end_breakdown" name="end_breakdown">
+                <option value="full">Full Day</option>
+                <option value="half">Half Day</option>
+            </select>
+
+            <label for="reason">Reason / Description</label>
+            <textarea id="reason" name="reason" required></textarea>
+
+            <button type="submit">Apply</button>
+        </form>
+    </div>
+
+</body>
+</html>

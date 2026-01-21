@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Outward Tracking Form</title>
+
+<style>
+/* Header */
+.header {
+  position: sticky;
+  top: 0;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  padding: 18px 60px;
+  z-index: 1000;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.logo-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo-section img {
+  height: 36px;
+}
+
+body{
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  background:#f2f4f7;
+  margin:0;
+  padding:0;
+}
+.form-wrap{
+  max-width:780px;
+  margin:32px auto;
+  background:#fff;
+  padding:32px;
+  border-radius:8px;
+  box-shadow:0 4px 12px rgba(0,0,0,.08);
+}
+h1{
+  text-align:center;
+  margin-bottom:6px;
+  font-size:26px;
+}
+.req-note{
+  text-align:center;
+  color:#d93025;
+  font-size:13px;
+  margin-bottom:24px;
+}
+label{
+  display:block;
+  margin-top:18px;
+  font-size:14px;
+  font-weight:500;
+}
+.req{
+  color:#d93025;
+}
+input,select{
+  width:100%;
+  margin-top:6px;
+  padding:10px;
+  font-size:14px;
+  border:1px solid #ccd0d5;
+  border-radius:4px;
+  box-sizing:border-box;
+}
+input:focus,select:focus{
+  outline:none;
+  border-color:#1a73e8;
+}
+button{
+  width:100%;
+  margin-top:28px;
+  padding:12px;
+  background:#1a73e8;
+  color:#fff;
+  font-size:16px;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+}
+button:hover{
+  background:#1558b0;
+}
+
+/* Conditional field visibility */
+.inverter-only {
+  display: none;
+}
+
+.battery-only {
+  display: none;
+}
+
+/* Hide browser validation popups */
+input:invalid {
+  box-shadow: none;
+}
+
+input::-webkit-validation-bubble-message {
+  display: none;
+}
+
+.pcb-only {
+  display: none;
+}
+
+.inverter-only.show,
+.battery-only.show,
+.pcb-only.show {
+  display: block;
+}
+
+@media(max-width:600px){
+  .form-wrap{
+    margin:16px;
+    padding:24px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+  <div class="logo-section">
+    <a href="/" style="text-decoration: none;">
+      <img src="https://www.deyeinverter.com/template/en/images/logo.png" alt="DEYE">
+    </a>
+  </div>
+</div>
+
+{% if form_errors %}
+<div style="background:#fdecea;color:#611a15;border:1px solid #f5c6cb;padding:8px 12px;border-radius:6px;margin:12px 0;">
+  <strong>There were errors with your submission:</strong>
+  <ul style="margin:8px 0 0 16px;">
+    {% for field, errors in form_errors.items %}
+      <li><b>{{ field|capfirst }}</b>: {{ errors|join:', ' }}</li>
+    {% endfor %}
+  </ul>
+  <div style="font-size:12px;opacity:.8;">Please correct them and submit again.</div>
+</div>
+{% endif %}
+
+<form class="form-wrap" method="post">
+{% csrf_token %}
+
+<h1>Outward Tracking</h1>
+<div class="req-note">* Indicates required question</div>
+
+<label>Sent By <span class="req">*</span></label>
+<select name="sent_by" required>
+<option value="">Select</option>
+<option>Shrikant</option>
+<option>Rushikesh</option>
+<option>Sagar K</option>
+<option>Arun</option>
+<option>Vinayak</option>
+<option>Bhuvan</option>
+<option>Sandeep</option>
+<option>Pranav</option>
+<option>Jayesh</option>
+<option>Sanjay</option>
+<option>Mukesh</option>
+</select>
+
+<label>Approved By <span class="req">*</span></label>
+<select name="approved_by" required>
+<option value="">Select</option>
+<option>Sagar K</option>
+<option>Tanaji</option>
+<option>Mahammad</option>
+<option>Snehal</option>
+<option>Sandeep</option>
+<option>Akshay Sir</option>
+<option>Bhuvan</option>
+<option>Pranav</option>
+<option>Rakesh</option>
+</select>
+
+<label>Company Abbreviation <span class="req">*</span></label>
+<select name="company_abbrev" required>
+<option value="">Select</option>
+<option>Aps</option>
+<option>Deye</option>
+<option>Evvo</option>
+<option>Feston</option>
+<option>Greenedge</option>
+<option>Ksolare</option>
+<option>Mindra</option>
+<option>Powerone</option>
+<option>Solaryaan</option>
+<option>Utl</option>
+<option>Vsole</option>
+<option>Waaree</option>
+<option>Other</option>
+</select>
+
+<label>Outward Object <span class="req">*</span></label>
+<select name="outward_object" id="outwardObject" required>
+<option value="">Select</option>
+<option value="Inverter">Inverter</option>
+<option value="Battery">Battery</option>
+<option value="PCB">PCB</option>
+</select>
+
+<label>Inverter Sent To Company Name <span class="req">*</span></label>
+<input type="text" name="sent_to_company" required>
+
+<label>Pincode <span class="req">*</span></label>
+<input type="text" name="pincode" required placeholder="Enter 6-digit pincode">
+
+<label>Sent To Address <span class="req">*</span></label>
+<input type="text" name="sent_to_address" required readonly style="background-color: #f0f0f0;">
+
+<label>Sent To District <span class="req">*</span></label>
+<input type="text" name="sent_to_district" required readonly style="background-color: #f0f0f0;">
+
+<label>Sent To State <span class="req">*</span></label>
+<select name="sent_to_state" required disabled style="background-color: #f0f0f0;">
+<option value="">Select</option>
+<option>Andhra Pradesh</option>
+<option>Arunachal Pradesh</option>
+<option>Assam</option>
+<option>Bihar</option>
+<option>Chhattisgarh</option>
+<option>Goa</option>
+<option>Gujarat</option>
+<option>Haryana</option>
+<option>Himachal Pradesh</option>
+<option>Jharkhand</option>
+<option>Karnataka</option>
+<option>Kerala</option>
+<option>Madhya Pradesh</option>
+<option>Maharashtra</option>
+<option>Manipur</option>
+<option>Meghalaya</option>
+<option>Mizoram</option>
+<option>Nagaland</option>
+<option>Odisha</option>
+<option>Punjab</option>
+<option>Rajasthan</option>
+<option>Sikkim</option>
+<option>Tamil Nadu</option>
+<option>Telangana</option>
+<option>Tripura</option>
+<option>Uttar Pradesh</option>
+<option>Uttarakhand</option>
+<option>West Bengal</option>
+<option>Other - Jammu & Kashmir</option>
+</select>
+
+<div class="inverter-only">
+<label>Inverter ID – Outward <span class="req">*</span></label>
+<input type="text" name="inverter_id_outward" required>
+
+<label>Inverter Specification <span class="req">*</span></label>
+<select name="inverter_spec" required>
+<option value="">Select</option>
+<option>1PH - Hybrid</option>
+<option>3PH - Hybrid</option>
+<option>1PH - Ongrid</option>
+<option>3PH - Ongrid</option>
+<option>All In One - Hybrid</option>
+<option>Micro Inverter</option>
+</select>
+
+<label>Inverter Rating</label>
+<select name="inverter_rating">
+<option value="">Select</option>
+<option>2.2 KW</option>
+<option>3 KW</option>
+<option>3.3 KW</option>
+<option>4 KW</option>
+<option>5 KW</option>
+<option>6 KW</option>
+<option>8 KW</option>
+<option>10 KW</option>
+<option>12 KW</option>
+<option>15 KW</option>
+<option>18 KW</option>
+<option>20 KW</option>
+<option>25 KW</option>
+<option>30 KW</option>
+<option>33 KW</option>
+<option>35 KW</option>
+<option>40 KW</option>
+<option>50 KW</option>
+<option>60 KW</option>
+<option>75 KW</option>
+<option>80 KW</option>
+<option>100 KW</option>
+<option>125 KW</option>
+<option>136 KW</option>
+</select>
+</div>
+
+<div class="battery-only">
+<label>Battery ID <span class="req">*</span></label>
+<input type="text" name="battery_id" required>
+
+<label>Battery Model</label>
+<select name="battery_model">
+<option value="">Select</option>
+<option>RW - L 2.5 Neutral</option>
+<option>RW - M 5.3 Neutral</option>
+<option>RW - M 5.3 Pro Neutral (M6)</option>
+<option>RW - M 6.1 Neutral</option>
+<option>RW - M 6.1 B Neutral No Remark</option>
+<option>SE - G 5.1 - Pro B Neutral No Remark</option>
+<option>AI - W 5.1 Neutral</option>
+<option>AI - W 5.1 - B Neutral No Remark</option>
+<option>BOS - GM 5.1 Neutral</option>
+<option>GB - LM 4.0 Neutral</option>
+<option>GB - LB Neutral</option>
+<option>SE - G 5.3</option>
+<option>SE - G 5.3 Pro</option>
+<option>SE - F 5</option>
+<option>Other</option>
+</select>
+</div>
+
+<div class="pcb-only">
+<label>PCB Serial Number <span class="req">*</span></label>
+<input type="text" name="pcb_serial_number" required>
+
+<label>No of Quantity <span class="req">*</span></label>
+<input type="number" name="no_of_quantity" required min="1">
+
+<label>PCB Ratings</label>
+<select name="pcb_ratings">
+<option value="">Select</option>
+<option>2.2 KW</option>
+<option>3 KW</option>
+<option>3.3 KW</option>
+<option>4 KW</option>
+<option>5 KW</option>
+<option>6 KW</option>
+<option>8 KW</option>
+<option>10 KW</option>
+<option>12 KW</option>
+<option>15 KW</option>
+<option>18 KW</option>
+<option>20 KW</option>
+<option>25 KW</option>
+<option>30 KW</option>
+<option>33 KW</option>
+<option>35 KW</option>
+<option>40 KW</option>
+<option>50 KW</option>
+<option>60 KW</option>
+<option>75 KW</option>
+<option>80 KW</option>
+<option>100 KW</option>
+<option>125 KW</option>
+<option>136 KW</option>
+</select>
+
+<label>PCB Specifications</label>
+<select name="pcb_specifications">
+<option value="">Select</option>
+<option>1PH - Hybrid</option>
+<option>3PH - Hybrid</option>
+<option>1PH - Ongrid</option>
+<option>3PH - Ongrid</option>
+<option>All In One - Hybrid</option>
+<option>Micro Inverter</option>
+</select>
+</div>
+
+<label>Delivered Through <span class="req">*</span></label>
+<select name="delivered_through" required>
+<option value="">Select</option>
+<option>Bigship</option>
+<option>Blue Dart</option>
+<option>Anjani</option>
+<option>Other</option>
+</select>
+
+<label>AWB Number <span class="req">*</span></label>
+<input type="text" name="awb_number" required>
+
+<button type="submit">Submit</button>
+
+</form>
+
+<script>
+// Toggle conditional fields based on Outward Object selection
+function toggleOutwardFields() {
+  const outwardObject = document.querySelector('#outwardObject').value;
+  const inverterFields = document.querySelectorAll('.inverter-only');
+  const batteryFields = document.querySelectorAll('.battery-only');
+  const pcbFields = document.querySelectorAll('.pcb-only');
+  const inverterInputs = document.querySelectorAll('.inverter-only input, .inverter-only select, .inverter-only textarea');
+  const batteryInputs = document.querySelectorAll('.battery-only input, .battery-only select, .battery-only textarea');
+  const pcbInputs = document.querySelectorAll('.pcb-only input, .pcb-only select, .pcb-only textarea');
+
+  function setRequired(nodes, shouldRequire){
+    nodes.forEach(el => {
+      if (!el) return;
+      if (shouldRequire) el.setAttribute('required','required');
+      else el.removeAttribute('required');
+    });
+  }
+
+  function setDisabled(nodes, shouldDisable){
+    nodes.forEach(el => {
+      if (!el) return;
+      el.disabled = shouldDisable;
+      if (shouldDisable){
+        if (el.tagName === 'SELECT') el.selectedIndex = 0;
+        else if (el.type === 'checkbox' || el.type === 'radio') el.checked = false;
+        else el.value = '';
+      }
+    });
+  }
+  
+  inverterFields.forEach(field => {
+    field.classList.remove('show');
+  });
+  batteryFields.forEach(field => {
+    field.classList.remove('show');
+  });
+  pcbFields.forEach(field => {
+    field.classList.remove('show');
+  });
+  
+  if (outwardObject === 'Inverter') {
+    inverterFields.forEach(field => {
+      field.classList.add('show');
+    });
+  } else if (outwardObject === 'Battery') {
+    batteryFields.forEach(field => {
+      field.classList.add('show');
+    });
+  } else if (outwardObject === 'PCB') {
+    pcbFields.forEach(field => {
+      field.classList.add('show');
+    });
+  }
+
+  // Only require the fields for the active section
+  setRequired(inverterInputs, outwardObject === 'Inverter');
+  setRequired(batteryInputs, outwardObject === 'Battery');
+  setRequired(pcbInputs, outwardObject === 'PCB');
+
+  // Disable hidden section inputs so their blank values don't override posted data
+  setDisabled(inverterInputs, outwardObject !== 'Inverter');
+  setDisabled(batteryInputs, outwardObject !== 'Battery');
+  setDisabled(pcbInputs, outwardObject !== 'PCB');
+}
+
+document.querySelector('#outwardObject').addEventListener('change', toggleOutwardFields);
+
+// Pincode autofill functionality
+document.querySelector('input[name="pincode"]').addEventListener('input', function(e) {
+  const pincode = e.target.value.trim();
+  
+  // Only fetch when pincode is exactly 6 digits
+  if (pincode.length === 6 && /^\d{6}$/.test(pincode)) {
+    // Show loading indicator
+    const originalBg = e.target.style.backgroundColor;
+    e.target.style.backgroundColor = '#fffacd';
+    
+    fetch(`https://api.postalpincode.in/pincode/${pincode}`)
+      .then(response => response.json())
+      .then(data => {
+        e.target.style.backgroundColor = originalBg;
+        
+        if (data && data[0] && data[0].Status === 'Success' && data[0].PostOffice) {
+          const postOffice = data[0].PostOffice[0];
+          
+          // Autofill State
+          const stateSelect = document.querySelector('select[name="sent_to_state"]');
+          if (stateSelect && postOffice.State) {
+            stateSelect.disabled = false;
+            // Try to match state name
+            for (let option of stateSelect.options) {
+              if (option.value.toLowerCase() === postOffice.State.toLowerCase()) {
+                stateSelect.value = option.value;
+                break;
+              }
+            }
+            stateSelect.disabled = true;
+          }
+          
+          // Autofill District
+          const districtInput = document.querySelector('input[name="sent_to_district"]');
+          if (districtInput && postOffice.District) {
+            districtInput.value = postOffice.District;
+          }
+          
+          // Autofill Address with Area/City info
+          const addressInput = document.querySelector('input[name="sent_to_address"]');
+          if (addressInput) {
+            const area = postOffice.Name || '';
+            const region = postOffice.Region || '';
+            addressInput.value = area + (region && region !== area ? ', ' + region : '');
+          }
+        } else {
+          console.log('Invalid pincode or no data found');
+        }
+      })
+      .catch(error => {
+        e.target.style.backgroundColor = originalBg;
+        console.error('Error fetching pincode data:', error);
+      });
+  }
+});
+
+// Enable disabled fields before form submission
+document.querySelector('form').addEventListener('submit', function(e) {
+  document.querySelector('select[name="sent_to_state"]').disabled = false;
+});
+
+// Show success message after redirect with ?success=1
+const outwardParams = new URLSearchParams(window.location.search);
+if (outwardParams.get('success') === '1') {
+  alert('Thank you for filling this form. Your form was submitted successfully.');
+  outwardParams.delete('success');
+  const newUrl = `${window.location.pathname}${outwardParams.toString() ? '?' + outwardParams.toString() : ''}`;
+  window.history.replaceState({}, '', newUrl);
+}
+</script>
+
+</body>
+</html>

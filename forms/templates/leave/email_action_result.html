@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leave Request Action</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            padding: 50px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+        
+        .icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+        
+        .success-icon {
+            color: #27ae60;
+        }
+        
+        .error-icon {
+            color: #e74c3c;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+        
+        .message {
+            color: #555;
+            font-size: 18px;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        
+        .details {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 30px 0;
+            text-align: left;
+        }
+        
+        .detail-row {
+            padding: 10px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+        
+        .label {
+            font-weight: bold;
+            color: #495057;
+            display: inline-block;
+            width: 140px;
+        }
+        
+        .value {
+            color: #212529;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        .status-approved {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-rejected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 20px;
+            transition: background 0.3s;
+        }
+        
+        .btn:hover {
+            background: #5568d3;
+        }
+        
+        /* Modern Header Styles */
+        .nav-header {
+            position: sticky;
+            top: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            padding: 18px 60px;
+            z-index: 1000;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+        }
+
+        .logo-section img {
+            height: 36px;
+            object-fit: contain;
+        }
+    </style>
+</head>
+<body>
+    <div class="nav-header">
+        <div class="logo-section">
+            <a href="/" style="text-decoration: none;">
+                <img src="https://www.deyeinverter.com/template/en/images/logo.png" alt="DEYE">
+            </a>
+        </div>
+    </div>
+    
+    <div class="container">
+        {% if success %}
+            <div class="icon success-icon">✓</div>
+            <h1>Action Successful!</h1>
+        {% else %}
+            <div class="icon error-icon">✗</div>
+            <h1>Action Failed</h1>
+        {% endif %}
+        
+        <p class="message">{{ message }}</p>
+        
+        <div class="details">
+            <div class="detail-row">
+                <span class="label">Employee:</span>
+                <span class="value">{{ leave.user.get_full_name|default:leave.user.username }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="label">Request Type:</span>
+                <span class="value">{{ leave.get_leave_type_display }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="label">Start Date:</span>
+                <span class="value">{{ leave.start_date|date:"d M Y" }} ({{ leave.get_start_breakdown_display }})</span>
+            </div>
+            <div class="detail-row">
+                <span class="label">End Date:</span>
+                <span class="value">{{ leave.end_date|date:"d M Y" }} ({{ leave.get_end_breakdown_display }})</span>
+            </div>
+            <div class="detail-row">
+                <span class="label">Total Days:</span>
+                <span class="value">{{ leave.total_days }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="label">Status:</span>
+                <span class="value">
+                    <span class="status-badge status-{{ leave.status }}">
+                        {{ leave.status|upper }}
+                    </span>
+                </span>
+            </div>
+        </div>
+        
+        {% if success %}
+            <p style="color: #666; font-size: 14px; margin-top: 20px;">
+                {% if action == 'approved' %}
+                    ✓ Employee has been notified about the approval.
+                {% else %}
+                    ✓ Employee has been notified about the rejection.
+                {% endif %}
+            </p>
+        {% endif %}
+    </div>
+</body>
+</html>

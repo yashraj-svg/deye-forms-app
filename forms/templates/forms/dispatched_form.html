@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dispatch Stock - Deye</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #667eea;
+            --primary-dark: #764ba2;
+            --secondary: #FF6B6B;
+            --secondary-dark: #FF8E53;
+            --success: #52b788;
+            --success-dark: #40916c;
+            --info: #4361ee;
+            --bg-light: #FAFBFC;
+            --text-dark: #1a1a1a;
+            --text-gray: #4a5568;
+            --text-light: #6b7280;
+            --border-light: rgba(0, 0, 0, 0.06);
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+            --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.12);
+        }
+
+        /* Logo Header */
+        .nav-header {
+            position: sticky;
+            top: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-light);
+            padding: 18px 60px;
+            z-index: 1000;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo-section img {
+            height: 36px;
+            object-fit: contain;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-gray);
+            font-weight: 500;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        body { 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            min-height: 100vh;
+            padding: 0 20px 40px;
+        }
+        
+        .header {
+            text-align: center;
+            margin: 40px 0;
+        }
+        
+        h1 { 
+            color: white;
+            font-size: 2.5em;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin-bottom: 12px;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        
+        .subtitle {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 16px;
+            font-weight: 500;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: var(--shadow-lg);
+            padding: 50px 40px;
+            margin: 0 auto;
+            max-width: 900px;
+        }
+
+        .form-section {
+            margin-bottom: 32px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--primary);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            padding: 12px 16px;
+            border: 2px solid var(--border-light);
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: all 0.3s ease;
+            background: var(--bg-light);
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .suggestions-box {
+            position: absolute;
+            background: white;
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            box-shadow: var(--shadow-md);
+            max-height: 200px;
+            overflow-y: auto;
+            width: 100%;
+            z-index: 100;
+            display: none;
+        }
+
+        .suggestion-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border-light);
+            transition: background 0.2s ease;
+        }
+
+        .suggestion-item:hover {
+            background: var(--bg-light);
+        }
+
+        .suggestion-item:last-child {
+            border-bottom: none;
+        }
+
+        .btn {
+            padding: 14px 32px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            box-shadow: 0 4px 14px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+
+        .btn-secondary:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 16px;
+            justify-content: flex-end;
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 2px solid var(--border-light);
+        }
+
+        .alert {
+            padding: 16px 20px;
+            border-radius: 10px;
+            margin-bottom: 24px;
+            font-weight: 500;
+            display: none;
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #10b981;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #ef4444;
+        }
+
+        .stock-info {
+            background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+            padding: 16px;
+            border-radius: 10px;
+            border-left: 4px solid var(--info);
+            margin-top: 12px;
+            display: none;
+        }
+
+        .stock-info-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .stock-info-item:last-child {
+            margin-bottom: 0;
+            font-weight: 700;
+            font-size: 15px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .stock-label {
+            color: var(--text-gray);
+        }
+
+        .stock-value {
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .stock-value.warning {
+            color: var(--secondary);
+        }
+
+        .stock-value.success {
+            color: var(--success);
+        }
+
+        @media (max-width: 768px) {
+            .nav-header {
+                padding: 14px 20px;
+            }
+
+            .logo-section img {
+                height: 32px;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            .container {
+                padding: 30px 20px;
+                border-radius: 16px;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-actions {
+                flex-direction: column-reverse;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="nav-header">
+        <div class="logo-section">
+            <a href="/" style="text-decoration: none;">
+                <img src="https://www.deyeinverter.com/template/en/images/logo.png" alt="DEYE">
+            </a>
+            <div class="user-info">
+                <div class="user-avatar">{{ user.first_name.0|upper }}{{ user.last_name.0|upper }}</div>
+                <span>Hello, {{ user.first_name }}</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="header">
+        <h1>📦 Dispatch Stock Form</h1>
+        <p class="subtitle">Record stock dispatch from approved requisitions</p>
+    </div>
+    
+    <div class="container">
+        <div id="alertBox" class="alert"></div>
+
+        <form method="POST" id="dispatchForm">
+            {% csrf_token %}
+            
+            <!-- Requisition Selection -->
+            <div class="form-section">
+                <h2 class="section-title">Select Approved Requisition</h2>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="requisition">Requisition ID *</label>
+                        <select name="requisition_id" id="requisition" required>
+                            <option value="">-- Select Approved Requisition --</option>
+                            {% for req in approved_requisitions %}
+                            <option value="{{ req.id }}" 
+                                    data-serial="{{ req.serial_number }}"
+                                    data-component="{{ req.component_type }}"
+                                    data-qty="{{ req.approved_quantity|default:req.quantity_required }}"
+                                    data-engineer="{{ req.manager_name }}"
+                                    data-location="{{ req.required_to }}">
+                                #{{ req.id }} - {{ req.serial_number }} - {{ req.component_type }} ({{ req.approved_quantity|default:req.quantity_required }} PCS)
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dispatch Details -->
+            <div class="form-section">
+                <h2 class="section-title">Dispatch Information</h2>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="serial_number">Serial Number</label>
+                        <input type="text" id="serial_number" name="serial_number" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="component_type">Component Type</label>
+                        <input type="text" id="component_type" name="component_type" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="quantity_dispatched">Quantity Dispatched *</label>
+                        <input type="number" id="quantity_dispatched" name="quantity_dispatched" min="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="dispatch_date">Dispatch Date *</label>
+                        <input type="date" id="dispatch_date" name="dispatch_date" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="engineer_name">Engineer Name</label>
+                        <input type="text" id="engineer_name" name="engineer_name" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="dispatch_location">Dispatch To</label>
+                        <input type="text" id="dispatch_location" name="dispatch_location" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="courier_name">Courier Service *</label>
+                        <input type="text" id="courier_name" name="courier_name" placeholder="e.g., Blue Dart, DTDC" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="tracking_number">Tracking Number *</label>
+                        <input type="text" id="tracking_number" name="tracking_number" placeholder="Enter tracking/docket number" required>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="dispatch_remarks">Remarks</label>
+                        <textarea id="dispatch_remarks" name="dispatch_remarks" placeholder="Any additional notes about this dispatch..."></textarea>
+                    </div>
+                </div>
+
+                <div id="stockInfo" class="stock-info">
+                    <div class="stock-info-item">
+                        <span class="stock-label">Approved Quantity:</span>
+                        <span class="stock-value" id="approvedQty">-</span>
+                    </div>
+                    <div class="stock-info-item">
+                        <span class="stock-label">Current Stock:</span>
+                        <span class="stock-value" id="currentStock">-</span>
+                    </div>
+                    <div class="stock-info-item">
+                        <span class="stock-label">Remaining After Dispatch:</span>
+                        <span class="stock-value" id="remainingStock">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="window.location.href='/stock-home/'">Cancel</button>
+                <button type="submit" class="btn btn-primary">
+                    <span>📤 Submit Dispatch</span>
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    <script>
+        // Auto-fill form when requisition is selected
+        document.getElementById('requisition').addEventListener('change', function() {
+            const option = this.options[this.selectedIndex];
+            if (option.value) {
+                document.getElementById('serial_number').value = option.dataset.serial;
+                document.getElementById('component_type').value = option.dataset.component;
+                document.getElementById('engineer_name').value = option.dataset.engineer;
+                document.getElementById('dispatch_location').value = option.dataset.location;
+                document.getElementById('quantity_dispatched').max = option.dataset.qty;
+                document.getElementById('quantity_dispatched').value = option.dataset.qty;
+                
+                // Fetch and display stock info
+                fetchStockInfo(option.dataset.serial, option.dataset.qty);
+            }
+        });
+
+        // Set today's date as default
+        document.getElementById('dispatch_date').valueAsDate = new Date();
+
+        // Calculate remaining stock on quantity change
+        document.getElementById('quantity_dispatched').addEventListener('input', function() {
+            const currentStock = parseInt(document.getElementById('currentStock').textContent) || 0;
+            const dispatchQty = parseInt(this.value) || 0;
+            const remaining = currentStock - dispatchQty;
+            const remainingEl = document.getElementById('remainingStock');
+            remainingEl.textContent = remaining + ' PCS';
+            remainingEl.className = 'stock-value ' + (remaining >= 0 ? 'success' : 'warning');
+        });
+
+        function fetchStockInfo(serialNumber, approvedQty) {
+            fetch(`/api/stock-info/?serial=${serialNumber}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('approvedQty').textContent = approvedQty + ' PCS';
+                    document.getElementById('currentStock').textContent = data.quantity + ' PCS';
+                    const remaining = data.quantity - approvedQty;
+                    const remainingEl = document.getElementById('remainingStock');
+                    remainingEl.textContent = remaining + ' PCS';
+                    remainingEl.className = 'stock-value ' + (remaining >= 0 ? 'success' : 'warning');
+                    document.getElementById('stockInfo').style.display = 'block';
+                })
+                .catch(error => {
+                    console.error('Error fetching stock info:', error);
+                });
+        }
+
+        // Form submission
+        document.getElementById('dispatchForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const alertBox = document.getElementById('alertBox');
+            
+            fetch(window.location.href, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alertBox.className = 'alert alert-success';
+                    alertBox.textContent = data.message;
+                    alertBox.style.display = 'block';
+                    this.reset();
+                    document.getElementById('stockInfo').style.display = 'none';
+                    setTimeout(() => window.location.href = '/stock-home/', 2000);
+                } else {
+                    alertBox.className = 'alert alert-error';
+                    alertBox.textContent = data.message || 'Error submitting dispatch';
+                    alertBox.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                alertBox.className = 'alert alert-error';
+                alertBox.textContent = 'Network error. Please try again.';
+                alertBox.style.display = 'block';
+            });
+        });
+    </script>
+</body>
+</html>

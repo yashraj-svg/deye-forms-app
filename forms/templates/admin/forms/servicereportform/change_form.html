@@ -1,0 +1,154 @@
+{% extends "admin/change_form.html" %}
+{% load static %}
+
+{% block extrahead %}
+{{ block.super }}
+<style>
+    .service-report-container {
+        background: #f9fafb;
+        border-radius: 8px;
+        padding: 20px;
+        margin-top: 20px;
+        border: 1px solid #e3e6e9;
+    }
+    
+    .measurements-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+        margin-top: 15px;
+        border-radius: 6px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    
+    .measurements-table thead {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        font-weight: 600;
+    }
+    
+    .measurements-table thead th {
+        padding: 12px;
+        text-align: left;
+        font-size: 13px;
+        white-space: nowrap;
+    }
+    
+    .measurements-table tbody tr {
+        border-bottom: 1px solid #e3e6e9;
+    }
+    
+    .measurements-table tbody tr:hover {
+        background-color: #f0f4ff;
+    }
+    
+    .measurements-table tbody tr:nth-child(even) {
+        background-color: #fafbfc;
+    }
+    
+    .measurements-table tbody td {
+        padding: 10px 12px;
+        font-size: 13px;
+    }
+    
+    .pv-label {
+        font-weight: 600;
+        color: #667eea;
+        min-width: 40px;
+    }
+    
+    .phase-label {
+        font-weight: 600;
+        color: #764ba2;
+        min-width: 50px;
+    }
+    
+    .section-title {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 12px 15px;
+        border-radius: 6px;
+        margin-top: 20px;
+        margin-bottom: 15px;
+        font-size: 14px;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{{ block.super }}
+
+{% if original %}
+<div class="service-report-container">
+    <div class="section-title">📊 DC Side Measurements (PV Data)</div>
+    
+    {% if original.pv_data %}
+    <table class="measurements-table">
+        <thead>
+            <tr>
+                <th>PV</th>
+                <th>Voltage (V)</th>
+                <th>Current (A)</th>
+                <th>Earthing</th>
+                <th>PV Panel</th>
+                <th>Observation</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in original.pv_data %}
+            <tr>
+                <td class="pv-label">{{ row.pv }}</td>
+                <td>{{ row.voltage }}</td>
+                <td>{{ row.current }}</td>
+                <td>{{ row.earthing }}</td>
+                <td>{{ row.panel }}</td>
+                <td>{{ row.observation }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="color: #999; padding: 20px; text-align: center;">No PV data recorded</p>
+    {% endif %}
+    
+    <div class="section-title">⚡ AC Side Measurements</div>
+    
+    {% if original.ac_data %}
+    <table class="measurements-table">
+        <thead>
+            <tr>
+                <th>Phase</th>
+                <th>Voltage (V)</th>
+                <th>Current (A)</th>
+                <th>Earthing</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for phase, data in original.ac_data.items %}
+            <tr>
+                <td class="phase-label">
+                    {% if phase == "R_TO_N" %}R TO N
+                    {% elif phase == "Y_TO_N" %}Y TO N
+                    {% elif phase == "B_TO_N" %}B TO N
+                    {% elif phase == "R_TO_Y" %}R TO Y
+                    {% elif phase == "Y_TO_B" %}Y TO B
+                    {% elif phase == "B_TO_R" %}B TO R
+                    {% elif phase == "N_TO_PE" %}N TO PE
+                    {% else %}{{ phase }}{% endif %}
+                </td>
+                <td>{{ data.voltage }}</td>
+                <td>{{ data.current }}</td>
+                <td>{{ data.earthing }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="color: #999; padding: 20px; text-align: center;">No AC data recorded</p>
+    {% endif %}
+</div>
+{% endif %}
+
+{% endblock %}

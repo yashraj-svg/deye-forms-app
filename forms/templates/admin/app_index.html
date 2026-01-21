@@ -1,0 +1,50 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    .welcome-container {
+        background: white;
+        border-radius: 15px;
+        padding: 60px 40px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        margin-top: 40px;
+    }
+    
+    .welcome-title {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        font-size: 36px;
+        font-weight: 700;
+        margin-bottom: 15px;
+    }
+    
+    .welcome-message {
+        color: #666;
+        font-size: 18px;
+        line-height: 1.6;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    
+    .welcome-icon {
+        font-size: 80px;
+        margin-bottom: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="welcome-container">
+    <div class="welcome-icon">⚙️</div>
+    <h1 class="welcome-title">Forms Administration</h1>
+    <p class="welcome-message">
+        Use the navigation menu on the left to manage your forms, stock, leave requests, and events.<br>
+        Select a category to view available options.
+    </p>
+</div>
+{% endblock %}

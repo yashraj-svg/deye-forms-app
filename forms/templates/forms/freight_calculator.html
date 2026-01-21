@@ -1,0 +1,160 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Freight Rate Calculator</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+  <style>
+    body { padding: 20px; }
+    .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 12px; }
+    .col-6 { grid-column: span 6; }
+    .col-4 { grid-column: span 4; }
+    .col-3 { grid-column: span 3; }
+    .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 8px 10px; border-bottom: 1px solid #eee; text-align: right; }
+    th:first-child, td:first-child { text-align: left; }
+    .muted { color: #6b7280; font-size: 12px; }
+    .badge { background:#eef2ff; color:#3730a3; padding:2px 6px; border-radius:6px; font-size:12px }
+  </style>
+</head>
+<body>
+  <header>
+    <h2>Multi-Partner Freight Calculator</h2>
+    <p class="muted">Compare quotes across Safexpress, Bluedart (Surface), Global Courier Cargo, and Shree Anjani.</p>
+  </header>
+
+  {% if error %}
+  <article class="card" style="border-left:4px solid #ef4444;">
+    <strong>Error:</strong> {{ error }}
+  </article>
+  {% endif %}
+
+  <main class="grid">
+    <section class="card col-6">
+      <h4>Inputs</h4>
+      <form method="post">
+        {% csrf_token %}
+        <div class="grid">
+          <div class="col-6">{{ form.from_pincode.label_tag }}{{ form.from_pincode }}
+            <div id="from-pin-info" class="muted">City: -  |  State: -</div>
+          </div>
+          <div class="col-6">{{ form.to_pincode.label_tag }}{{ form.to_pincode }}
+            <div id="to-pin-info" class="muted">City: -  |  State: -</div>
+          </div>
+          <div class="col-4">{{ form.weight_kg.label_tag }}{{ form.weight_kg }}</div>
+          <div class="col-4">{{ form.length_cm.label_tag }}{{ form.length_cm }}</div>
+          <div class="col-4">{{ form.breadth_cm.label_tag }}{{ form.breadth_cm }}</div>
+          <div class="col-4">{{ form.height_cm.label_tag }}{{ form.height_cm }}</div>
+          <div class="col-4" style="display:flex;align-items:end;gap:8px;">{{ form.reverse_pickup }} {{ form.reverse_pickup.label_tag }}</div>
+          <div class="col-4">{{ form.insured_value.label_tag }}{{ form.insured_value }}</div>
+          <div class="col-4">{{ form.days_in_transit_storage.label_tag }}{{ form.days_in_transit_storage }}</div>
+          <div class="col-4">{{ form.pieces_max_weight_kg.label_tag }}{{ form.pieces_max_weight_kg }}</div>
+          <div class="col-4">{{ form.longest_side_cm.label_tag }}{{ form.longest_side_cm }}</div>
+        </div>
+        <br>
+        <button type="submit">Calculate</button>
+        <a href="/" role="button" class="secondary">Back</a>
+      </form>
+    </section>
+
+    <section class="card col-6">
+      <h4>Results</h4>
+      {% if missing_pincodes %}
+      <div style="background: #fff3cd; border: 1px solid #ffc107; padding: 1rem; margin-bottom: 1rem; border-radius: 4px;">
+        <strong>⚠️ Warning: Pincode(s) Not Found in Database</strong>
+        <ul style="margin: 0.5rem 0 0 0; padding-left: 1.5rem;">
+          {% for pin in missing_pincodes %}
+          <li>{{ pin }}</li>
+          {% endfor %}
+        </ul>
+        <small style="display: block; margin-top: 0.5rem; color: #856404;">
+          Rates may be inaccurate. Please contact admin to add these pincodes to the database.
+        </small>
+      </div>
+      {% endif %}
+      {% if results %}
+      <table>
+        <thead>
+          <tr>
+            <th>Partner</th>
+            <th>From</th>
+            <th>To</th>
+            <th>Chargeable (kg)</th>
+            <th>Base</th>
+            <th>Fuel</th>
+            <th>ODA/Metro</th>
+            <th>Waybill</th>
+            <th>GST</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in results %}
+          <tr>
+            <td>{{ r.partner_name }} {% if not r.deliverable %}<span class="badge">ND</span>{% endif %}</td>
+            <td>{{ r.from_zone|default:"-" }}</td>
+            <td>{{ r.to_zone|default:"-" }}</td>
+            <td>{{ r.chargeable_weight_kg|floatformat:2 }}</td>
+            <td>{{ r.base_freight|floatformat:2 }}</td>
+            <td>{{ r.surcharges.fuel_surcharge|default:0|floatformat:2 }}</td>
+            <td>{% firstof r.surcharges.oda r.surcharges.metro_charge 0 %}</td>
+            <td>{{ r.surcharges.waybill|default:r.surcharges.docket|default:0|floatformat:2 }}</td>
+            <td>{{ r.gst_amount|floatformat:2 }}</td>
+            <td><strong>{{ r.total_after_gst|floatformat:2 }}</strong></td>
+          </tr>
+          {% if r.rate_details %}
+          <tr>
+            <td colspan="10" class="muted" style="font-size: 0.85em; padding: 0.3rem 0.5rem;">
+              <strong>Rate Details:</strong> ₹{{ r.rate_per_kg|floatformat:2 }}/kg
+              {% if r.rate_details.region_code %}(Region: {{ r.rate_details.region_code }}){% endif %}
+              | Actual: {{ r.actual_weight_kg|floatformat:2 }}kg
+              {% if r.volumetric_weight_kg > 0 %}
+              | Volumetric: {{ r.volumetric_weight_kg|floatformat:2 }}kg 
+              {% if r.rate_details.volumetric_divisor %}(L×B×H/{{ r.rate_details.volumetric_divisor|floatformat:0 }}){% endif %}
+              {% endif %}
+              | Chargeable: {{ r.chargeable_weight_kg|floatformat:2 }}kg
+            </td>
+          </tr>
+          {% endif %}
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="muted">Fill inputs and click Calculate to see quotes.</p>
+      {% endif %}
+    </section>
+  </main>
+</body>
+</html>
+<script>
+// City/State inline hints for From/To pincodes using backend API with fallback
+(function(){
+  function attach(selector, infoId){
+    const el = document.querySelector(selector);
+    const info = document.getElementById(infoId);
+    if(!el || !info) return;
+    function setInfo(text, ok=true){ info.textContent = text || 'City: -  |  State: -'; info.style.color = ok ? '#6b7280' : '#b91c1c'; }
+    el.addEventListener('input', function(e){
+      const pin = e.target.value.trim();
+      if(pin.length !== 6 || !/^\d{6}$/.test(pin)){ setInfo('City: -  |  State: -'); return; }
+      fetch(`/api/pincode/?pin=${encodeURIComponent(pin)}`)
+        .then(r=>r.json())
+        .then(j=>{
+          if(j && j.ok && j.data){ 
+            let odaText = j.data.oda === true ? ' | ODA' : (j.data.oda === false ? ' | Non-ODA' : '');
+            setInfo(`City: ${j.data.city||'-'}  |  State: ${j.data.state||'-'}${odaText}`); 
+            return; 
+          }
+          return fetch(`https://api.postalpincode.in/pincode/${pin}`).then(r=>r.json()).then(d=>{
+            if(d && d[0] && d[0].Status==='Success' && d[0].PostOffice){ const po=d[0].PostOffice[0]; setInfo(`City: ${po.District||po.Name||'-'}  |  State: ${po.State||'-'}`);} else { setInfo('Pincode not found', false); }
+          });
+        })
+        .catch(()=>setInfo('Lookup failed', false));
+    });
+  }
+  attach('input[name="from_pincode"]','from-pin-info');
+  attach('input[name="to_pincode"]','to-pin-info');
+})();
+</script>

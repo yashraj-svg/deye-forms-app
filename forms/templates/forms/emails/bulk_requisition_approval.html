@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #059669, #10b981); color: white; padding: 20px; border-radius: 8px 8px 0 0; }
+        .header h1 { margin: 0; font-size: 24px; }
+        .summary { background: #e7f5f0; padding: 15px 20px; border-radius: 0; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 20px; }
+        .summary-item { flex: 1; min-width: 150px; }
+        .summary-label { font-size: 12px; color: #64748b; text-transform: uppercase; font-weight: bold; }
+        .summary-value { font-size: 16px; color: #0f172a; font-weight: bold; margin-top: 5px; }
+        .table-wrapper { overflow-x: auto; margin: 20px 0; }
+        table { width: 100%; border-collapse: collapse; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        th { background: #059669; color: white; padding: 12px; text-align: left; font-size: 12px; font-weight: bold; text-transform: uppercase; border-bottom: 2px solid #047857; }
+        td { padding: 12px; border-bottom: 1px solid #e2e8f0; font-size: 13px; }
+        tr:hover { background: #f8fafc; }
+        .serial { color: #059669; font-weight: bold; }
+        .qty-requested { background: #fef3c7; color: #92400e; padding: 4px 8px; border-radius: 4px; font-weight: bold; text-align: center; }
+        .current-stock { background: #dbeafe; color: #1e40af; padding: 4px 8px; border-radius: 4px; font-weight: bold; text-align: center; }
+        .remaining { padding: 4px 8px; border-radius: 4px; font-weight: bold; text-align: center; }
+        .remaining.positive { background: #dcfce7; color: #166534; }
+        .remaining.negative { background: #fee2e2; color: #991b1b; }
+        .status-pending { background: #fef3c7; color: #92400e; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: bold; text-align: center; }
+        .status-approved { background: #dcfce7; color: #166534; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: bold; text-align: center; }
+        .status-rejected { background: #fee2e2; color: #991b1b; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: bold; text-align: center; }
+        .action-section { background: #e7f5f0; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center; }
+        .button { display: inline-block; padding: 12px 30px; margin: 0 10px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 14px; }
+        .btn-approve { background: #28a745; color: white; }
+        .btn-reject { background: #dc3545; color: white; }
+        .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666; text-align: center; }
+        .note { background: #fff3cd; border: 1px solid #ffc107; padding: 12px; border-radius: 6px; margin-top: 20px; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📋 Stock Requisition Batch - Requires Approval</h1>
+        </div>
+
+        <!-- Summary Section -->
+        <div class="summary">
+            <div class="summary-item">
+                <div class="summary-label">Submission Date</div>
+                <div class="summary-value">{{ submission_date|date:"d M Y, H:i" }}</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-label">Engineer Name</div>
+                <div class="summary-value">{{ engineer_name }}</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-label">Required To</div>
+                <div class="summary-value">{{ required_to }}</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-label">Total Items</div>
+                <div class="summary-value">{{ total_items }}</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-label">Total Qty Requested</div>
+                <div class="summary-value">{{ total_requested_qty }} PCS</div>
+            </div>
+        </div>
+
+        <!-- Table Section -->
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Serial Number</th>
+                        <th>Type of Component</th>
+                        <th>Qty Requested</th>
+                        <th>Current Stock</th>
+                        <th>Remaining (If Approved)</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                    <tr>
+                        <td class="serial">
+                            <a href="{{ item.approval_url }}" style="color: #059669; font-weight: bold; text-decoration: none;">
+                                {{ item.requisition.serial_number }} 🔗
+                            </a>
+                        </td>
+                        <td>{{ item.requisition.component_type }}</td>
+                        <td><div class="qty-requested">{{ item.requisition.quantity_required }}</div></td>
+                        <td><div class="current-stock">{{ item.current_quantity }}</div></td>
+                        <td>
+                            <div class="remaining {% if item.remaining_after_requested >= 0 %}positive{% else %}negative{% endif %}">
+                                {{ item.remaining_after_requested }}
+                                {% if item.remaining_after_requested < 0 %}⚠️{% endif %}
+                            </div>
+                        </td>
+                        <td><div class="status-pending">PENDING</div></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Instructions Section -->
+        <div class="note">
+            <strong>📝 How to Approve:</strong><br>
+            Click on any serial number above to open that requisition in the admin panel. You can edit the "Approved Quantity" field if you want to send a different amount than requested, then set the status to Approved or Rejected.
+        </div>
+
+        <!-- Action Section -->
+        <div class="action-section">
+            <h2 style="margin-top: 0; color: #059669;">Next Steps</h2>
+            <p>Review the requisitions above and manage them in the admin panel:</p>
+            <p>
+                <a href="#" class="button btn-approve">✓ View in Admin</a>
+            </p>
+        </div>
+
+        <div class="footer">
+            <p>This is an automated email. Please do not reply. For more information, contact the administration.</p>
+            <p>&copy; 2026 DEYE. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>
