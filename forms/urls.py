@@ -53,5 +53,4 @@ urlpatterns = [
     path('leave/email/approve/<int:leave_id>/', views.approve_leave_email, name='approve_leave_email'),
     path('leave/email/reject/<int:leave_id>/', views.reject_leave_email, name='reject_leave_email'),
 
-    path('hierarchy/', views.hierarchy_view, name='hierarchy'),
 ]

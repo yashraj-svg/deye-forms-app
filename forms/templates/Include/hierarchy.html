@@ -319,23 +319,7 @@
     
     <div class="container">
         <div class="tree">
-            {% for manager in managers %}
-            <div class="hierarchy-level-1">
-                <strong>{{ manager.name }}</strong> ({{ manager.position }})
-                {% for child in manager.children.all %}
-                    <div class="hierarchy-level-2 ml-4">
-                        → {{ child.name }} ({{ child.position }})
-                        {% for grandchild in child.children.all %}
-                            <div class="hierarchy-level-3 ml-4">
-                                →→ {{ grandchild.name }} ({{ grandchild.position }})
-                            </div>
-                        {% endfor %}
-                    </div>
-                {% endfor %}
-            </div>
-            {% empty %}
-            <p>No hierarchy data</p>
-            {% endfor %}
+            <p>Hierarchy view is currently disabled.</p>
         </div>
     </div>
 </body>
