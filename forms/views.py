@@ -38,6 +38,19 @@ from .forms import (
 from .calculator import get_all_partner_quotes, QuoteInput
 from .calculator.data_loader import load_pincode_master, lookup_pincode
 
+# Hierarchy view for employee tree
+from django.db.models import Prefetch
+from .models import Employee
+
+def hierarchy_view(request):
+    # Get ONLY top-level managers (no parent)
+    top_managers = Employee.objects.filter(parent__isnull=True).prefetch_related(
+        Prefetch('children', queryset=Employee.objects.filter(parent__isnull=False).prefetch_related('children'))
+    )
+    print('Top managers:', len(top_managers))  # Debug step
+    context = {'managers': top_managers}
+    return render(request, 'Include/hierarchy.html', context)
+
 # ─────────────────────────────
 # HOME
 # ─────────────────────────────
