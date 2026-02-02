@@ -756,15 +756,15 @@ class LeaveReportAdmin(admin.ModelAdmin):
 
 @admin.register(StockItem)
 class StockItemAdmin(admin.ModelAdmin):
-    list_display = ('pcba_sn_new', 'component_type', 'quantity', 'year', 'created_at')
-    list_filter = ('year', 'component_type', 'created_at')
+    list_display = ('pcba_sn_new', 'component_type', 'specification', 'quantity', 'year', 'shipment_date', 'created_at')
+    list_filter = ('year', 'component_type', 'shipment_date', 'created_at')
     search_fields = ('pcba_sn_new', 'pcba_sn_old', 'component_type', 'specification', 'remark')
     readonly_fields = ('created_at', 'updated_at')
     list_per_page = 50
     
     fieldsets = (
         ('Identification', {
-            'fields': ('pcba_sn_new', 'pcba_sn_old', 'year')
+            'fields': ('pcba_sn_new', 'pcba_sn_old', 'year', 'shipment_date')
         }),
         ('Component Details', {
             'fields': ('component_type', 'specification', 'quantity')

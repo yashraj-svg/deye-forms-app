@@ -183,6 +183,18 @@ class UserRegistrationForm(forms.ModelForm):
         return user
 
 class RepairingFormForm(forms.ModelForm):
+    pcb_specification = forms.CharField(
+        max_length=255,
+        required=False,
+        label='PCB Specification',
+        widget=forms.TextInput(attrs={'placeholder': 'Enter PCB Specification'})
+    )
+    pcb_rating = forms.CharField(
+        max_length=255,
+        required=False,
+        label='PCB Rating',
+        widget=forms.TextInput(attrs={'placeholder': 'Enter PCB Rating'})
+    )
     class Meta:
         model = RepairingForm
         exclude = ('pcba_serial', 'fault_problems')  # Exclude fault_problems for manual handling
@@ -198,12 +210,33 @@ class RepairingFormForm(forms.ModelForm):
             self.fields['case_number'].required = False
 
 class InwardFormForm(forms.ModelForm):
+    accessories = forms.MultipleChoiceField(
+        choices=[('data_logger', 'Data Logger'), ('stand', 'Stand')],
+        widget=forms.CheckboxSelectMultiple,
+        required=False,
+        label='Accessories'
+    )
+    pcb_serial_number = forms.CharField(
+        max_length=255,
+        required=False,
+        label='PCB Serial Number',
+        widget=forms.TextInput(attrs={'placeholder': 'Enter PCB Serial Number'})
+    )
+    pcb_quantity = forms.IntegerField(
+        required=False,
+        min_value=1,
+        label='No of Quantity',
+        widget=forms.NumberInput(attrs={'placeholder': 'Enter quantity'})
+    )
     class Meta:
         model = InwardForm
         fields = '__all__'
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # Always make email field not required
+        if 'email' in self.fields:
+            self.fields['email'].required = False
         # Dynamically relax requirements based on selected inward object
         inward_object = None
         # Prefer posted data when available
@@ -221,6 +254,8 @@ class InwardFormForm(forms.ModelForm):
                 self.fields['inverter_specs'].required = False
             if 'inverter_ratings' in self.fields:
                 self.fields['inverter_ratings'].required = False
+            # Hide accessories field if not Inverter
+            self.fields['accessories'].widget = forms.HiddenInput()
 
     def clean(self):
         cleaned = super().clean()
@@ -241,6 +276,24 @@ class InwardFormForm(forms.ModelForm):
         return cleaned
 
 class OutwardFormForm(forms.ModelForm):
+    control_card_changed = forms.ChoiceField(
+        choices=[('', 'Select'), ('No', 'No'), ('Yes', 'Yes')],
+        required=False,
+        label='Control Card Changed'
+    )
+    new_serial_number = forms.CharField(
+        max_length=100,
+        required=False,
+        label='New Serial Number'
+    )
+
+    accessories = forms.MultipleChoiceField(
+        choices=[('data_logger', 'Data Logger'), ('stand', 'Stand')],
+        widget=forms.CheckboxSelectMultiple,
+        required=False,
+        label='Accessories'
+    )
+
     class Meta:
         model = OutwardForm
         fields = '__all__'
@@ -585,12 +638,14 @@ class StockRequisitionItemForm(forms.Form):
         'rows': 3,
         'placeholder': 'Enter component description'
     }))
-    quantity_required = forms.IntegerField(min_value=1, widget=forms.NumberInput(attrs={
-        'class': 'form-control',
-        'min': '1',
-        'placeholder': 'Enter quantity required'
-    }))
-
+    quantity_received = forms.DecimalField(
+        required=False,
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control qty-received',
+            'min': '0',
+            'placeholder': 'Enter received qty'
+        })
+    )
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Populate component types from StockItem distinct values
@@ -602,3 +657,15 @@ class StockRequisitionItemForm(forms.Form):
             self.fields['component_type'].choices = choices
         except Exception:
             self.fields['component_type'].choices = [('Other', 'Other')]
+
+        # Auto-fill quantity_remaining if serial_number is present
+        data = self.data or self.initial
+        serial = data.get('serial_number') if data else None
+        if serial:
+            try:
+                from .models import StockItem
+                item = StockItem.objects.filter(pcba_sn_new=serial).order_by('-year').first()
+                if item:
+                    self.fields['quantity_remaining'].initial = item.quantity
+            except Exception:
+                pass

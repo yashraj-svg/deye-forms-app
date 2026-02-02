@@ -1,0 +1,29 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "makemigrations for OutwardForm accessories",
+			"type": "shell",
+			"command": "python manage.py makemigrations forms",
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "migrate for OutwardForm accessories",
+			"type": "shell",
+			"command": "python manage.py migrate forms",
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "makemigrations for StockItem shipment_date",
+			"type": "shell",
+			"command": "python manage.py makemigrations forms"
+		},
+		{
+			"label": "migrate for StockItem shipment_date",
+			"type": "shell",
+			"command": "python manage.py migrate forms"
+		}
+	]
+}

@@ -13,20 +13,24 @@ from .config import DEFAULT_SETTINGS, Settings
 from .data_loader import PincodeDB, PincodeRecord, load_pincode_master
 
 
+
 @dataclass
-class QuoteInput:
-    from_pincode: str
-    to_pincode: str
+class ShipmentItem:
     weight_kg: float
     length_cm: float
     breadth_cm: float
     height_cm: float
+
+@dataclass
+class QuoteInput:
+    from_pincode: str
+    to_pincode: str
+    items: List[ShipmentItem]
     reverse_pickup: bool = False
     insured_value: Optional[float] = None
     days_in_transit_storage: int = 0
-    pieces_max_weight_kg: Optional[float] = None
-    longest_side_cm: Optional[float] = None
     gst_mode: str = "12pct"
+    # Optional: for backward compatibility, you can add these fields and ignore them
 
 
 @dataclass
@@ -53,8 +57,12 @@ class QuoteResult:
 # Utilities
 # -----------------------------
 
+
 def _volumetric(weight_divisor: float, l: float, b: float, h: float) -> float:
     return (l * b * h) / weight_divisor
+
+def total_chargeable_weight(items: List[ShipmentItem], volumetric_divisor: float, min_weight: float = 0.0) -> float:
+    return max(min_weight, sum(max(item.weight_kg, _volumetric(volumetric_divisor, item.length_cm, item.breadth_cm, item.height_cm)) for item in items))
 
 
 def _round_money(x: float) -> float:
@@ -170,8 +178,8 @@ class BaseCarrier:
     def resolve_regions(self, from_pin: PincodeRecord, to_pin: PincodeRecord) -> Dict[str, str]:
         return {}
 
-    def chargeable_weight(self, inp: QuoteInput) -> float:
-        return max(inp.weight_kg, 0.0)
+    def chargeable_weight(self, inp: QuoteInput, volumetric_divisor: float = 4000.0, min_weight: float = 0.0) -> float:
+        return total_chargeable_weight(inp.items, volumetric_divisor, min_weight)
 
     def base_rate_per_kg(self, from_zone: str, to_zone: str, cw: float) -> float:
         return 0.0
@@ -278,10 +286,8 @@ class GlobalCourierCargo(BaseCarrier):
         }
 
     def chargeable_weight(self, inp: QuoteInput) -> float:
-        # Volumetric: 1 cubic feet = 7 kg, so L*B*H(cm) / 4000 ≈ cubic feet * 7
-        vol_wt = _volumetric(4000.0, inp.length_cm, inp.breadth_cm, inp.height_cm)
-        cw = max(inp.weight_kg, vol_wt)
-        return max(cw, 20.0)  # Minimum 20 kg
+        # Volumetric: 1 cubic feet = 7 kg, so L*B*H(cm) / 4000  cubic feet * 7
+        return total_chargeable_weight(inp.items, 4000.0, 20.0)
 
     def base_rate_per_kg(self, from_zone: str, to_zone: str, cw: float) -> float:
         # Get rate from matrix
@@ -305,8 +311,10 @@ class GlobalCourierCargo(BaseCarrier):
         # Reverse pickup flat example
         if inp.reverse_pickup:
             s["reverse_pickup"] = 150.0
-        # Handling if single piece >150kg or > 6 feet (~183 cm)
-        if (inp.pieces_max_weight_kg or 0) > 150 or (inp.longest_side_cm or 0) > 183:
+        # Handling if any single item >150kg or longest side > 6 feet (~183 cm)
+        max_item_weight = max((item.weight_kg for item in inp.items), default=0)
+        max_longest_side = max((max(item.length_cm, item.breadth_cm, item.height_cm) for item in inp.items), default=0)
+        if max_item_weight > 150 or max_longest_side > 183:
             s["handling"] = max(5.0 * self.chargeable_weight(inp), 1000.0)
         # Demurrage after 3 days
         if inp.days_in_transit_storage > 3:
@@ -342,15 +350,16 @@ class GlobalCourierCargo(BaseCarrier):
         # Calculate total
         total_before_gst = subtotal_for_gst
         total_after_gst = _round_money(total_before_gst + gst)
-        
+
         # Apply minimum LR of Rs.450 (if calculated total < 450, charge 450)
         MINIMUM_LR = 450.0
         if total_after_gst < MINIMUM_LR:
             total_after_gst = MINIMUM_LR
-        
-        # Calculate volumetric weight for display
-        vol_wt = _volumetric(4000.0, inp.length_cm, inp.breadth_cm, inp.height_cm)
-        
+
+        # Calculate volumetric weight for display (sum of all items)
+        vol_wt = sum(_volumetric(4000.0, item.length_cm, item.breadth_cm, item.height_cm) for item in inp.items)
+        actual_wt = sum(item.weight_kg for item in inp.items)
+
         return QuoteResult(
             partner_name=self.name,
             deliverable=True,
@@ -364,7 +373,7 @@ class GlobalCourierCargo(BaseCarrier):
             total_after_gst=total_after_gst,
             rate_per_kg=rate,
             volumetric_weight_kg=round(vol_wt, 3),
-            actual_weight_kg=inp.weight_kg,
+            actual_weight_kg=actual_wt,
             rate_details={
                 "zone_code": to_zone,
                 "from_zone": from_zone,
@@ -399,8 +408,7 @@ class ShreeAnjaniCourier(BaseCarrier):
         return {"from": from_pin.state or "", "to": band}
 
     def chargeable_weight(self, inp: QuoteInput) -> float:
-        vol_wt = _volumetric(5000.0, inp.length_cm, inp.breadth_cm, inp.height_cm)
-        return max(inp.weight_kg, vol_wt)
+        return total_chargeable_weight(inp.items, 5000.0)
 
     def base_rate_per_kg(self, from_zone: str, to_zone: str, cw: float) -> float:
         slabs = self.DEST_SLABS.get(to_zone or "Rest of India", [])
@@ -424,12 +432,11 @@ class ShreeAnjaniCourier(BaseCarrier):
         # override to apply fuel on total bill amount
         from_pin = pins.get(inp.from_pincode) or PincodeRecord(pincode=inp.from_pincode)
         to_pin = pins.get(inp.to_pincode) or PincodeRecord(pincode=inp.to_pincode)
-        
+
         regions = self.resolve_regions(from_pin, to_pin)
-        vol_wt = _volumetric(5000.0, inp.length_cm, inp.breadth_cm, inp.height_cm)
         cw = self.chargeable_weight(inp)
         rate = self.base_rate_per_kg(regions.get("from", ""), regions.get("to", "Rest of India"), cw)
-        
+
         result = super().calculate_quote(inp, pins)
         if not result.deliverable:
             return result
@@ -442,16 +449,18 @@ class ShreeAnjaniCourier(BaseCarrier):
         result.total_before_gst = new_subtotal
         result.gst_amount = gst
         result.total_after_gst = _round_money(new_subtotal + gst)
-        
+
         # Add rate details
+        vol_wt = sum(_volumetric(5000.0, item.length_cm, item.breadth_cm, item.height_cm) for item in inp.items)
+        actual_wt = sum(item.weight_kg for item in inp.items)
         result.rate_per_kg = rate
         result.volumetric_weight_kg = round(vol_wt, 3)
-        result.actual_weight_kg = inp.weight_kg
+        result.actual_weight_kg = actual_wt
         result.rate_details = {
             "destination_band": regions.get("to", "Rest of India"),
             "volumetric_divisor": 5000,
         }
-        
+
         return result
 
 
@@ -463,74 +472,65 @@ class Safexpress(BaseCarrier):
     name = "Safexpress"
     ZONE_RATE_A_TO_E: Dict[str, float] = {"A": 6.0, "B": 8.0, "C": 10.0, "D": 12.0, "E": 15.0}
 
+    # Safexpress weight slabs: if weight falls in a slab, round to next 10kg
+    # Example: 52kg stays 52kg, 124kg -> 130kg, 1-10kg -> 10kg, 11-20kg -> 20kg, etc.
+    WEIGHT_SLABS = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 200, 250, 300, 500, 1000]
+
     ORIGIN_REGION_BY_STATE = {
-        "himachal pradesh": "NORTH_ONE",
-        "punjab": "NORTH_ONE",
-        "haryana": "NORTH_ONE",
-        "uttarakhand": "NORTH_ONE",
-        "uttar pradesh": "NORTH_ONE",
-        "rajasthan": "NORTH_ONE",
-        "delhi": "NORTH_ONE",
-        "chandigarh": "NORTH_TWO",
-        "jammu and kashmir": "NORTH_TWO",
-        "ladakh": "NORTH_TWO",
-        "himachal": "NORTH_ONE",
+        "himachal pradesh": "NORTH",
+        "punjab": "NORTH",
+        "haryana": "NORTH",
+        "uttarakhand": "NORTH",
+        "uttar pradesh": "NORTH",
+        "rajasthan": "NORTH",
+        "delhi": "NORTH",
         "bihar": "EAST",
         "odisha": "EAST",
         "orissa": "EAST",
         "west bengal": "EAST",
         "jharkhand": "EAST",
-        "chhattisgarh": "EAST",
-        "assam": "NORTH_EAST",
-        "meghalaya": "NORTH_EAST",
-        "tripura": "NORTH_EAST",
-        "arunachal pradesh": "NORTH_EAST",
-        "mizoram": "NORTH_EAST",
-        "manipur": "NORTH_EAST",
-        "nagaland": "NORTH_EAST",
-        "sikkim": "NORTH_EAST",
-        "gujarat": "WEST_ONE",
-        "daman and diu": "WEST_ONE",
-        "dadra and nagar haveli": "WEST_ONE",
-        "maharashtra": "WEST_TWO",
-        "goa": "WEST_TWO",
-        "andhra pradesh": "SOUTH_ONE",
-        "telangana": "SOUTH_ONE",
-        "karnataka": "SOUTH_ONE",
-        "tamil nadu": "SOUTH_ONE",
-        "pondicherry": "SOUTH_TWO",
-        "puducherry": "SOUTH_TWO",
-        "kerala": "SOUTH_TWO",
-        "madhya pradesh": "CENTRAL",
+        "maharashtra": "WEST",
+        "madhya pradesh": "WEST",
+        "gujaratstate": "WEST",
+        "chhattisgarh": "WEST",
+        "goa": "WEST",
+        "daman and diu": "WEST",
+        "dadra and nagar haveli": "WEST",
+        "karnataka": "SOUTH",
+        "tamil nadu": "SOUTH",
+        "kerala": "SOUTH",
+        "andhra pradesh": "SOUTH",
+        "telangana": "SOUTH",
+        "pondicherry": "SOUTH",
+        "puducherry": "SOUTH",
+        "nagaland": "NE",
+        "mizoram": "NE",
+        "manipur": "NE",
+        "meghalaya": "NE",
+        "tripura": "NE",
+        "arunachal pradesh": "NE",
+        "jammu and kashmir": "J&K",
+        "ladakh": "J&K",
     }
 
     # Annexure 2 matrix origin_region -> dest_region -> band A-E
     ZONE_MATRIX: Dict[str, Dict[str, str]] = {
-        "NORTH_ONE": {"NORTH_ONE": "A", "NORTH_TWO": "A", "EAST": "D", "NORTH_EAST": "E", "WEST_ONE": "B", "WEST_TWO": "C", "SOUTH_ONE": "C", "SOUTH_TWO": "D", "CENTRAL": "B"},
-        "NORTH_TWO": {"NORTH_ONE": "A", "NORTH_TWO": "A", "EAST": "D", "NORTH_EAST": "E", "WEST_ONE": "C", "WEST_TWO": "C", "SOUTH_ONE": "D", "SOUTH_TWO": "D", "CENTRAL": "B"},
-        "EAST": {"NORTH_ONE": "C", "NORTH_TWO": "D", "EAST": "A", "NORTH_EAST": "B", "WEST_ONE": "C", "WEST_TWO": "D", "SOUTH_ONE": "C", "SOUTH_TWO": "D", "CENTRAL": "B"},
-        "NORTH_EAST": {"NORTH_ONE": "C", "NORTH_TWO": "D", "EAST": "B", "NORTH_EAST": "A", "WEST_ONE": "D", "WEST_TWO": "D", "SOUTH_ONE": "D", "SOUTH_TWO": "E", "CENTRAL": "C"},
-        "WEST_ONE": {"NORTH_ONE": "B", "NORTH_TWO": "C", "EAST": "D", "NORTH_EAST": "E", "WEST_ONE": "A", "WEST_TWO": "A", "SOUTH_ONE": "C", "SOUTH_TWO": "D", "CENTRAL": "B"},
-        "WEST_TWO": {"NORTH_ONE": "C", "NORTH_TWO": "D", "EAST": "D", "NORTH_EAST": "E", "WEST_ONE": "A", "WEST_TWO": "A", "SOUTH_ONE": "B", "SOUTH_TWO": "D", "CENTRAL": "B"},
-        "SOUTH_ONE": {"NORTH_ONE": "C", "NORTH_TWO": "D", "EAST": "D", "NORTH_EAST": "E", "WEST_ONE": "C", "WEST_TWO": "B", "SOUTH_ONE": "A", "SOUTH_TWO": "B", "CENTRAL": "B"},
-        "SOUTH_TWO": {"NORTH_ONE": "D", "NORTH_TWO": "D", "EAST": "D", "NORTH_EAST": "E", "WEST_ONE": "C", "WEST_TWO": "C", "SOUTH_ONE": "A", "SOUTH_TWO": "A", "CENTRAL": "B"},
-        "CENTRAL": {"NORTH_ONE": "B", "NORTH_TWO": "C", "EAST": "D", "NORTH_EAST": "E", "WEST_ONE": "A", "WEST_TWO": "B", "SOUTH_ONE": "B", "SOUTH_TWO": "D", "CENTRAL": "A"},
+        "NORTH": {"NORTH": "A", "EAST": "B", "WEST": "B", "SOUTH": "C", "NE": "D", "J&K": "C"},
+        "EAST": {"NORTH": "B", "EAST": "A", "WEST": "B", "SOUTH": "B", "NE": "C", "J&K": "E"},
+        "WEST": {"NORTH": "C", "EAST": "B", "WEST": "A", "SOUTH": "B", "NE": "D", "J&K": "D"},
+        "SOUTH": {"NORTH": "C", "EAST": "B", "WEST": "B", "SOUTH": "A", "NE": "D", "J&K": "E"},
+        "NE": {"NORTH": "D", "EAST": "C", "WEST": "D", "SOUTH": "D", "NE": "A", "J&K": "D"},
+        "J&K": {"NORTH": "C", "EAST": "E", "WEST": "D", "SOUTH": "E", "NE": "D", "J&K": "A"},
+        "CENTRAL": {"NORTH": "C", "EAST": "B", "WEST": "B", "SOUTH": "C", "NE": "D", "J&K": "D", "CENTRAL": "C"},
     }
 
     MIN_FREIGHT_BY_ZONE = {"A": 500.0, "B": 500.0, "C": 600.0, "D": 600.0, "E": 700.0}
 
-    UCC_CITIES = {"ahmedabad", "bengaluru", "bangalore", "chennai", "delhi", "new delhi", "hyderabad", "kolkata", "mumbai", "pune"}
+    UCC_CITIES = {"ahmedabad", "bengaluru", "bangalore", "chennai", "delhi", "new delhi", "hyderabad", "kolkata", "mumbai", "pune", "vasai", "vasaivirar"}
 
     STATE_SURCHARGE_PER_KG = {
-        "kerala": 4.0,
-        "assam": 4.0,
-        "jammu and kashmir": 4.0,
-        "arunachal pradesh": 12.0,
-        "mizoram": 12.0,
-        "tripura": 12.0,
-        "manipur": 12.0,
-        "meghalaya": 12.0,
-        "nagaland": 12.0,
+        # Most states have no per-kg surcharge
+        # Add states with surcharges here if needed per the MOU
     }
 
     def _region_for_state(self, state: str) -> str:
@@ -543,43 +543,56 @@ class Safexpress(BaseCarrier):
         band = self.ZONE_MATRIX.get(from_region, {}).get(to_region, "C")
         return {"from": from_region, "to": band}
 
+    def _apply_weight_slab(self, weight_kg: float) -> float:
+        """Apply Safexpress weight slab logic: round up to next slab weight.
+        Example: 52kg -> 52kg (already at slab), 124kg -> 130kg (next slab)"""
+        for slab in self.WEIGHT_SLABS:
+            if weight_kg <= slab:
+                return float(slab)
+        # If exceeds all slabs, return as is
+        return weight_kg
+
     def chargeable_weight(self, inp: QuoteInput) -> float:
         # Safexpress MoU: 1 cubic foot = 6 kg -> divisor ~4720 in cm. Use 4720 for cm volumetric.
-        vol_wt = _volumetric(4720.0, inp.length_cm, inp.breadth_cm, inp.height_cm)
-        return max(20.0, inp.weight_kg, vol_wt)
+        base_cw = total_chargeable_weight(inp.items, 4720.0, 20.0)
+        # Apply weight slab logic
+        return self._apply_weight_slab(base_cw)
 
-    def base_rate_per_kg(self, from_zone: str, to_zone: str, cw: float) -> float:
+    def base_rate_per_kg(self, from_zone: str, to_zone: str, cw: float, reverse_pickup: bool = False) -> float:
         band = to_zone or "C"
-        return self.ZONE_RATE_A_TO_E.get(band, 10.0)
+        rate = self.ZONE_RATE_A_TO_E.get(band, 10.0)
+        # Removed extra 2 Rs for reverse pickup as per new requirement
+        return rate
 
     def _min_freight(self, band: str) -> float:
         return self.MIN_FREIGHT_BY_ZONE.get(band, 600.0)
 
     def calc_surcharges(self, base_freight: float, inp: QuoteInput, from_pin: PincodeRecord, to_pin: PincodeRecord, pins: Optional[PincodeDB] = None) -> Dict[str, float]:
         s: Dict[str, float] = {"waybill": 150.0}
-        
-        # OSC (Minimum Freight Adjustment): If Basic Freight + Waybill < 500, add difference as OSC
-        min_lr_charge = 500.0
-        osc_amount = max(0.0, min_lr_charge - (base_freight + s["waybill"]))
-        if osc_amount > 0:
-            s["osc"] = osc_amount
-        
+        # Value Surcharge: Fixed ₹100 (insurance/valuation charge)
+        s["value_surcharge"] = 100.0
+        # Reverse pickup extra charge - use total chargeable weight
+        if inp.reverse_pickup:
+            cw = self.chargeable_weight(inp)
+            if cw < 100:
+                s["reverse_pickup"] = 200.0
+            else:
+                s["reverse_pickup"] = 300.0
+        # UCC cities surcharge
+        if (to_pin.city or "").strip().lower() in self.UCC_CITIES:
+            s["ucc"] = 100.0
+        # ODA charge
         safex_is_oda = to_pin.safexpress_is_oda
         if safex_is_oda is None:
             safex_is_oda = True  # not in whitelist => treat as ODA
         if safex_is_oda:
             s["oda"] = 1500.0
-        # UCC cities surcharge
-        if (to_pin.city or "").strip().lower() in self.UCC_CITIES:
-            s["ucc"] = 100.0
         # State per-kg surcharge flat
         state_key = (to_pin.state or "").strip().lower()
         perkg = self.STATE_SURCHARGE_PER_KG.get(state_key)
         if perkg:
             s["state_surcharge"] = perkg * self.chargeable_weight(inp)
-        # Fuel surcharge: 10% on (base_freight + waybill + oda + ucc + state_surcharge + osc)
-        subtotal_for_fuel = base_freight + sum(s.values())
-        s["fuel_surcharge"] = self.get_fuel_surcharge_percent(self.name) * subtotal_for_fuel
+        # NOTE: Fuel surcharge is calculated in calculate_quote() AFTER OSC is determined
         return {k: _round_money(v) for k, v in s.items()}
 
     def calculate_quote(self, inp: QuoteInput, pins: PincodeDB) -> QuoteResult:
@@ -590,10 +603,29 @@ class Safexpress(BaseCarrier):
         band = regions.get("to") or "C"
 
         cw = self.chargeable_weight(inp)
-        rate = self.base_rate_per_kg(regions.get("from", ""), band, cw)
-        vol_wt = _volumetric(4720.0, inp.length_cm, inp.breadth_cm, inp.height_cm)
-        base_freight = _round_money(max(rate * cw, self._min_freight(band)))
+        rate = self.base_rate_per_kg(regions.get("from", ""), band, cw, reverse_pickup=inp.reverse_pickup)
+        vol_wt = sum(_volumetric(4720.0, item.length_cm, item.breadth_cm, item.height_cm) for item in inp.items)
+        actual_wt = sum(item.weight_kg for item in inp.items)
+        
+        # Safexpress: Calculate base freight WITHOUT minimum first
+        base_freight = _round_money(rate * cw)
+        
+        # Get surcharges (initially without fuel and OSC)
         sur = self.calc_surcharges(base_freight, inp, from_pin, to_pin)
+        
+        # Apply minimum freight adjustment: minimum applies to (base_freight + waybill) only
+        min_lr_charge = 500.0
+        base_plus_waybill = base_freight + sur.get("waybill", 0)
+        osc_amount = max(0.0, min_lr_charge - base_plus_waybill)
+        if osc_amount > 0:
+            sur["osc"] = _round_money(osc_amount)
+        
+        # Now calculate fuel: 10% on (base + waybill + value + ucc + oda + reverse + osc)
+        # NOTE: fuel is NOT applied to fuel itself
+        subtotal_for_fuel = base_freight + sum({k: v for k, v in sur.items() if k != "fuel_surcharge"}.values())
+        sur["fuel_surcharge"] = _round_money(self.get_fuel_surcharge_percent(self.name) * subtotal_for_fuel)
+        
+        # Final total
         total_before_gst = _round_money(base_freight + sum(sur.values()))
         gst = _round_money(self.apply_gst(total_before_gst))
         total_after_gst = _round_money(total_before_gst + gst)
@@ -610,7 +642,7 @@ class Safexpress(BaseCarrier):
             total_after_gst=total_after_gst,
             rate_per_kg=rate,
             volumetric_weight_kg=round(vol_wt, 3),
-            actual_weight_kg=inp.weight_kg,
+            actual_weight_kg=actual_wt,
             rate_details={
                 "from_region": regions.get("from", ""),
                 "to_band": band,
@@ -685,10 +717,13 @@ class BluedartSurface(BaseCarrier):
 
     def chargeable_weight(self, inp: QuoteInput) -> float:
         divisor = 2700.0  # 1 Cu Ft = 10 Kg std
-        print(f"Using divisor {divisor} for {self.name} partner (source: file:freight_calculator.py)")
-        vol_wt_raw = _volumetric(divisor, inp.length_cm, inp.breadth_cm, inp.height_cm)
-        vol_wt = math.ceil(vol_wt_raw * 2.0) / 2.0  # round up to nearest 0.5 kg
-        return max(10.0, inp.weight_kg, vol_wt)
+        # For each item, round up volumetric to nearest 0.5kg, then sum
+        def item_chargeable(item):
+            vol_wt_raw = _volumetric(divisor, item.length_cm, item.breadth_cm, item.height_cm)
+            vol_wt = math.ceil(vol_wt_raw * 2.0) / 2.0
+            return max(item.weight_kg, vol_wt)
+        total = sum(item_chargeable(item) for item in inp.items)
+        return max(10.0, total)
 
     def base_rate_per_kg(self, from_zone: str, to_zone: str, cw: float) -> float:
         return self.ZONE_RATE_1_TO_5.get(to_zone or "3", 11.0)
@@ -724,7 +759,9 @@ class BluedartSurface(BaseCarrier):
 
         cw = self.chargeable_weight(inp)
         rate = self.base_rate_per_kg(regions.get("from", ""), zone, cw)
-        vol_wt = _volumetric(5000.0, inp.length_cm, inp.breadth_cm, inp.height_cm)
+        # For display, sum volumetric and actual weights for all items
+        vol_wt = sum(_volumetric(5000.0, item.length_cm, item.breadth_cm, item.height_cm) for item in inp.items)
+        actual_wt = sum(item.weight_kg for item in inp.items)
         base_freight = _round_money(max(rate * cw, 150.0))
         sur = self.calc_surcharges(base_freight, inp, from_pin, to_pin)
         total_before_gst = _round_money(base_freight + sum(sur.values()))
@@ -743,7 +780,7 @@ class BluedartSurface(BaseCarrier):
             total_after_gst=total_after_gst,
             rate_per_kg=rate,
             volumetric_weight_kg=round(vol_wt, 3),
-            actual_weight_kg=inp.weight_kg,
+            actual_weight_kg=actual_wt,
             rate_details={
                 "zone": zone,
                 "volumetric_divisor": 5000,
@@ -794,18 +831,18 @@ def print_partner_breakdown(results: List[QuoteResult]) -> None:
 
 
 if __name__ == "__main__":
-    # Quick manual test example
+    # Quick manual test example with multiple items
     sample = QuoteInput(
         from_pincode="110001",
         to_pincode="400001",
-        weight_kg=25.0,
-        length_cm=50.0,
-        breadth_cm=40.0,
-        height_cm=30.0,
+        items=[
+            ShipmentItem(weight_kg=25.0, length_cm=50.0, breadth_cm=40.0, height_cm=30.0),
+            ShipmentItem(weight_kg=15.0, length_cm=30.0, breadth_cm=25.0, height_cm=20.0),
+        ],
         reverse_pickup=False,
         insured_value=50000.0,
-        pieces_max_weight_kg=30.0,
-        longest_side_cm=100.0,
+        days_in_transit_storage=0,
+        gst_mode="12pct",
     )
     quotes = get_all_partner_quotes(sample)
     import json

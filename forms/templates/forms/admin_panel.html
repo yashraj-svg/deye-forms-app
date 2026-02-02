@@ -425,6 +425,9 @@
 
         <!-- Tabs -->
         <div class="tabs">
+                        <button class="tab" onclick="openTab(event, 'all-entries')">
+                            🗂️ All Entries <span class="count-badge">{{ all_entries|length }}</span>
+                        </button>
             <button class="tab active" onclick="openTab(event, 'repairing')">
                 🔧 Repairing Forms <span class="count-badge">{{ repairing_forms.count }}</span>
             </button>
@@ -456,28 +459,45 @@
                     <table>
                         <thead>
                             <tr>
-                                <th>Serial Number</th>
                                 <th>Case Number</th>
-                                <th>Customer</th>
+                                <th>Customer Abbrev</th>
+                                <th>Repairing Object</th>
+                                <th>Inverter ID</th>
+                                <th>Inverter Spec</th>
+                                <th>Inverter Rating</th>
+                                <th>Battery</th>
+                                <th>Fault Problems</th>
+                                <th>Fault Description</th>
+                                <th>Fault Location</th>
+                                <th>Battery ID</th>
+                                <th>PCBA Serial</th>
+                                <th>Repair Content</th>
                                 <th>Repaired By</th>
                                 <th>Tested By</th>
-                                <th>Status</th>
-                                <th>Date</th>
+                                <th>Repaired On</th>
+                                <th>Status/Remark</th>
+                                <th>Date Created</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for form in repairing_forms %}
                             <tr{% if form.duplicate_count %} class="duplicate-row"{% endif %}>
-                                <td>
-                                    {{ form.inverter_id }}
-                                    {% if form.duplicate_count %}
-                                    <span class="duplicate-badge" title="This serial appears {{ form.duplicate_count }} times">×{{ form.duplicate_count }}</span>
-                                    {% endif %}
-                                </td>
                                 <td>{{ form.case_number }}</td>
                                 <td>{{ form.customer_abbrev }}</td>
+                                <td>{{ form.repairing_object }}</td>
+                                <td>{{ form.inverter_id }}</td>
+                                <td>{{ form.inverter_spec }}</td>
+                                <td>{{ form.inverter_rating }}</td>
+                                <td>{{ form.battery }}</td>
+                                <td>{{ form.fault_problems }}</td>
+                                <td>{{ form.fault_description }}</td>
+                                <td>{{ form.fault_location }}</td>
+                                <td>{{ form.battery_id }}</td>
+                                <td>{{ form.pcba_serial }}</td>
+                                <td>{{ form.repair_content }}</td>
                                 <td>{{ form.repaired_by }}</td>
                                 <td>{{ form.tested_by }}</td>
+                                <td>{{ form.repaired_on_date }}</td>
                                 <td>{{ form.remark }}</td>
                                 <td>{{ form.created_at|date:"M d, Y" }}</td>
                             </tr>
@@ -534,6 +554,41 @@
         </div>
 
         <!-- Outward Forms Tab -->
+                <!-- All Entries Tab -->
+                <div id="all-entries" class="tab-content">
+                    {% if all_entries %}
+                        <div class="section-title">
+                            🗂️ All Entries
+                            <span class="count-badge">{{ all_entries|length }} Record(s)</span>
+                        </div>
+                        <div style="overflow-x: auto;">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Form Type</th>
+                                        <th>Serial Number</th>
+                                        <th>Customer/Company</th>
+                                        <th>Date</th>
+                                        <th>Remark/Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for entry in all_entries %}
+                                    <tr>
+                                        <td>{{ entry.form_type }}</td>
+                                        <td>{{ entry.serial }}</td>
+                                        <td>{{ entry.customer }}</td>
+                                        <td>{{ entry.date }}</td>
+                                        <td>{{ entry.remark }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="no-data">No entries found</div>
+                    {% endif %}
+                </div>
         <div id="outward" class="tab-content">
             {% if outward_forms %}
                 <div class="section-title">

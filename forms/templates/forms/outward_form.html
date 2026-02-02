@@ -3,18 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <title>Outward Tracking Form</title>
-
+{% load static %}
 <style>
 /* Header */
 .header {
   position: sticky;
   top: 0;
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-  padding: 18px 60px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px 40px;
   z-index: 1000;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
 }
 
 .logo-section {
@@ -24,69 +22,90 @@
 }
 
 .logo-section img {
-  height: 36px;
+  height: 40px;
+  filter: brightness(0) invert(1);
 }
 
 body{
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-  background:#f2f4f7;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
   margin:0;
-  padding:0;
+  padding:20px 0;
 }
 .form-wrap{
-  max-width:780px;
-  margin:32px auto;
+  max-width:1100px;
+  margin:30px auto;
   background:#fff;
-  padding:32px;
-  border-radius:8px;
-  box-shadow:0 4px 12px rgba(0,0,0,.08);
+  padding:40px;
+  border-radius:12px;
+  box-shadow:0 10px 40px rgba(0,0,0,0.2);
 }
 h1{
   text-align:center;
-  margin-bottom:6px;
-  font-size:26px;
+  color:#667eea;
+  margin-bottom:10px;
+  font-size:30px;
+  font-weight:700;
 }
 .req-note{
   text-align:center;
-  color:#d93025;
+  color:#e74c3c;
   font-size:13px;
-  margin-bottom:24px;
+  margin-bottom:20px;
 }
 label{
   display:block;
-  margin-top:18px;
+  margin:18px 0 8px;
   font-size:14px;
-  font-weight:500;
+  font-weight:600;
+  color:#333;
 }
 .req{
-  color:#d93025;
+  color:#e74c3c;
 }
 input,select{
   width:100%;
-  margin-top:6px;
-  padding:10px;
+  padding:12px 14px;
   font-size:14px;
-  border:1px solid #ccd0d5;
-  border-radius:4px;
+  border:2px solid #e0e0e0;
+  border-radius:6px;
   box-sizing:border-box;
+  background:#fafafa;
+  transition:all 0.3s ease;
 }
 input:focus,select:focus{
   outline:none;
-  border-color:#1a73e8;
+  border-color:#667eea;
+  background:#fff;
+  box-shadow:0 0 0 3px rgba(102,126,234,0.1);
+}
+select{
+  cursor:pointer;
+  appearance:none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23667eea' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat:no-repeat;
+  background-position:right 10px center;
+  background-size:20px;
+  padding-right:36px;
 }
 button{
   width:100%;
   margin-top:28px;
-  padding:12px;
-  background:#1a73e8;
+  padding:14px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color:#fff;
   font-size:16px;
+  font-weight:700;
   border:none;
-  border-radius:6px;
+  border-radius:8px;
   cursor:pointer;
+  box-shadow:0 4px 15px rgba(102,126,234,0.4);
+  transition:all 0.3s ease;
 }
 button:hover{
-  background:#1558b0;
+  transform: translateY(-2px);
+  box-shadow:0 6px 20px rgba(102,126,234,0.6);
 }
 
 /* Conditional field visibility */
@@ -123,15 +142,57 @@ input::-webkit-validation-bubble-message {
     padding:24px;
   }
 }
+  /* Dropdown suggestions styles moved here */
+  .dropdown-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 2px solid #1a73e8;
+    border-radius: 8px;
+    max-height: 240px;
+    overflow-y: auto;
+    z-index: 2000;
+    box-shadow: 0 8px 24px rgba(26,115,232,0.10), 0 1.5px 6px rgba(0,0,0,0.08);
+    display: none;
+    margin-top: 2px;
+    animation: fadeIn 0.18s;
+  }
+  .dropdown-suggestions .dropdown-item {
+    padding: 14px 20px;
+    cursor: pointer;
+    font-size: 17px;
+    color: #1a237e;
+    border-bottom: 1px solid #f0f4fa;
+    transition: background 0.13s, color 0.13s;
+    background: #fff;
+  }
+  .dropdown-suggestions .dropdown-item:last-child {
+    border-bottom: none;
+  }
+  .dropdown-suggestions .dropdown-item:hover,
+  .dropdown-suggestions .dropdown-item.active {
+    background: linear-gradient(90deg, #e3f0fd 0%, #e8f3fc 100%);
+    color: #0d47a1;
+    font-weight: 600;
+    border-left: 4px solid #1a73e8;
+    padding-left: 16px;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
 </style>
 </head>
 
 <body>
 
+
 <div class="header">
   <div class="logo-section">
     <a href="/" style="text-decoration: none;">
-      <img src="https://www.deyeinverter.com/template/en/images/logo.png" alt="DEYE">
+      <img src="{% static 'admin/Images/logo-deye-300x225.webp' %}" alt="DEYE">
     </a>
   </div>
 </div>
@@ -187,19 +248,66 @@ input::-webkit-validation-bubble-message {
 <label>Company Abbreviation <span class="req">*</span></label>
 <select name="company_abbrev" required>
 <option value="">Select</option>
-<option>Aps</option>
-<option>Deye</option>
-<option>Evvo</option>
-<option>Feston</option>
-<option>Greenedge</option>
-<option>Ksolare</option>
-<option>Mindra</option>
-<option>Powerone</option>
-<option>Solaryaan</option>
-<option>Utl</option>
-<option>Vsole</option>
-<option>Waaree</option>
-<option>Other</option>
+<option>Alternative Energy</option>
+   <option>Alternative Energy</option>
+        <option>Aps</option>
+        <option>Arkay Solar</option>
+        <option>Avirat Energy</option>
+        <option>Brither World Engineering Works</option>
+        <option>Banglore</option>
+        <option>Ceyone Solar</option>
+        <option>Chetanbhai Trimandir</option>
+        <option>Deye</option>
+        <option>Eco Active Energy & Solution</option>
+        <option>Envest Energy Solutions Llp</option>
+        <option>Evaanta Solar</option>
+        <option>Evvo</option>
+        <option>Ferus Solar Energy Solution</option>
+        <option>Feston</option>
+        <option>Fine Vibes Renewable Pvt Ltd (Cg)</option>
+        <option>Glowx</option>
+        <option>Green Energy</option>
+        <option>Green Era</option>
+        <option>Green Watt Energy</option>
+        <option>Greenedge</option>
+        <option>Gujarat Energy</option>
+        <option>Invergy</option>
+        <option>Jaffins Enterprise</option>
+        <option>Jay Aditya Solar</option>
+        <option>Kerala Office</option>
+        <option>Ksolare</option>
+        <option>Madhav Enterprise</option>
+        <option>Madhya Pradesh Solar9</option>
+        <option>Mindra</option>
+        <option>Mp Engineering</option>
+        <option>Navi Energy</option>
+        <option>Next Tech Solar Energy</option>
+        <option>Nil Electronics</option>
+        <option>Nk Construction</option>
+        <option>Powerone</option>
+        <option>Pushan Renewable Energy Pvt Ltd</option>
+        <option>Radiant Sun Energy</option>
+        <option>Railway Station Dhanera</option>
+        <option>Roshni Solar</option>
+        <option>Rudra Solar</option>
+        <option>Saan Electrical</option>
+        <option>Shantimani Enterprises</option>
+        <option>Smart Solar Bidgely Solution Pvt Ltd</option>
+        <option>Solaryaan</option>
+        <option>Suntech Energy</option>
+        <option>Swami Solar</option>
+        <option>Symbroz Solar  Pvt Ltd</option>
+        <option>Tecnogoods Energy</option>
+        <option>Trambaka Solar  Pvt Ltd</option>
+        <option>Urja Strot</option>
+        <option>Utl</option>
+        <option>Utl Solar</option>
+        <option>Vsole</option>
+        <option>Waaree</option>
+        <option>Water Sun Solar</option>
+        <option>Watthut</option>
+        <option>Yamas Solar</option>
+        <option>Other</option>
 </select>
 
 <label>Outward Object <span class="req">*</span></label>
@@ -257,73 +365,124 @@ input::-webkit-validation-bubble-message {
 </select>
 
 <div class="inverter-only">
-<label>Inverter ID – Outward <span class="req">*</span></label>
-<input type="text" name="inverter_id_outward" required>
+  <div class="accessories-section" style="margin-top:18px; margin-bottom:18px;">
+    <label style="font-weight:600; font-size:15px; margin-bottom:8px; display:block;">Accessories (optional)</label>
+    <div style="display:flex; gap:32px; align-items:center;">
+      <div style="display:flex; align-items:center; gap:6px;">
+        <input type="checkbox" id="accessory_data_logger" name="accessories" value="data_logger" style="margin:0;">
+        <label for="accessory_data_logger" style="font-weight:400; font-size:14px; margin:0;">Data Logger</label>
+      </div>
+      <div style="display:flex; align-items:center; gap:6px;">
+        <input type="checkbox" id="accessory_stand" name="accessories" value="stand" style="margin:0;">
+        <label for="accessory_stand" style="font-weight:400; font-size:14px; margin:0;">Stand</label>
+      </div>
+    </div>
+  </div>
+</div>
 
-<label>Inverter Specification <span class="req">*</span></label>
-<select name="inverter_spec" required>
-<option value="">Select</option>
-<option>1PH - Hybrid</option>
-<option>3PH - Hybrid</option>
-<option>1PH - Ongrid</option>
-<option>3PH - Ongrid</option>
-<option>All In One - Hybrid</option>
-<option>Micro Inverter</option>
-</select>
 
-<label>Inverter Rating</label>
-<select name="inverter_rating">
-<option value="">Select</option>
-<option>2.2 KW</option>
-<option>3 KW</option>
-<option>3.3 KW</option>
-<option>4 KW</option>
-<option>5 KW</option>
-<option>6 KW</option>
-<option>8 KW</option>
-<option>10 KW</option>
-<option>12 KW</option>
-<option>15 KW</option>
-<option>18 KW</option>
-<option>20 KW</option>
-<option>25 KW</option>
-<option>30 KW</option>
-<option>33 KW</option>
-<option>35 KW</option>
-<option>40 KW</option>
-<option>50 KW</option>
-<option>60 KW</option>
-<option>75 KW</option>
-<option>80 KW</option>
-<option>100 KW</option>
-<option>125 KW</option>
-<option>136 KW</option>
-</select>
+<div class="inverter-only">
+  <label>Inverter ID – Outward</label>
+  <div style="position:relative; width:100%;">
+    <input type="text" name="inverter_id_outward" id="inverterIdOutward" autocomplete="off" placeholder="Type to search serial..." style="width:100%;">
+    <div id="dropdown-inverter-suggestions" class="dropdown-suggestions"></div>
+  </div>
+
+  <label>Inverter Specification <span class="req">*</span></label>
+  <select name="inverter_spec" id="inverterSpec">
+    <option value="">Select</option>
+    <option>1PH - Hybrid</option>
+    <option>3PH - Hybrid</option>
+    <option>1PH - Ongrid</option>
+    <option>3PH - Ongrid</option>
+    <option>All In One - Hybrid</option>
+    <option>Micro Inverter</option>
+  </select>
+
+  <label>Inverter Rating</label>
+  <select name="inverter_rating" id="inverterRating">
+    <option value="">Select</option>
+    <option>2.2 KW</option>
+    <option>3 KW</option>
+    <option>3.3 KW</option>
+    <option>4 KW</option>
+    <option>5 KW</option>
+    <option>6 KW</option>
+    <option>8 KW</option>
+    <option>10 KW</option>
+    <option>12 KW</option>
+    <option>15 KW</option>
+    <option>18 KW</option>
+    <option>20 KW</option>
+    <option>25 KW</option>
+    <option>30 KW</option>
+    <option>33 KW</option>
+    <option>35 KW</option>
+    <option>40 KW</option>
+    <option>50 KW</option>
+    <option>60 KW</option>
+    <option>75 KW</option>
+    <option>80 KW</option>
+    <option>100 KW</option>
+    <option>125 KW</option>
+    <option>136 KW</option>
+  </select>
+</div>
+  <!-- Control Card Changed Section (only for Inverter) -->
+  <div id="controlCardChangedSection" style="margin-top:18px; margin-bottom:10px; display:none;">
+    <label for="control_card_changed" style="font-weight:500; font-size:14px;">Control Card Changed</label>
+    <select name="control_card_changed" id="controlCardChanged" style="margin-top:6px; width:100%;">
+      <option value="">Select</option>
+      <option value="No">No</option>
+      <option value="Yes">Yes</option>
+    </select>
+  </div>
+  <div id="newSerialNumberDiv" style="display:none; margin-bottom:18px;">
+    <label for="new_serial_number" style="font-weight:500; font-size:14px;">New Serial Number <span class="req">*</span></label>
+    <input type="text" name="new_serial_number" id="newSerialNumber" style="margin-top:6px; width:100%;" maxlength="100" placeholder="Enter new serial number">
+  </div>
+  <!-- Replacement Type (only for Inverter) -->
+  <div id="replacementTypeDiv" style="display:none; margin-bottom:18px;">
+    <label for="replacement_type" style="font-weight:500; font-size:14px;">Replacement Type <span class="req">*</span></label>
+    <select name="replacement_type" id="replacementType" style="margin-top:6px; width:100%;">
+      <option value="">Select</option>
+      <option value="Warranty">Yes</option>
+      <option value="Out of Warranty">No</option>
+    </select>
+  </div>
+  <!-- Inward Inverter ID (only if Replacement Type selected) -->
+  <div id="inwardInverterIdDiv" style="display:none; margin-bottom:18px;">
+    <label for="inverter_id_inward" style="font-weight:500; font-size:14px; margin-top:10px;">Inward Inverter ID <span class="req">*</span></label>
+    <input type="text" name="inverter_id_inward" id="inverterIdInward" style="margin-top:6px; width:100%;" maxlength="255" placeholder="Enter Inward Inverter ID">
+  </div>
 </div>
 
 <div class="battery-only">
-<label>Battery ID <span class="req">*</span></label>
-<input type="text" name="battery_id" required>
+  <label>Battery ID <span class="req">*</span> (with dropdown-style autocomplete)</label>
+  <div style="position:relative; width:100%;">
+    <input type="text" name="battery_id" id="batteryIdOutward" autocomplete="off" placeholder="Type to search battery serial..." style="width:100%;">
+    <div id="dropdown-battery-suggestions" class="dropdown-suggestions"></div>
+  </div>
 
-<label>Battery Model</label>
-<select name="battery_model">
-<option value="">Select</option>
-<option>RW - L 2.5 Neutral</option>
-<option>RW - M 5.3 Neutral</option>
-<option>RW - M 5.3 Pro Neutral (M6)</option>
-<option>RW - M 6.1 Neutral</option>
-<option>RW - M 6.1 B Neutral No Remark</option>
-<option>SE - G 5.1 - Pro B Neutral No Remark</option>
-<option>AI - W 5.1 Neutral</option>
-<option>AI - W 5.1 - B Neutral No Remark</option>
-<option>BOS - GM 5.1 Neutral</option>
-<option>GB - LM 4.0 Neutral</option>
-<option>GB - LB Neutral</option>
-<option>SE - G 5.3</option>
-<option>SE - G 5.3 Pro</option>
-<option>SE - F 5</option>
-<option>Other</option>
-</select>
+  <label>Battery Model</label>
+  <select name="battery_model">
+    <option value="">Select</option>
+    <option>RW - L 2.5 Neutral</option>
+    <option>RW - M 5.3 Neutral</option>
+    <option>RW - M 5.3 Pro Neutral (M6)</option>
+    <option>RW - M 6.1 Neutral</option>
+    <option>RW - M 6.1 B Neutral No Remark</option>
+    <option>SE - G 5.1 - Pro B Neutral No Remark</option>
+    <option>AI - W 5.1 Neutral</option>
+    <option>AI - W 5.1 - B Neutral No Remark</option>
+    <option>BOS - GM 5.1 Neutral</option>
+    <option>GB - LM 4.0 Neutral</option>
+    <option>GB - LB Neutral</option>
+    <option>SE - G 5.3</option>
+    <option>SE - G 5.3 Pro</option>
+    <option>SE - F 5</option>
+    <option>Other</option>
+  </select>
 </div>
 
 <div class="pcb-only">
@@ -380,6 +539,7 @@ input::-webkit-validation-bubble-message {
 <option>Bigship</option>
 <option>Blue Dart</option>
 <option>Anjani</option>
+<option>Safexpress</option>
 <option>Other</option>
 </select>
 
@@ -391,72 +551,134 @@ input::-webkit-validation-bubble-message {
 </form>
 
 <script>
+
 // Toggle conditional fields based on Outward Object selection
 function toggleOutwardFields() {
   const outwardObject = document.querySelector('#outwardObject').value;
-  const inverterFields = document.querySelectorAll('.inverter-only');
-  const batteryFields = document.querySelectorAll('.battery-only');
-  const pcbFields = document.querySelectorAll('.pcb-only');
-  const inverterInputs = document.querySelectorAll('.inverter-only input, .inverter-only select, .inverter-only textarea');
-  const batteryInputs = document.querySelectorAll('.battery-only input, .battery-only select, .battery-only textarea');
-  const pcbInputs = document.querySelectorAll('.pcb-only input, .pcb-only select, .pcb-only textarea');
-
-  function setRequired(nodes, shouldRequire){
-    nodes.forEach(el => {
-      if (!el) return;
-      if (shouldRequire) el.setAttribute('required','required');
-      else el.removeAttribute('required');
-    });
-  }
-
-  function setDisabled(nodes, shouldDisable){
-    nodes.forEach(el => {
-      if (!el) return;
-      el.disabled = shouldDisable;
-      if (shouldDisable){
-        if (el.tagName === 'SELECT') el.selectedIndex = 0;
-        else if (el.type === 'checkbox' || el.type === 'radio') el.checked = false;
-        else el.value = '';
-      }
-    });
-  }
-  
-  inverterFields.forEach(field => {
-    field.classList.remove('show');
+  // Hide all conditional sections
+  document.querySelectorAll('.inverter-only, .battery-only, .pcb-only').forEach(section => {
+    section.classList.remove('show');
   });
-  batteryFields.forEach(field => {
-    field.classList.remove('show');
-  });
-  pcbFields.forEach(field => {
-    field.classList.remove('show');
-  });
+  // Handle each object type
   
   if (outwardObject === 'Inverter') {
-    inverterFields.forEach(field => {
-      field.classList.add('show');
-    });
-  } else if (outwardObject === 'Battery') {
-    batteryFields.forEach(field => {
-      field.classList.add('show');
-    });
-  } else if (outwardObject === 'PCB') {
-    pcbFields.forEach(field => {
-      field.classList.add('show');
-    });
+    document.querySelectorAll('.inverter-only').forEach(section => section.classList.add('show'));
+    // Set required for inverter fields
+    document.getElementById('inverterIdOutward').setAttribute('required', 'required');
+    document.getElementById('inverterSpec').setAttribute('required', 'required');
+  } else {
+    // Remove required for inverter fields
+    document.getElementById('inverterIdOutward').removeAttribute('required');
+    document.getElementById('inverterSpec').removeAttribute('required');
+  }
+  if (outwardObject === 'Battery') {
+    document.querySelector('.battery-only').classList.add('show');
+  }
+  if (outwardObject === 'PCB') {
+    document.querySelector('.pcb-only').classList.add('show');
+  }
+}
+  
+  // Show/hide Control Card Changed and New Serial Number only for Inverter
+  function toggleControlCardChangedSection() {
+    var outwardObject = document.getElementById('outwardObject').value;
+    var controlCardSection = document.getElementById('controlCardChangedSection');
+    var controlCardChanged = document.getElementById('controlCardChanged');
+    var newSerialDiv = document.getElementById('newSerialNumberDiv');
+    if (controlCardSection) {
+      if (outwardObject === 'Inverter') {
+        controlCardSection.style.display = '';
+      } else {
+        controlCardSection.style.display = 'none';
+        if (controlCardChanged) controlCardChanged.value = '';
+        if (newSerialDiv) {
+          newSerialDiv.style.display = 'none';
+          var nsn = document.getElementById('newSerialNumber');
+          if (nsn) nsn.value = '';
+        }
+      }
+    }
   }
 
-  // Only require the fields for the active section
-  setRequired(inverterInputs, outwardObject === 'Inverter');
-  setRequired(batteryInputs, outwardObject === 'Battery');
-  setRequired(pcbInputs, outwardObject === 'PCB');
+  document.getElementById('outwardObject').addEventListener('change', function() {
+    toggleControlCardChangedSection();
+  });
 
-  // Disable hidden section inputs so their blank values don't override posted data
-  setDisabled(inverterInputs, outwardObject !== 'Inverter');
-  setDisabled(batteryInputs, outwardObject !== 'Battery');
-  setDisabled(pcbInputs, outwardObject !== 'PCB');
+  // Show/hide New Serial Number, Replacement Type, and Inward Inverter ID based on logic
+  document.addEventListener('DOMContentLoaded', function() {
+    var controlCardChanged = document.getElementById('controlCardChanged');
+    var newSerialDiv = document.getElementById('newSerialNumberDiv');
+    var newSerialInput = document.getElementById('newSerialNumber');
+    var replacementTypeDiv = document.getElementById('replacementTypeDiv');
+    var replacementType = document.getElementById('replacementType');
+    var inwardInverterIdDiv = document.getElementById('inwardInverterIdDiv');
+    var inverterIdInward = document.getElementById('inverterIdInward');
+    var outwardObject = document.getElementById('outwardObject');
+
+    function updateConditionalFields() {
+      // Show/hide New Serial Number based on Control Card Changed
+      if (controlCardChanged && newSerialDiv && newSerialInput) {
+        if (controlCardChanged.value === 'Yes') {
+          newSerialDiv.style.display = '';
+          newSerialInput.setAttribute('required', 'required');
+        } else {
+          newSerialDiv.style.display = 'none';
+          newSerialInput.value = '';
+          newSerialInput.removeAttribute('required');
+        }
+      }
+      // Show/hide Replacement Type if Outward Object is Inverter
+      if (replacementTypeDiv && outwardObject) {
+        if (outwardObject.value === 'Inverter') {
+          replacementTypeDiv.style.display = '';
+          replacementType.setAttribute('required', 'required');
+        } else {
+          replacementTypeDiv.style.display = 'none';
+          replacementType.value = '';
+          replacementType.removeAttribute('required');
+        }
+      }
+      // Show/hide Inward Inverter ID if Replacement Type is selected
+      if (inwardInverterIdDiv && replacementType && inverterIdInward) {
+        if (replacementType.value !== '') {
+          inwardInverterIdDiv.style.display = '';
+          inverterIdInward.setAttribute('required', 'required');
+        } else {
+          inwardInverterIdDiv.style.display = 'none';
+          inverterIdInward.value = '';
+          inverterIdInward.removeAttribute('required');
+        }
+      }
+    }
+    if (controlCardChanged) controlCardChanged.addEventListener('change', updateConditionalFields);
+    if (replacementType) replacementType.addEventListener('change', updateConditionalFields);
+    if (outwardObject) outwardObject.addEventListener('change', updateConditionalFields);
+    updateConditionalFields(); // Initial state
+    toggleControlCardChangedSection(); // Initial state
+  });
+
+// Accessories section show/hide logic
+function toggleAccessoriesSection() {
+  const outwardObject = document.querySelector('#outwardObject').value;
+  const accessoriesSection = document.querySelector('.inverter-only .accessories-section');
+  if (accessoriesSection) {
+    accessoriesSection.style.display = (outwardObject === 'Inverter') ? '' : 'none';
+    if (outwardObject !== 'Inverter') {
+      accessoriesSection.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+    }
+  }
 }
 
-document.querySelector('#outwardObject').addEventListener('change', toggleOutwardFields);
+document.querySelector('#outwardObject').addEventListener('change', function() {
+  toggleOutwardFields();
+  toggleAccessoriesSection();
+});
+
+// Initial call to set correct state on page load
+document.addEventListener('DOMContentLoaded', function() {
+  toggleOutwardFields();
+  toggleAccessoriesSection();
+});
 
 // Pincode autofill functionality
 document.querySelector('input[name="pincode"]').addEventListener('input', function(e) {
@@ -515,7 +737,12 @@ document.querySelector('input[name="pincode"]').addEventListener('input', functi
 });
 
 // Enable disabled fields before form submission
+document.querySelector('form').setAttribute('novalidate', 'novalidate');
 document.querySelector('form').addEventListener('submit', function(e) {
+  // Enable all required fields before validation
+  document.querySelectorAll('[required]').forEach(field => {
+    field.disabled = false;
+  });
   document.querySelector('select[name="sent_to_state"]').disabled = false;
 });
 
@@ -527,6 +754,178 @@ if (outwardParams.get('success') === '1') {
   const newUrl = `${window.location.pathname}${outwardParams.toString() ? '?' + outwardParams.toString() : ''}`;
   window.history.replaceState({}, '', newUrl);
 }
+
+// Dropdown-style autocomplete for Inverter ID – Outward
+(function() {
+  const input = document.getElementById('inverterIdOutward');
+  const suggestionBox = document.getElementById('dropdown-inverter-suggestions');
+  let currentSuggestions = [];
+  let selectedIndex = -1;
+
+  function showSuggestions(suggestions) {
+    suggestionBox.innerHTML = '';
+    if (!suggestions.length) {
+      suggestionBox.style.display = 'none';
+      return;
+    }
+    suggestions.forEach((serial, idx) => {
+      const div = document.createElement('div');
+      div.textContent = serial;
+      div.className = 'dropdown-item' + (idx === selectedIndex ? ' active' : '');
+      div.addEventListener('mousedown', function(e) {
+        e.preventDefault();
+        input.value = serial;
+        suggestionBox.style.display = 'none';
+      });
+      div.addEventListener('touchstart', function(e) {
+        e.preventDefault();
+        input.value = serial;
+        suggestionBox.style.display = 'none';
+      });
+      suggestionBox.appendChild(div);
+    });
+    suggestionBox.style.display = 'block';
+  }
+
+  function fetchAndShowSuggestions(query) {
+    if (query.length < 2) {
+      showSuggestions([]);
+      return;
+    }
+    fetch('/api/available-inverter-serials/')
+      .then(response => response.json())
+      .then(data => {
+        if (data.serials && Array.isArray(data.serials)) {
+          currentSuggestions = data.serials.filter(serial => serial.toLowerCase().includes(query.toLowerCase()));
+          selectedIndex = -1;
+          showSuggestions(currentSuggestions);
+        } else {
+          showSuggestions([]);
+        }
+      })
+      .catch(err => {
+        showSuggestions([]);
+      });
+  }
+
+  input.addEventListener('input', function() {
+    fetchAndShowSuggestions(input.value);
+  });
+
+  input.addEventListener('focus', function() {
+    fetchAndShowSuggestions(input.value);
+  });
+
+  input.addEventListener('blur', function() {
+    setTimeout(() => suggestionBox.style.display = 'none', 120);
+  });
+
+  // Keyboard navigation (desktop)
+  input.addEventListener('keydown', function(e) {
+    if (!currentSuggestions.length) return;
+    if (e.key === 'ArrowDown') {
+      selectedIndex = (selectedIndex + 1) % currentSuggestions.length;
+      showSuggestions(currentSuggestions);
+      e.preventDefault();
+    } else if (e.key === 'ArrowUp') {
+      selectedIndex = (selectedIndex - 1 + currentSuggestions.length) % currentSuggestions.length;
+      showSuggestions(currentSuggestions);
+      e.preventDefault();
+    } else if (e.key === 'Enter') {
+      if (selectedIndex >= 0 && selectedIndex < currentSuggestions.length) {
+        input.value = currentSuggestions[selectedIndex];
+        suggestionBox.style.display = 'none';
+        e.preventDefault();
+      }
+    }
+  });
+})();
+
+// Dropdown-style autocomplete for Battery ID – Outward
+(function() {
+  const input = document.getElementById('batteryIdOutward');
+  const suggestionBox = document.getElementById('dropdown-battery-suggestions');
+  let currentSuggestions = [];
+  let selectedIndex = -1;
+
+  function showSuggestions(suggestions) {
+    suggestionBox.innerHTML = '';
+    if (!suggestions.length) {
+      suggestionBox.style.display = 'none';
+      return;
+    }
+    suggestions.forEach((serial, idx) => {
+      const div = document.createElement('div');
+      div.textContent = serial;
+      div.className = 'dropdown-item' + (idx === selectedIndex ? ' active' : '');
+      div.addEventListener('mousedown', function(e) {
+        e.preventDefault();
+        input.value = serial;
+        suggestionBox.style.display = 'none';
+      });
+      div.addEventListener('touchstart', function(e) {
+        e.preventDefault();
+        input.value = serial;
+        suggestionBox.style.display = 'none';
+      });
+      suggestionBox.appendChild(div);
+    });
+    suggestionBox.style.display = 'block';
+  }
+
+  function fetchAndShowSuggestions(query) {
+    if (query.length < 2) {
+      showSuggestions([]);
+      return;
+    }
+    fetch('/api/available-battery-serials/')
+      .then(response => response.json())
+      .then(data => {
+        if (data.serials && Array.isArray(data.serials)) {
+          currentSuggestions = data.serials.filter(serial => serial.toLowerCase().includes(query.toLowerCase()));
+          selectedIndex = -1;
+          showSuggestions(currentSuggestions);
+        } else {
+          showSuggestions([]);
+        }
+      })
+      .catch(err => {
+        showSuggestions([]);
+      });
+  }
+
+  input.addEventListener('input', function() {
+    fetchAndShowSuggestions(input.value);
+  });
+
+  input.addEventListener('focus', function() {
+    fetchAndShowSuggestions(input.value);
+  });
+
+  input.addEventListener('blur', function() {
+    setTimeout(() => suggestionBox.style.display = 'none', 120);
+  });
+
+  // Keyboard navigation (desktop)
+  input.addEventListener('keydown', function(e) {
+    if (!currentSuggestions.length) return;
+    if (e.key === 'ArrowDown') {
+      selectedIndex = (selectedIndex + 1) % currentSuggestions.length;
+      showSuggestions(currentSuggestions);
+      e.preventDefault();
+    } else if (e.key === 'ArrowUp') {
+      selectedIndex = (selectedIndex - 1 + currentSuggestions.length) % currentSuggestions.length;
+      showSuggestions(currentSuggestions);
+      e.preventDefault();
+    } else if (e.key === 'Enter') {
+      if (selectedIndex >= 0 && selectedIndex < currentSuggestions.length) {
+        input.value = currentSuggestions[selectedIndex];
+        suggestionBox.style.display = 'none';
+        e.preventDefault();
+      }
+    }
+  });
+})();
 </script>
 
 </body>

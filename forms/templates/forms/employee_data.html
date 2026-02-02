@@ -478,6 +478,113 @@
                 font-size: 14px;
             }
         }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.6);
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 30px;
+            border: none;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 700px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideDown 0.3s;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .modal-header h2 {
+            color: #667eea;
+            font-size: 22px;
+            margin: 0;
+        }
+
+        .close {
+            color: #aaa;
+            font-size: 32px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.2s;
+            line-height: 1;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: #667eea;
+        }
+
+        .modal-body {
+            color: #333;
+            font-size: 16px;
+            line-height: 1.8;
+            max-height: 500px;
+            overflow-y: auto;
+            padding: 10px;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+
+        .clickable-cell {
+            cursor: pointer;
+            position: relative;
+        }
+
+        .clickable-cell:hover {
+            background-color: #f0f0ff !important;
+            text-decoration: underline;
+        }
+
+        .clickable-cell::after {
+            content: "🔍";
+            position: absolute;
+            right: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 12px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .clickable-cell:hover::after {
+            opacity: 0.6;
+        }
     </style>
 </head>
 <body>
@@ -506,7 +613,6 @@
                     🔧 Repairing Forms
                     <span class="count-badge">{{ repairing_forms.count }}</span>
                 </h2>
-                
                 <!-- Filters for Repairing -->
                 <div class="tab-filters">
                     <form method="GET" id="repairing-filter-form">
@@ -532,52 +638,64 @@
                             </div>
                         </div>
                     </form>
-                </div>
-                
+                  </div>
                 <div class="tab-export">
-                    <a href="{% url 'forms:export_employee_data' 'repairing' 'csv' %}?repairing_date_from={{ repairing_date_from }}&repairing_date_to={{ repairing_date_to }}&repairing_search={{ repairing_search }}" class="export-btn">
-                        📄 Export CSV
-                    </a>
-                    <a href="{% url 'forms:export_employee_data' 'repairing' 'xlsx' %}?repairing_date_from={{ repairing_date_from }}&repairing_date_to={{ repairing_date_to }}&repairing_search={{ repairing_search }}" class="export-btn xlsx">
-                        📊 Export Excel
-                    </a>
+                    <a href="{% url 'forms:export_employee_data' 'repairing' 'csv' %}?repairing_date_from={{ repairing_date_from }}&repairing_date_to={{ repairing_date_to }}&repairing_search={{ repairing_search }}" class="export-btn">📄 Export CSV</a>
+                    <a href="{% url 'forms:export_employee_data' 'repairing' 'xlsx' %}?repairing_date_from={{ repairing_date_from }}&repairing_date_to={{ repairing_date_to }}&repairing_search={{ repairing_search }}" class="export-btn xlsx">📊 Export Excel</a>
                 </div>
                 {% if repairing_forms %}
                 <div class="scrollable">
                     <table>
                         <thead>
                             <tr>
-                                <th>Case Number</th>
-                                <th>Customer</th>
-                                <th>Object</th>
+                                <th>Repaired On</th>
+                                <th>Customer Abbreviation</th>
+                                <th>Repairing Object</th>
                                 <th>Inverter ID</th>
+                                <th>Battery ID</th>
+                                <th>PCB Serial Number</th>
+                                <th>Inverter Specifications</th>
+                                <th>Inverter Ratings</th>
+                                <th>PCB Specification</th>
+                                <th>PCB Rating</th>
+                                <th>Battery Model</th>
+                                <th>Fault Problems</th>
+                                <th>Fault Description</th>
+                                <th>Fault Location</th>
+                                <th>Repair Content</th>
                                 <th>Repaired By</th>
                                 <th>Tested By</th>
-                                <th>Date</th>
-                                <th>Status</th>
-                                <th>Actions</th>
+                                <th>Filled By</th>
+                            <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for form in repairing_forms %}
+                            {% if form.user and form.user.id == user.id %}
                             <tr{% if form.duplicate_count %} class="duplicate-row"{% endif %}>
-                                <td>{{ form.case_number }}</td>
+                                <td>{{ form.repaired_on_date|date:"d M Y" }}</td>
                                 <td>{{ form.customer_abbrev }}</td>
                                 <td>{{ form.repairing_object }}</td>
-                                <td>
-                                    {{ form.inverter_id|truncatewords:3 }}
-                                    {% if form.duplicate_count %}
-                                    <span class="duplicate-badge" title="This serial appears {{ form.duplicate_count }} times">×{{ form.duplicate_count }}</span>
-                                    {% endif %}
-                                </td>
+                                <td>{{ form.inverter_id }}</td>
+                                <td>{{ form.battery_id }}</td>
+                                <td>{{ form.pcb_serial_number }}</td>
+                                <td>{{ form.inverter_spec }}</td>
+                                <td>{{ form.inverter_rating }}</td>
+                                <td>{{ form.pcb_specification }}</td>
+                                <td>{{ form.pcb_rating }}</td>
+                                <td>{{ form.battery }}</td>
+                                <td>{{ form.fault_problems }}</td>
+                                <td>{{ form.fault_description }}</td>
+                                <td>{{ form.fault_location }}</td>
+                                <td>{{ form.repair_content }}</td>
                                 <td>{{ form.repaired_by }}</td>
                                 <td>{{ form.tested_by }}</td>
-                                <td>{{ form.repaired_on_date|date:"d M Y" }}</td>
-                                <td>{{ form.remark|default:"Completed" }}</td>
+                                <td>{% if form.user %}{{ form.user.get_full_name|default:form.user.username }}{% else %}-{% endif %}</td>
                                 <td>
                                     <a href="{% url 'forms:edit_employee_form' 'repairing' form.id %}" class="edit-btn">✏️ Edit</a>
                                 </td>
                             </tr>
+                            {% endif %}
                             {% endfor %}
                         </tbody>
                     </table>
@@ -593,7 +711,6 @@
                     📥 Inward Forms
                     <span class="count-badge">{{ inward_forms.count }}</span>
                 </h2>
-                
                 <!-- Filters for Inward -->
                 <div class="tab-filters">
                     <form method="GET" id="inward-filter-form">
@@ -620,7 +737,6 @@
                         </div>
                     </form>
                 </div>
-                
                 <div class="tab-export">
                     <a href="{% url 'forms:export_employee_data' 'inward' 'csv' %}?inward_date_from={{ inward_date_from }}&inward_date_to={{ inward_date_to }}&inward_search={{ inward_search }}" class="export-btn">
                         📄 Export CSV
@@ -634,35 +750,62 @@
                     <table>
                         <thead>
                             <tr>
-                                <th>Customer</th>
+                                <th>Date</th>
+                                <th>Inward Object</th>
+                                <th>Customer Abbreviation</th>
+                                <th>Customer Name</th>
                                 <th>Inverter ID</th>
-                                <th>From Location</th>
+                                <th>Battery ID</th>
+                                <th>PCB Serial Number</th>
+                                <th>Inverter Specification</th>
+                                <th>Inverter Ratings</th>
+                                <th>Battery Model</th>
+                                <th>No of MPPT</th>
+                                <th>Current/MPPT</th>
+                                <th>PCB Quantity</th>
+                                <th>Received From Location</th>
+                                <th>Received From District</th>
+                                <th>Received From State</th>
+                                <th>Pincode</th>
                                 <th>Received By</th>
                                 <th>Reason</th>
-                                <th>AWB/LR</th>
-                                <th>Date</th>
+                                <th>Transportation Mode</th>
+                                <th>AWB Number</th>
+                                <th>Filled By</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for form in inward_forms %}
+                            {% if form.user and form.user.id == user.id %}
                             <tr{% if form.duplicate_count %} class="duplicate-row"{% endif %}>
+                                <td>{{ form.created_at|date:"d M Y" }}</td>
+                                <td>{{ form.inward_object }}</td>
+                                <td>{{ form.customer_abbrev }}</td>
                                 <td>{{ form.customer_name }}</td>
-                                <td>
-                                    {{ form.inverter_id }}
-                                    {% if form.duplicate_count %}
-                                    <span class="duplicate-badge" title="This serial appears {{ form.duplicate_count }} times">×{{ form.duplicate_count }}</span>
-                                    {% endif %}
-                                </td>
-                                <td>{{ form.received_from_location }}, {{ form.received_from_state }}</td>
+                                <td>{{ form.inverter_id }}</td>
+                                <td>{{ form.battery_id }}</td>
+                                <td>{{ form.pcb_serial_number }}</td>
+                                <td>{{ form.inverter_specs }}</td>
+                                <td>{{ form.inverter_ratings }}</td>
+                                <td>{{ form.battery }}</td>
+                                <td>{{ form.no_of_mppt }}</td>
+                                <td>{{ form.current_mppt }}</td>
+                                <td>{{ form.pcb_quantity }}</td>
+                                <td>{{ form.received_from_location }}</td>
+                                <td>{{ form.received_from_district }}</td>
+                                <td>{{ form.received_from_state }}</td>
+                                <td>{{ form.pincode }}</td>
                                 <td>{{ form.received_by }}</td>
                                 <td>{{ form.reason }}</td>
+                                <td>{{ form.transportation_mode }}</td>
                                 <td>{{ form.awb_lr_number }}</td>
-                                <td>{{ form.created_at|date:"d M Y" }}</td>
+                                <td>{% if form.user %}{{ form.user.get_full_name|default:form.user.username }}{% else %}-{% endif %}</td>
                                 <td>
                                     <a href="{% url 'forms:edit_employee_form' 'inward' form.id %}" class="edit-btn">✏️ Edit</a>
                                 </td>
                             </tr>
+                            {% endif %}
                             {% endfor %}
                         </tbody>
                     </table>
@@ -731,6 +874,7 @@
                         </thead>
                         <tbody>
                             {% for form in outward_forms %}
+                            {% if form.user and form.user.id == user.id %}
                             <tr{% if form.duplicate_count %} class="duplicate-row"{% endif %}>
                                 <td>
                                     {{ form.inverter_id_outward }}
@@ -748,6 +892,7 @@
                                     <a href="{% url 'forms:edit_employee_form' 'outward' form.id %}" class="edit-btn">✏️ Edit</a>
                                 </td>
                             </tr>
+                            {% endif %}
                             {% endfor %}
                         </tbody>
                     </table>
@@ -804,35 +949,97 @@
                     <table>
                         <thead>
                             <tr>
+                                <th>Submission Date</th>
                                 <th>Engineer</th>
                                 <th>Customer</th>
                                 <th>Product Type</th>
                                 <th>Serial Number</th>
                                 <th>Service Date</th>
-                                <th>Location</th>
-                                <th>Created</th>
+                                <th>Inverter Capacity</th>
+                                <th>PV Capacity (KW)</th>
+                                <th>No of MPPT</th>
+                                <th>DC Side PV Data</th>
+                                <th>AC Side Data</th>
+                                <th>Address</th>
+                                <th>Phone</th>
+                                <th>Email</th>
+                                <th>LCD Version</th>
+                                <th>MCU Version</th>
+                                <th>Battery Type</th>
+                                <th>Battery Make</th>
+                                <th>Battery Voltage</th>
+                                <th>Protocol</th>
+                                <th>Conclusion</th>
+                                <th>Customer Ratings</th>
+                                <th>Physical Observation</th>
+                                <th>Actual Work Done</th>
+                                <th>Cause of Failure</th>
+                                <th>AC Cable Size</th>
+                                <th>Filled By</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for form in service_forms %}
+                            {% if form.user and form.user.id == user.id %}
                             <tr{% if form.duplicate_count %} class="duplicate-row"{% endif %}>
-                                <td>{{ form.engineer_first_name }} {{ form.engineer_last_name }}</td>
+                                <td>{{ form.created_at|date:"d M Y" }}</td>
+                                <td><strong>{{ form.engineer_first_name }} {{ form.engineer_last_name }}</strong></td>
                                 <td>{{ form.customer_first_name }} {{ form.customer_last_name }}</td>
                                 <td>{{ form.product_type }}</td>
                                 <td>
-                                    {{ form.serial_number }}
+                                    <code style="background: #f0f0f0; padding: 4px 6px; border-radius: 3px;">{{ form.serial_number }}</code>
                                     {% if form.duplicate_count %}
                                     <span class="duplicate-badge" title="This serial appears {{ form.duplicate_count }} times">×{{ form.duplicate_count }}</span>
                                     {% endif %}
                                 </td>
-                                <td>{{ form.date_of_service|date:"d M Y"|default:"N/A" }}</td>
-                                <td>{{ form.address_city }}, {{ form.address_state }}</td>
-                                <td>{{ form.created_at|date:"d M Y" }}</td>
+                                <td>{{ form.date_of_service|date:"d M Y"|default:"—" }}</td>
+                                <td>{{ form.inverter_capacity }}</td>
+                                <td>{{ form.pv_capacity_kw }} KW</td>
+                                <td>{{ form.no_of_mppt }}</td>
+                                <td class="clickable-cell" style="text-align: center;" onclick="showPVData({{ form.id }}, {{ form.pv_data|safe }})">
+                                    {% if form.pv_data %}
+                                    <span style="background: #4ade80; color: white; padding: 4px 12px; border-radius: 4px; font-size: 12px; cursor: pointer;">📊 View PV Data</span>
+                                    {% else %}
+                                    <span style="color: #999;">—</span>
+                                    {% endif %}
+                                </td>
+                                <td class="clickable-cell" style="text-align: center;" onclick="showACData({{ form.id }}, {{ form.ac_data|safe }})">
+                                    {% if form.ac_data %}
+                                    <span style="background: #3b82f6; color: white; padding: 4px 12px; border-radius: 4px; font-size: 12px; cursor: pointer;">⚡ View AC Data</span>
+                                    {% else %}
+                                    <span style="color: #999;">—</span>
+                                    {% endif %}
+                                </td>
+                                <td class="clickable-cell" style="max-width: 120px; overflow: hidden; text-overflow: ellipsis;" title="{{ form.address_street }}, {{ form.address_city }}, {{ form.address_state }}" onclick="showFullContent('Full Address', '{{ form.address_street }}, {{ form.address_city }}, {{ form.address_state }}, {{ form.address_zip }}')">{{ form.address_city }}, {{ form.address_state }}</td>
+                                <td>{{ form.phone_number }}</td>
+                                <td>{{ form.email }}</td>
+                                <td>{{ form.lcd_version }}</td>
+                                <td>{{ form.mcu_version }}</td>
+                                <td>{{ form.battery_type|default:"—" }}</td>
+                                <td>{{ form.battery_make|default:"—" }}</td>
+                                <td>{{ form.battery_voltage|default:"—" }}</td>
+                                <td>{{ form.protocol }}</td>
+                                <td class="clickable-cell" onclick="showFullContent('Conclusion', '{{ form.conclusion }}')">
+                                    {% if "OK" in form.conclusion or "Working" in form.conclusion %}
+                                    <span style="background: #10b981; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">✓ {{ form.conclusion|truncatewords:2 }}</span>
+                                    {% elif "Repair" in form.conclusion %}
+                                    <span style="background: #f59e0b; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">⚠ {{ form.conclusion|truncatewords:2 }}</span>
+                                    {% else %}
+                                    <span style="background: #ef4444; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">✗ {{ form.conclusion|truncatewords:2 }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ form.customer_ratings|default:"—" }}</td>
+                                <td class="clickable-cell" style="max-width: 120px; overflow: hidden; text-overflow: ellipsis;" title="{{ form.physical_observation }}" onclick="showFullContent('Physical Observation', '{{ form.physical_observation }}')">{{ form.physical_observation|truncatewords:3 }}</td>
+                                <td class="clickable-cell" style="max-width: 120px; overflow: hidden; text-overflow: ellipsis;" title="{{ form.actual_work_done }}" onclick="showFullContent('Actual Work Done', '{{ form.actual_work_done }}')">{{ form.actual_work_done|truncatewords:3 }}</td>
+                                <td class="clickable-cell" style="max-width: 120px; overflow: hidden; text-overflow: ellipsis;" title="{{ form.cause_of_failure }}" onclick="showFullContent('Cause of Failure', '{{ form.cause_of_failure }}')">{{ form.cause_of_failure|truncatewords:3 }}</td>
+                                <td>{{ form.ac_cable_size|default:"—" }}</td>
+                                <td>{% if form.user %}{{ form.user.get_full_name|default:form.user.username }}{% else %}-{% endif %}</td>
                                 <td>
                                     <a href="{% url 'forms:edit_employee_form' 'service' form.id %}" class="edit-btn">✏️ Edit</a>
                                 </td>
                             </tr>
+                            {% endif %}
                             {% endfor %}
                         </tbody>
                     </table>
@@ -911,6 +1118,7 @@
                         </thead>
                         <tbody>
                             {% for req in stock_requisitions %}
+                            {% if req.user and req.user.id == user.id %}
                             <tr>
                                 <td>{{ req.serial_number }}</td>
                                 <td>{{ req.component_type }}</td>
@@ -925,6 +1133,7 @@
                                 </td>
                                 <td>{{ req.created_at|date:"d M Y" }}</td>
                             </tr>
+                            {% endif %}
                             {% endfor %}
                         </tbody>
                     </table>
@@ -993,6 +1202,7 @@
                         </thead>
                         <tbody>
                             {% for stock in dispatched_stock %}
+                            {% if stock.user and stock.user.id == user.id %}
                             <tr>
                                 <td>{{ stock.serial_number }}</td>
                                 <td>{{ stock.component_type }}</td>
@@ -1003,6 +1213,7 @@
                                 <td>{{ stock.tracking_number }}</td>
                                 <td>{{ stock.dispatch_date|date:"d M Y" }}</td>
                             </tr>
+                            {% endif %}
                             {% endfor %}
                         </tbody>
                     </table>
@@ -1056,6 +1267,130 @@
                 }
             }
         });
+
+        // Modal functionality for viewing full content
+        function showFullContent(title, content) {
+            const modal = document.getElementById('contentModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalBody = document.getElementById('modalBody');
+            
+            modalTitle.textContent = title;
+            modalBody.textContent = content || 'No content available';
+            modal.style.display = 'block';
+        }
+
+        function showPVData(formId, pvData) {
+            const modal = document.getElementById('contentModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalBody = document.getElementById('modalBody');
+            
+            modalTitle.textContent = '📊 DC Side Measurements (PV Data)';
+            
+            if (!pvData || pvData.length === 0) {
+                modalBody.innerHTML = '<p style="color: #999; text-align: center; padding: 20px;">No PV data recorded</p>';
+            } else {
+                let html = '<table style="width: 100%; border-collapse: collapse; margin-top: 10px;">';
+                html += '<thead style="background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%); color: white;">';
+                html += '<tr><th style="padding: 12px; border: 1px solid #ddd;">PV</th>';
+                html += '<th style="padding: 12px; border: 1px solid #ddd;">Voltage (V)</th>';
+                html += '<th style="padding: 12px; border: 1px solid #ddd;">Current (A)</th>';
+                html += '<th style="padding: 12px; border: 1px solid #ddd;">Earthing</th>';
+                html += '<th style="padding: 12px; border: 1px solid #ddd;">PV Panel</th>';
+                html += '<th style="padding: 12px; border: 1px solid #ddd;">Observation</th></tr></thead>';
+                html += '<tbody>';
+                
+                pvData.forEach((row, index) => {
+                    if (row.voltage || row.current || row.earthing || row.panel || row.observation) {
+                        html += `<tr style="background: ${index % 2 === 0 ? '#f9fafb' : 'white'};">`;
+                        html += `<td style="padding: 10px; border: 1px solid #ddd; font-weight: 600;">PV ${index + 1}</td>`;
+                        html += `<td style="padding: 10px; border: 1px solid #ddd;">${row.voltage || '—'}</td>`;
+                        html += `<td style="padding: 10px; border: 1px solid #ddd;">${row.current || '—'}</td>`;
+                        html += `<td style="padding: 10px; border: 1px solid #ddd;">${row.earthing || '—'}</td>`;
+                        html += `<td style="padding: 10px; border: 1px solid #ddd;">${row.panel || '—'}</td>`;
+                        html += `<td style="padding: 10px; border: 1px solid #ddd;">${row.observation || '—'}</td>`;
+                        html += '</tr>';
+                    }
+                });
+                
+                html += '</tbody></table>';
+                modalBody.innerHTML = html;
+            }
+            
+            modal.style.display = 'block';
+        }
+
+        function showACData(formId, acData) {
+            const modal = document.getElementById('contentModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalBody = document.getElementById('modalBody');
+            
+            modalTitle.textContent = '⚡ AC Side Measurements';
+            
+            if (!acData || Object.keys(acData).length === 0) {
+                modalBody.innerHTML = '<p style="color: #999; text-align: center; padding: 20px;">No AC data recorded</p>';
+            } else {
+                let html = '<table style="width: 100%; border-collapse: collapse; margin-top: 10px;">';
+                html += '<thead style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white;">';
+                html += '<tr><th style="padding: 12px; border: 1px solid #ddd;">Phase</th>';
+                html += '<th style="padding: 12px; border: 1px solid #ddd;">Voltage (V)</th>';
+                html += '<th style="padding: 12px; border: 1px solid #ddd;">Current (A)</th>';
+                html += '<th style="padding: 12px; border: 1px solid #ddd;">Earthing</th></tr></thead>';
+                html += '<tbody>';
+                
+                const phaseLabels = {
+                    'R-N': 'R TO N', 'Y-N': 'Y TO N', 'B-N': 'B TO N',
+                    'R-Y': 'R TO Y', 'Y-B': 'Y TO B', 'B-R': 'B TO R', 'N-PE': 'N TO PE'
+                };
+                
+                let index = 0;
+                for (const [phase, data] of Object.entries(acData)) {
+                    if (data.voltage || data.current || data.earthing) {
+                        html += `<tr style="background: ${index % 2 === 0 ? '#f9fafb' : 'white'};">`;
+                        html += `<td style="padding: 10px; border: 1px solid #ddd; font-weight: 600;">${phaseLabels[phase] || phase}</td>`;
+                        html += `<td style="padding: 10px; border: 1px solid #ddd;">${data.voltage || '—'}</td>`;
+                        html += `<td style="padding: 10px; border: 1px solid #ddd;">${data.current || '—'}</td>`;
+                        html += `<td style="padding: 10px; border: 1px solid #ddd;">${data.earthing || '—'}</td>`;
+                        html += '</tr>';
+                        index++;
+                    }
+                }
+                
+                html += '</tbody></table>';
+                modalBody.innerHTML = html;
+            }
+            
+            modal.style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('contentModal').style.display = 'none';
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('contentModal');
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeModal();
+            }
+        });
     </script>
+
+    <!-- Modal for displaying full content -->
+    <div id="contentModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Full Content</h2>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+        </div>
+    </div>
 </body>
 </html>

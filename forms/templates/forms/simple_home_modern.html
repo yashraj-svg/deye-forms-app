@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -398,7 +399,7 @@
 <!-- Header -->
 <div class="header">
     <div class="logo-section">
-        <img src="https://www.deyeinverter.com/template/en/images/logo.png" alt="DEYE">
+        <img src="{% static 'admin/Images/logo-deye-300x225.webp' %}" alt="DEYE">
     </div>
     <div class="user-greeting">
         <div class="user-avatar">{{ request.user.username|slice:":1"|upper }}</div>
@@ -460,7 +461,7 @@
                 <div class="nav-card-title">Team Data</div>
                 <div class="nav-card-desc">View all submissions</div>
             </a>
-            {% elif user.profile.team_members.exists %}
+            {% elif team_members|length > 0 %}
             <a href="{% url 'forms:team_data' %}" class="nav-card">
                 <div class="nav-card-icon">👥</div>
                 <div class="nav-card-title">Team Data</div>

@@ -1,3 +1,139 @@
+from django.contrib.auth.decorators import login_required
+
+# Update New Shipments view (same interface as send_stock)
+from django.http import HttpResponseForbidden
+@login_required
+def update_new_shipments(request):
+    # Restrict access to SnehalShine, Nilesh, or superusers only
+    allowed_users = {"SnehalShine", "Nilesh"}
+    if not (request.user.is_superuser or request.user.username in allowed_users):
+        return HttpResponseForbidden("You do not have permission to access this page.")
+    from django.forms import formset_factory
+    from .forms import StockRequisitionItemForm
+    ItemFormSet = formset_factory(StockRequisitionItemForm, extra=0, can_delete=True)
+
+    if request.method == 'POST':
+        # Step 1: Data entry POST, show confirmation page
+        if 'confirm_update' not in request.POST:
+            item_formset = ItemFormSet(request.POST, prefix='form')
+            if item_formset.is_valid():
+                # Prepare summary data for confirmation, but pass the formset to the template
+                total_qty = 0
+                for form in item_formset:
+                    if form.cleaned_data.get('serial_number') and not form.cleaned_data.get('DELETE'):
+                        qty = form.cleaned_data.get('quantity_received') or 0
+                        total_qty += float(qty)
+                return render(request, 'forms/update_new_shipments_confirm.html', {
+                    'item_formset': item_formset,
+                    'total_qty': total_qty,
+                })
+            else:
+                return render(request, 'forms/update_new_shipments.html', {
+                    'item_formset': item_formset,
+                    'empty_form': item_formset.empty_form,
+                })
+        # Step 2: Confirm Update POST, save to DB
+        else:
+            # Save to DB using the formset so all edits and unique items are saved
+            from .models import StockItem
+            item_formset = ItemFormSet(request.POST, prefix='form')
+            items = []
+            total_qty = 0
+            shipment_date = request.POST.get('shipment_date')
+            if item_formset.is_valid():
+                for form in item_formset:
+                    if form.cleaned_data.get('DELETE'):
+                        continue
+                    sn = form.cleaned_data.get('serial_number')
+                    ct = form.cleaned_data.get('component_type')
+                    desc = form.cleaned_data.get('description')
+                    qty = form.cleaned_data.get('quantity_received') or 0
+                    total_qty += float(qty)
+                    items.append({'serial_number': sn, 'component_type': ct, 'description': desc, 'quantity_received': qty})
+                    StockItem.objects.create(
+                        pcba_sn_new=sn,
+                        component_type=ct,
+                        specification=desc,
+                        quantity=qty,
+                        year=(int(shipment_date[:4]) if shipment_date else 2026),
+                        shipment_date=shipment_date
+                    )
+                return render(request, 'forms/update_new_shipments_confirm.html', {
+                    'items': items,
+                    'total_qty': total_qty,
+                    'shipment_date': shipment_date,
+                    'success_message': 'Shipments confirmed and saved!'
+                })
+            else:
+                # If invalid, return to edit page with errors
+                return render(request, 'forms/update_new_shipments.html', {
+                    'item_formset': item_formset,
+                    'empty_form': item_formset.empty_form,
+                })
+    else:
+        item_formset = ItemFormSet(prefix='form')
+    return render(request, 'forms/update_new_shipments.html', {
+        'item_formset': item_formset,
+        'empty_form': item_formset.empty_form,
+    })
+from django.views.decorators.http import require_GET
+from django.contrib.auth.decorators import login_required
+@login_required
+@require_GET
+def available_battery_serials(request):
+    from django.db.models import Count
+    inward_counts = InwardForm.objects.values('battery_id').annotate(count_inward=Count('id'))
+    outward_counts = OutwardForm.objects.values('battery_id').annotate(count_outward=Count('id'))
+    outward_map = {row['battery_id']: row['count_outward'] for row in outward_counts}
+    available_serials = []
+    for row in inward_counts:
+        serial = row['battery_id']
+        if not serial:
+            continue
+        inward = row['count_inward']
+        outward = outward_map.get(serial, 0)
+        if inward > outward:
+            available_serials.append(serial)
+    return JsonResponse({'serials': available_serials})
+from django.views.decorators.http import require_GET
+import json
+from django.contrib.auth.decorators import login_required
+# API endpoint for available inverter serials (inwarded but not outwarded)
+@login_required
+@require_GET
+def available_inverter_serials(request):
+    # For each inverter_id, count inward and outward occurrences
+    from django.db.models import Count
+    inward_counts = InwardForm.objects.values('inverter_id').annotate(count_inward=Count('id'))
+    outward_counts = OutwardForm.objects.values('inverter_id_outward').annotate(count_outward=Count('id'))
+    outward_map = {row['inverter_id_outward']: row['count_outward'] for row in outward_counts}
+    available_serials = []
+    for row in inward_counts:
+        serial = row['inverter_id']
+        inward = row['count_inward']
+        outward = outward_map.get(serial, 0)
+        if inward > outward:
+            available_serials.append(serial)
+    return JsonResponse({'serials': available_serials})
+from django.db.models import OuterRef, Subquery, Exists
+# Stock Inverters View
+from .models import InwardForm, OutwardForm
+
+from django.contrib.auth.decorators import login_required
+
+@login_required
+def stock_inverters_view(request):
+    # Get all inverter_ids from OutwardForm
+    outward_ids = set(OutwardForm.objects.values_list('inverter_id_outward', flat=True))
+    # Get all InwardForm entries whose inverter_id is NOT in OutwardForm
+    stock_inverters = InwardForm.objects.exclude(inverter_id__in=outward_ids).order_by('-created_at')
+    return render(request, 'forms/stock_inverters.html', {'stock_inverters': stock_inverters})
+# Simple static view for hierarchy page
+from django.contrib.auth.decorators import login_required
+
+@login_required
+def hierarchy_static_view(request):
+    return render(request, 'Include/hierarchy.html')
 from django.shortcuts import render, redirect, get_object_or_404
 from collections import defaultdict
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -36,6 +172,7 @@ from .forms import (
 )
 
 from .calculator import get_all_partner_quotes, QuoteInput
+from .calculator.freight_calculator import ShipmentItem
 from .calculator.data_loader import load_pincode_master, lookup_pincode
 
 
@@ -50,7 +187,10 @@ def simple_home(request):
         is_active=True,
         event_date__gte=today
     ).order_by('event_date')[:6]
-    return render(request, 'forms/simple_home_modern.html', {'events': events})
+    team_members = []
+    if hasattr(request.user, 'profile'):
+        team_members = request.user.profile.get_team_members()
+    return render(request, 'forms/simple_home_modern.html', {'events': events, 'user': request.user, 'team_members': team_members})
 
 
 @login_required
@@ -61,6 +201,9 @@ def stock_home(request):
 
 @login_required
 def received_stock(request):
+    if not request.user.is_superuser:
+        from django.http import HttpResponseForbidden
+        return HttpResponseForbidden("You do not have permission to view received stock.")
     """Received stock dashboard with filtering"""
     from .models import StockItem
     from django.db.models import Q
@@ -173,6 +316,10 @@ def received_stock(request):
 @login_required
 def remaining_stock(request):
     """Remaining stock view - Coming soon"""
+    allowed_users = ['Nilesh', 'SnehalShinde']
+    if not (request.user.is_superuser or request.user.username in allowed_users):
+        from django.http import HttpResponseForbidden
+        return HttpResponseForbidden("You do not have permission to view remaining stock.")
     return render(request, 'forms/remaining_stock.html')
 
 
@@ -252,6 +399,10 @@ def send_stock(request):
 
 @login_required
 def dispatched_stock(request):
+    allowed_users = ['Nilesh', 'SnehalShinde']
+    if not (request.user.is_superuser or request.user.username in allowed_users):
+        from django.http import HttpResponseForbidden
+        return HttpResponseForbidden("You do not have permission to view dispatched stock.")
     """Dispatch approved stock requisitions."""
     if request.method == 'POST':
         try:
@@ -362,7 +513,8 @@ def stock_serial_details(request):
         'pcba_sn_new': item.pcba_sn_new,
         'component_type': item.component_type or '',
         'specification': item.specification or '',
-        'year': item.year
+        'year': item.year,
+        'quantity': float(item.quantity) if item.quantity is not None else 0
     })
 
 
@@ -429,6 +581,10 @@ def forms_data_overview(request):
 @login_required
 def repairing_form_page(request):
     if request.method == 'POST':
+        print('\n[RepairingForm] ===== POST DATA RECEIVED =====')
+        print(f'All POST keys: {list(request.POST.keys())}')
+        print(f'Full POST data: {dict(request.POST.lists())}')
+        
         # Template uses 'Tested_by' instead of 'tested_by'
         data = request.POST.copy()
         if 'Tested_by' in data and 'tested_by' not in data:
@@ -436,11 +592,15 @@ def repairing_form_page(request):
 
         form = RepairingFormForm(data)
         if form.is_valid():
+            print(f'[RepairingForm] Form valid. Cleaned data keys: {list(form.cleaned_data.keys())}')
             instance = form.save(commit=False)
             # Collect multiple checkbox values for fault_problems
             problems = request.POST.getlist('fault_problems')
             instance.fault_problems = problems if problems else []
+            print(f'[RepairingForm] Fault problems captured: {instance.fault_problems}')
+            instance.user = request.user
             instance.save()
+            print(f'[RepairingForm] ✓ Saved successfully. ID: {instance.id}')
             return redirect(f"{request.path}?success=1")
         else:
             print('[RepairingForm] Validation errors:', form.errors.as_json())
@@ -457,9 +617,18 @@ def repairing_form_page(request):
 @login_required
 def inward_form_page(request):
     if request.method == 'POST':
+        print('\n[InwardForm] ===== POST DATA RECEIVED =====')
+        print(f'All POST keys: {list(request.POST.keys())}')
+        print(f'Full POST data: {dict(request.POST.lists())}')
+        
         form = InwardFormForm(request.POST)
         if form.is_valid():
-            form.save()
+            print(f'[InwardForm] Form valid. Cleaned data keys: {list(form.cleaned_data.keys())}')
+            print(f'[InwardForm] Accessories: {form.cleaned_data.get("accessories")}')
+            instance = form.save(commit=False)
+            instance.user = request.user
+            instance.save()
+            print(f'[InwardForm] ✓ Saved successfully. ID: {instance.id}')
             return redirect(f"{request.path}?success=1")
         # Log errors to console for debugging
         print('[InwardForm] Validation errors:', form.errors.as_json())
@@ -474,41 +643,125 @@ def inward_form_page(request):
 
 @login_required
 def outward_form_page(request):
+    # For each inverter_id, count inward and outward occurrences
+    from django.db.models import Count
+    inward_counts = InwardForm.objects.values('inverter_id').annotate(count_inward=Count('id'))
+    outward_counts = OutwardForm.objects.values('inverter_id_outward').annotate(count_outward=Count('id'))
+    outward_map = {row['inverter_id_outward']: row['count_outward'] for row in outward_counts}
+    available_serials = []
+    for row in inward_counts:
+        serial = row['inverter_id']
+        inward = row['count_inward']
+        outward = outward_map.get(serial, 0)
+        if inward > outward:
+            available_serials.append(serial)
     if request.method == 'POST':
+        print('\n[OutwardForm] ===== POST DATA RECEIVED =====')
+        print(f'All POST keys: {list(request.POST.keys())}')
+        print(f'Full POST data: {dict(request.POST.lists())}')
+        
         form = OutwardFormForm(request.POST)
         if form.is_valid():
-            form.save()
+            print(f'[OutwardForm] Form valid. Cleaned data keys: {list(form.cleaned_data.keys())}')
+            print(f'[OutwardForm] Accessories: {form.cleaned_data.get("accessories")}')
+            print(f'[OutwardForm] Control card changed: {form.cleaned_data.get("control_card_changed")}')
+            instance = form.save(commit=False)
+            instance.user = request.user
+            instance.save()
+            print(f'[OutwardForm] ✓ Saved successfully. ID: {instance.id}')
             return redirect(f"{request.path}?success=1")
         print('[OutwardForm] Validation errors:', form.errors.as_json())
         return render(request, 'forms/outward_form.html', {
             'form': form,
             'success': False,
             'form_errors': form.errors,
+            'available_serials': available_serials,
         })
     form = OutwardFormForm()
-    return render(request, 'forms/outward_form.html', {'form': form})
+    return render(request, 'forms/outward_form.html', {'form': form, 'available_serials': available_serials})
 
 
 @login_required
 def service_form_page(request):
     if request.method == 'POST':
+        print('\n[ServiceReportForm] ===== POST DATA RECEIVED =====')
+        print(f'All POST keys: {list(request.POST.keys())}')
+        print(f'Full POST data: {dict(request.POST.lists())}')
+        
         data = request.POST.copy()
         # Map signature hidden inputs to model fields if present
         eng_sig = data.get('engData')
         cust_sig = data.get('custData')
+        print(f'[ServiceReportForm] Engineer signature data present: {bool(eng_sig)}')
+        print(f'[ServiceReportForm] Customer signature data present: {bool(cust_sig)}')
+        
         form = ServiceReportFormForm(data)
         if form.is_valid():
+            print(f'[ServiceReportForm] Form valid. Cleaned data keys: {list(form.cleaned_data.keys())}')
             instance = form.save(commit=False)
+            instance.user = request.user
             if eng_sig:
                 instance.engineer_signature_data = eng_sig
             if cust_sig:
                 instance.customer_signature_data = cust_sig
-            # Initialize PV/AC data if absent
-            if not instance.pv_data:
-                instance.pv_data = []
-            if not instance.ac_data:
-                instance.ac_data = {}
+            
+            # Parse PV data from POST parameters (pv1_voltage, pv1_current, etc.)
+            pv_data = []
+            for i in range(1, 9):  # PV 1-8
+                pv_entry = {
+                    'voltage': data.get(f'pv{i}_voltage', ''),
+                    'current': data.get(f'pv{i}_current', ''),
+                    'earthing': data.get(f'pv{i}_earthing', ''),
+                    'panel': data.get(f'pv{i}_panel', ''),
+                    'observation': data.get(f'pv{i}_observation', ''),
+                }
+                pv_data.append(pv_entry)
+            instance.pv_data = pv_data
+            print(f'[ServiceReportForm] PV data captured: {instance.pv_data}')
+            
+            # Parse AC data from POST parameters (ac_rn_voltage, ac_yn_voltage, etc.)
+            ac_data = {
+                'R-N': {
+                    'voltage': data.get('ac_rn_voltage', ''),
+                    'current': data.get('ac_rn_current', ''),
+                    'earthing': data.get('ac_rn_earthing', ''),
+                },
+                'Y-N': {
+                    'voltage': data.get('ac_yn_voltage', ''),
+                    'current': data.get('ac_yn_current', ''),
+                    'earthing': data.get('ac_yn_earthing', ''),
+                },
+                'B-N': {
+                    'voltage': data.get('ac_bn_voltage', ''),
+                    'current': data.get('ac_bn_current', ''),
+                    'earthing': data.get('ac_bn_earthing', ''),
+                },
+                'R-Y': {
+                    'voltage': data.get('ac_ry_voltage', ''),
+                    'current': data.get('ac_ry_current', ''),
+                    'earthing': data.get('ac_ry_earthing', ''),
+                },
+                'Y-B': {
+                    'voltage': data.get('ac_yb_voltage', ''),
+                    'current': data.get('ac_yb_current', ''),
+                    'earthing': data.get('ac_yb_earthing', ''),
+                },
+                'B-R': {
+                    'voltage': data.get('ac_br_voltage', ''),
+                    'current': data.get('ac_br_current', ''),
+                    'earthing': data.get('ac_br_earthing', ''),
+                },
+                'N-PE': {
+                    'voltage': data.get('ac_npe_voltage', ''),
+                    'current': data.get('ac_npe_current', ''),
+                    'earthing': data.get('ac_npe_earthing', ''),
+                },
+            }
+            instance.ac_data = ac_data
+            print(f'[ServiceReportForm] AC data captured: {instance.ac_data}')
+            
             instance.save()
+            print(f'[ServiceReportForm] ✓ Saved successfully. ID: {instance.id}')
             return redirect(f"{request.path}?success=1")
         print('[ServiceReportForm] Validation errors:', form.errors.as_json())
         return render(request, 'forms/service_form.html', {
@@ -520,7 +773,7 @@ def service_form_page(request):
     return render(request, 'forms/service_form.html', {'form': form})
 
 
-
+@login_required
 def hierarchy_details(request):
     # Minimal hierarchy logic only
     from collections import defaultdict
@@ -550,20 +803,75 @@ def freight_calculator(request):
     
     if request.method == 'POST':
         form = FreightCalculatorForm(request.POST)
+        
+        # DEBUG: Log all POST data received
+        print("=" * 80)
+        print("FREIGHT CALCULATOR - POST DATA RECEIVED:")
+        print("=" * 80)
+        for key, value in request.POST.items():
+            if key != 'csrfmiddlewaretoken':
+                print(f"  {key}: {value}")
+        print("=" * 80)
+        
         if form.is_valid():
             data = form.cleaned_data
+            
+            # DEBUG: Log cleaned data
+            print("\nCLEANED FORM DATA:")
+            print("-" * 80)
+            for key, value in data.items():
+                print(f"  {key}: {value}")
+            print("-" * 80)
+            
+            # Build items list from form data (multiple items support)
+            items = []
+            item_index = 0
+            while True:
+                weight_key = f'weight_kg_{item_index}' if item_index > 0 else 'weight_kg'
+                length_key = f'length_cm_{item_index}' if item_index > 0 else 'length_cm'
+                breadth_key = f'breadth_cm_{item_index}' if item_index > 0 else 'breadth_cm'
+                height_key = f'height_cm_{item_index}' if item_index > 0 else 'height_cm'
+                
+                # Check if this item exists in POST data
+                if weight_key in request.POST or (item_index == 0 and 'weight_kg' in data):
+                    weight = float(request.POST.get(weight_key, data.get('weight_kg', 0)))
+                    length = float(request.POST.get(length_key, data.get('length_cm', 0)))
+                    breadth = float(request.POST.get(breadth_key, data.get('breadth_cm', 0)))
+                    height = float(request.POST.get(height_key, data.get('height_cm', 0)))
+                    
+                    print(f"\nITEM {item_index}: weight={weight}kg, L={length}cm, B={breadth}cm, H={height}cm")
+                    
+                    if weight > 0 and length > 0 and breadth > 0 and height > 0:
+                        items.append(ShipmentItem(
+                            weight_kg=weight,
+                            length_cm=length,
+                            breadth_cm=breadth,
+                            height_cm=height,
+                        ))
+                    item_index += 1
+                else:
+                    break
+            
+            print(f"\nTOTAL ITEMS CREATED: {len(items)}")
+            print("=" * 80)
+            
+            # If no items were added, create one from main form fields
+            if not items:
+                items = [ShipmentItem(
+                    weight_kg=data['weight_kg'],
+                    length_cm=data['length_cm'],
+                    breadth_cm=data['breadth_cm'],
+                    height_cm=data['height_cm'],
+                )]
+            
             q = QuoteInput(
                 from_pincode=data['from_pincode'],
                 to_pincode=data['to_pincode'],
-                weight_kg=data['weight_kg'],
-                length_cm=data['length_cm'],
-                breadth_cm=data['breadth_cm'],
-                height_cm=data['height_cm'],
+                items=items,
                 reverse_pickup=data.get('reverse_pickup') or False,
                 insured_value=data.get('insured_value') or 0.0,
                 days_in_transit_storage=data.get('days_in_transit_storage') or 0,
-                pieces_max_weight_kg=data.get('pieces_max_weight_kg') or 0.0,
-                longest_side_cm=data.get('longest_side_cm') or 0.0,
+                gst_mode=data.get('gst_mode', '12pct'),
             )
             try:
                 # Check if pincodes exist in database
@@ -585,8 +893,15 @@ def freight_calculator(request):
                             r.surcharges.setdefault(k, 0.0)
             except Exception as exc:
                 error = f"Calculator error: {exc}"
+                print(f"\n❌ CALCULATOR ERROR: {exc}")
+                print("=" * 80)
         else:
             error = 'Please correct the errors below.'
+            print("\n❌ FORM VALIDATION ERRORS:")
+            print("-" * 80)
+            for field, errors in form.errors.items():
+                print(f"  {field}: {', '.join(errors)}")
+            print("=" * 80)
     else:
         form = FreightCalculatorForm()
 
@@ -1175,11 +1490,8 @@ def employee_data_view(request):
     stock_disp_date_to = request.GET.get('stock_disp_date_to', '')
     stock_disp_search = request.GET.get('stock_disp_search', '')
     
-    # Repairing Forms
-    repairing_forms = RepairingForm.objects.filter(
-        Q(repaired_by__icontains=user_name) | 
-        Q(tested_by__icontains=user_name)
-    )
+    # Repairing Forms (show only forms filled by the logged-in user)
+    repairing_forms = RepairingForm.objects.filter(user=user)
     if repairing_date_from:
         from_date = datetime.strptime(repairing_date_from, '%Y-%m-%d')
         repairing_forms = repairing_forms.filter(created_at__gte=from_date)
@@ -1195,11 +1507,8 @@ def employee_data_view(request):
         )
     repairing_forms = repairing_forms.order_by('-created_at')
     
-    # Inward Forms
-    inward_forms = InwardForm.objects.filter(
-        Q(email=user_email) | 
-        Q(received_by__icontains=user_name)
-    )
+    # Inward Forms (show only forms filled by the logged-in user)
+    inward_forms = InwardForm.objects.filter(user=user)
     if inward_date_from:
         from_date = datetime.strptime(inward_date_from, '%Y-%m-%d')
         inward_forms = inward_forms.filter(created_at__gte=from_date)
@@ -1215,11 +1524,8 @@ def employee_data_view(request):
         )
     inward_forms = inward_forms.order_by('-created_at')
     
-    # Outward Forms
-    outward_forms = OutwardForm.objects.filter(
-        Q(sent_by__icontains=user_name) | 
-        Q(approved_by__icontains=user_name)
-    )
+    # Outward Forms (show only forms filled by the logged-in user)
+    outward_forms = OutwardForm.objects.filter(user=user)
     if outward_date_from:
         from_date = datetime.strptime(outward_date_from, '%Y-%m-%d')
         outward_forms = outward_forms.filter(created_at__gte=from_date)
@@ -1235,8 +1541,9 @@ def employee_data_view(request):
         )
     outward_forms = outward_forms.order_by('-created_at')
     
-    # Service Report Forms
+    # Service Report Forms (show only forms filled by the logged-in user)
     service_forms = ServiceReportForm.objects.filter(
+        Q(user=user) |
         Q(email=user_email) |
         Q(engineer_first_name__icontains=user.first_name, engineer_last_name__icontains=user.last_name)
     )
@@ -1255,10 +1562,8 @@ def employee_data_view(request):
         )
     service_forms = service_forms.order_by('-created_at')
     
-    # Stock Requisitions
-    stock_requisitions = StockRequisition.objects.filter(
-        manager_name__icontains=user_name
-    )
+    # Stock Requisitions (show only forms filled by the logged-in user)
+    stock_requisitions = StockRequisition.objects.filter(user=user)
     if stock_req_date_from:
         from_date = datetime.strptime(stock_req_date_from, '%Y-%m-%d')
         stock_requisitions = stock_requisitions.filter(created_at__gte=from_date)
@@ -1277,10 +1582,8 @@ def employee_data_view(request):
     stock_requisitions = stock_requisitions.order_by('-created_at')
     
     # Dispatched Stock
-    dispatched_stock = DispatchedStock.objects.filter(
-        Q(dispatched_by__icontains=user_name) |
-        Q(engineer_name__icontains=user_name)
-    )
+    # Dispatched Stock (show only forms filled by the logged-in user)
+    dispatched_stock = DispatchedStock.objects.filter(user=user)
     if stock_disp_date_from:
         from_date = datetime.strptime(stock_disp_date_from, '%Y-%m-%d')
         dispatched_stock = dispatched_stock.filter(created_at__gte=from_date)
@@ -1300,21 +1603,52 @@ def employee_data_view(request):
     from collections import Counter
     
     # Count duplicates separately for each form type (excluding stock forms)
-    repairing_serials = Counter(repairing_forms.values_list('inverter_id', flat=True))
-    inward_serials = Counter(inward_forms.values_list('inverter_id', flat=True))
-    outward_serials = Counter(outward_forms.values_list('inverter_id_outward', flat=True))
+    # Build counters by object type for each form
+    repairing_inv = Counter(f.inverter_id for f in repairing_forms if f.repairing_object == 'Inverter' and f.inverter_id)
+    repairing_bat = Counter(f.battery_id for f in repairing_forms if f.repairing_object == 'Battery' and f.battery_id)
+    repairing_pcb = Counter(f.pcb_serial_number for f in repairing_forms if f.repairing_object == 'PCB' and f.pcb_serial_number)
+
+    inward_inv = Counter(f.inverter_id for f in inward_forms if f.inward_object == 'Inverter' and f.inverter_id)
+    inward_bat = Counter(f.battery_id for f in inward_forms if f.inward_object == 'Battery' and f.battery_id)
+    inward_pcb = Counter(f.pcb_serial_number for f in inward_forms if f.inward_object == 'PCB' and f.pcb_serial_number)
+
+    outward_inv = Counter(f.inverter_id_outward for f in outward_forms if f.outward_object == 'Inverter' and f.inverter_id_outward)
+    outward_bat = Counter(f.battery_id for f in outward_forms if f.outward_object == 'Battery' and f.battery_id)
+    outward_pcb = Counter(f.pcb_serial_number for f in outward_forms if f.outward_object == 'PCB' and f.pcb_serial_number)
+
     service_serials = Counter(service_forms.values_list('serial_number', flat=True))
-    
-    # Annotate each object with duplicate count (only within its own form type)
+
+    # Annotate each object with duplicate count (only within its own form type/object type)
     for form in repairing_forms:
-        form.duplicate_count = repairing_serials.get(form.inverter_id, 0) if repairing_serials.get(form.inverter_id, 0) > 1 else 0
-    
+        if form.repairing_object == 'Inverter':
+            form.duplicate_count = repairing_inv.get(form.inverter_id, 0) if repairing_inv.get(form.inverter_id, 0) > 1 else 0
+        elif form.repairing_object == 'Battery':
+            form.duplicate_count = repairing_bat.get(form.battery_id, 0) if repairing_bat.get(form.battery_id, 0) > 1 else 0
+        elif form.repairing_object == 'PCB':
+            form.duplicate_count = repairing_pcb.get(form.pcb_serial_number, 0) if repairing_pcb.get(form.pcb_serial_number, 0) > 1 else 0
+        else:
+            form.duplicate_count = 0
+
     for form in inward_forms:
-        form.duplicate_count = inward_serials.get(form.inverter_id, 0) if inward_serials.get(form.inverter_id, 0) > 1 else 0
-    
+        if form.inward_object == 'Inverter':
+            form.duplicate_count = inward_inv.get(form.inverter_id, 0) if inward_inv.get(form.inverter_id, 0) > 1 else 0
+        elif form.inward_object == 'Battery':
+            form.duplicate_count = inward_bat.get(form.battery_id, 0) if inward_bat.get(form.battery_id, 0) > 1 else 0
+        elif form.inward_object == 'PCB':
+            form.duplicate_count = inward_pcb.get(form.pcb_serial_number, 0) if inward_pcb.get(form.pcb_serial_number, 0) > 1 else 0
+        else:
+            form.duplicate_count = 0
+
     for form in outward_forms:
-        form.duplicate_count = outward_serials.get(form.inverter_id_outward, 0) if outward_serials.get(form.inverter_id_outward, 0) > 1 else 0
-    
+        if form.outward_object == 'Inverter':
+            form.duplicate_count = outward_inv.get(form.inverter_id_outward, 0) if outward_inv.get(form.inverter_id_outward, 0) > 1 else 0
+        elif form.outward_object == 'Battery':
+            form.duplicate_count = outward_bat.get(form.battery_id, 0) if outward_bat.get(form.battery_id, 0) > 1 else 0
+        elif form.outward_object == 'PCB':
+            form.duplicate_count = outward_pcb.get(form.pcb_serial_number, 0) if outward_pcb.get(form.pcb_serial_number, 0) > 1 else 0
+        else:
+            form.duplicate_count = 0
+
     for form in service_forms:
         form.duplicate_count = service_serials.get(form.serial_number, 0) if service_serials.get(form.serial_number, 0) > 1 else 0
     
@@ -1365,31 +1699,26 @@ def edit_employee_form(request, form_type, form_id):
     # Get the appropriate form based on type
     if form_type == 'repairing':
         form_obj = get_object_or_404(RepairingForm, id=form_id)
-        # Check permission
-        if user_name not in form_obj.repaired_by and user_name not in form_obj.tested_by:
-            return HttpResponseForbidden("You don't have permission to edit this form")
         form_class = RepairingFormForm
         redirect_url = 'forms:my_data'
     elif form_type == 'inward':
         form_obj = get_object_or_404(InwardForm, id=form_id)
-        if user.email != form_obj.email and user_name not in form_obj.received_by:
-            return HttpResponseForbidden("You don't have permission to edit this form")
         form_class = InwardFormForm
         redirect_url = 'forms:my_data'
     elif form_type == 'outward':
         form_obj = get_object_or_404(OutwardForm, id=form_id)
-        if user_name not in form_obj.sent_by and user_name not in form_obj.approved_by:
-            return HttpResponseForbidden("You don't have permission to edit this form")
         form_class = OutwardFormForm
         redirect_url = 'forms:my_data'
     elif form_type == 'service':
         form_obj = get_object_or_404(ServiceReportForm, id=form_id)
-        if user.email != form_obj.email:
-            return HttpResponseForbidden("You don't have permission to edit this form")
         form_class = ServiceReportFormForm
         redirect_url = 'forms:my_data'
     else:
         return HttpResponseForbidden("Invalid form type")
+
+    # Only allow editing if the logged-in user filled the form, or is a superuser
+    if not (form_obj.user == user or user.is_superuser):
+        return HttpResponseForbidden("You don't have permission to edit this form")
     
     if request.method == 'POST':
         form = form_class(request.POST, instance=form_obj)
@@ -1416,15 +1745,18 @@ def export_employee_data(request, form_type, format):
     user_name = user.get_full_name() or user.username
     user_email = user.email
     
-    # Get forms based on type with tab-specific filters
+    # Get forms based on type with tab-specific filters (user's own entries only, but fields/headers match Team Data export)
+    def get_user_display(obj):
+        if hasattr(obj, 'user') and obj.user:
+            return obj.user.get_full_name() or obj.user.username
+        return '-'
+
     if form_type == 'repairing':
         date_from = request.GET.get('repairing_date_from', '')
         date_to = request.GET.get('repairing_date_to', '')
         search_query = request.GET.get('repairing_search', '')
-        
         queryset = RepairingForm.objects.filter(
-            Q(repaired_by__icontains=user_name) | 
-            Q(tested_by__icontains=user_name)
+            Q(repaired_by__icontains=user_name) | Q(tested_by__icontains=user_name)
         )
         if date_from:
             from_date = datetime.strptime(date_from, '%Y-%m-%d')
@@ -1441,15 +1773,16 @@ def export_employee_data(request, form_type, format):
             )
         queryset = queryset.order_by('-created_at')
         filename_prefix = "repairing_forms"
-        
+        headers = [
+            'Date', 'Case Number', 'Customer', 'Object', 'Inverter ID', 'PCB Serial Number', 'PCB Specification', 'PCB Rating',
+            'Inverter Spec', 'Inverter Rating', 'Battery', 'Fault Location', 'Repair Content', 'Repaired By', 'Tested By', 'Filled By'
+        ]
     elif form_type == 'inward':
         date_from = request.GET.get('inward_date_from', '')
         date_to = request.GET.get('inward_date_to', '')
         search_query = request.GET.get('inward_search', '')
-        
         queryset = InwardForm.objects.filter(
-            Q(email=user_email) | 
-            Q(received_by__icontains=user_name)
+            Q(email=user_email) | Q(received_by__icontains=user_name)
         )
         if date_from:
             from_date = datetime.strptime(date_from, '%Y-%m-%d')
@@ -1466,15 +1799,18 @@ def export_employee_data(request, form_type, format):
             )
         queryset = queryset.order_by('-created_at')
         filename_prefix = "inward_forms"
-        
+        headers = [
+            'Date', 'Inward Object', 'Customer Abbreviation', 'Customer Name', 'Inverter ID', 'Battery ID', 'PCB Serial Number',
+            'Inverter Specification', 'Inverter Ratings', 'Battery Model', 'No of MPPT', 'Current/MPPT', 'PCB Quantity',
+            'Received From Location', 'Received From District', 'Received From State', 'Pincode', 'Received By', 'Reason',
+            'Transportation Mode', 'AWB Number', 'Filled By'
+        ]
     elif form_type == 'outward':
         date_from = request.GET.get('outward_date_from', '')
         date_to = request.GET.get('outward_date_to', '')
         search_query = request.GET.get('outward_search', '')
-        
         queryset = OutwardForm.objects.filter(
-            Q(sent_by__icontains=user_name) | 
-            Q(approved_by__icontains=user_name)
+            Q(sent_by__icontains=user_name) | Q(approved_by__icontains=user_name)
         )
         if date_from:
             from_date = datetime.strptime(date_from, '%Y-%m-%d')
@@ -1491,15 +1827,18 @@ def export_employee_data(request, form_type, format):
             )
         queryset = queryset.order_by('-created_at')
         filename_prefix = "outward_forms"
-        
+        headers = [
+            'Date', 'Outward Object', 'Inverter ID (Outward)', 'Inverter Spec', 'Inverter Rating', 'Battery', 'Battery ID',
+            'Sent To Company', 'Sent To Address', 'Sent To District', 'Sent To State', 'Pincode', 'Sent By', 'Approved By',
+            'Control Card Changed', 'New Serial Number', 'Inverter ID (Inward)', 'Inverter Replaced', 'Delivered Through',
+            'AWB Number', 'Remarks', 'Filled By'
+        ]
     elif form_type == 'service':
         date_from = request.GET.get('service_date_from', '')
         date_to = request.GET.get('service_date_to', '')
         search_query = request.GET.get('service_search', '')
-        
         queryset = ServiceReportForm.objects.filter(
-            Q(email=user_email) |
-            Q(engineer_first_name__icontains=user.first_name, engineer_last_name__icontains=user.last_name)
+            Q(email=user_email) | Q(engineer_first_name__icontains=user.first_name, engineer_last_name__icontains=user.last_name)
         )
         if date_from:
             from_date = datetime.strptime(date_from, '%Y-%m-%d')
@@ -1516,281 +1855,98 @@ def export_employee_data(request, form_type, format):
             )
         queryset = queryset.order_by('-created_at')
         filename_prefix = "service_reports"
-        
-    elif form_type == 'stock-req':
-        date_from = request.GET.get('stock_req_date_from', '')
-        date_to = request.GET.get('stock_req_date_to', '')
-        search_query = request.GET.get('stock_req_search', '')
-        status_filter = request.GET.get('stock_req_status', '')
-        
-        queryset = StockRequisition.objects.filter(
-            manager_name__icontains=user_name
-        )
-        if date_from:
-            from_date = datetime.strptime(date_from, '%Y-%m-%d')
-            queryset = queryset.filter(created_at__gte=from_date)
-        if date_to:
-            to_date = datetime.strptime(date_to, '%Y-%m-%d')
-            end_date = to_date + timedelta(days=1)
-            queryset = queryset.filter(created_at__lt=end_date)
-        if search_query:
-            queryset = queryset.filter(
-                Q(serial_number__icontains=search_query) |
-                Q(component_type__icontains=search_query) |
-                Q(description__icontains=search_query)
-            )
-        if status_filter:
-            queryset = queryset.filter(status=status_filter)
-        queryset = queryset.order_by('-created_at')
-        filename_prefix = "stock_requisitions"
-        
-    elif form_type == 'stock-disp':
-        date_from = request.GET.get('stock_disp_date_from', '')
-        date_to = request.GET.get('stock_disp_date_to', '')
-        search_query = request.GET.get('stock_disp_search', '')
-        
-        queryset = DispatchedStock.objects.filter(
-            Q(dispatched_by__icontains=user_name) |
-            Q(engineer_name__icontains=user_name)
-        )
-        if date_from:
-            from_date = datetime.strptime(date_from, '%Y-%m-%d')
-            queryset = queryset.filter(created_at__gte=from_date)
-        if date_to:
-            to_date = datetime.strptime(date_to, '%Y-%m-%d')
-            end_date = to_date + timedelta(days=1)
-            queryset = queryset.filter(created_at__lt=end_date)
-        if search_query:
-            queryset = queryset.filter(
-                Q(serial_number__icontains=search_query) |
-                Q(component_type__icontains=search_query) |
-                Q(tracking_number__icontains=search_query)
-            )
-        queryset = queryset.order_by('-created_at')
-        filename_prefix = "dispatched_stock"
-    else:
-        return HttpResponse("Invalid form type", status=400)
+        headers = [
+            'Engineer', 'Customer', 'Product Type', 'Serial Number', 'Service Date', 'Address', 'Battery Type', 'Battery Make',
+            'Battery Voltage', 'PV Capacity (kW)', 'AC Cable Size', 'Physical Observation', 'Actual Work Done', 'Cause of Failure',
+            'Conclusion', 'Customer Ratings', 'Suggestions', 'Created', 'Filled By'
+        ]
     
     # Export based on format
     if format == 'csv':
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = f'attachment; filename="{filename_prefix}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv"'
-        
         writer = csv.writer(response)
-        
-        if form_type == 'repairing':
-            writer.writerow(['Case Number', 'Customer', 'Object', 'Inverter ID', 'Repaired By', 'Tested By', 'Date', 'Status'])
-            for form in queryset:
+        writer.writerow(headers)
+        for obj in queryset:
+            if form_type == 'repairing':
                 writer.writerow([
-                    form.case_number,
-                    form.customer_abbrev,
-                    form.repairing_object,
-                    form.inverter_id,
-                    form.repaired_by,
-                    form.tested_by,
-                    form.repaired_on_date,
-                    form.remark or 'Completed'
+                    obj.created_at.strftime('%d %b %Y'), obj.case_number, obj.customer_abbrev, obj.repairing_object, obj.inverter_id,
+                    obj.pcb_serial_number, getattr(obj, 'pcb_specification', ''), getattr(obj, 'pcb_rating', ''), obj.inverter_spec, obj.inverter_rating, obj.battery,
+                    obj.fault_location, obj.repair_content, obj.repaired_by, obj.tested_by, get_user_display(obj)
                 ])
-        
-        elif form_type == 'inward':
-            writer.writerow(['Customer', 'Inverter ID', 'From Location', 'Received By', 'Reason', 'AWB/LR', 'Date'])
-            for form in queryset:
+            elif form_type == 'inward':
                 writer.writerow([
-                    form.customer_name,
-                    form.inverter_id,
-                    f"{form.received_from_location}, {form.received_from_state}",
-                    form.received_by,
-                    form.reason,
-                    form.awb_lr_number,
-                    form.created_at.strftime('%Y-%m-%d')
+                    obj.created_at.strftime('%d %b %Y'), obj.inward_object, obj.customer_abbrev, obj.customer_name, obj.inverter_id, obj.battery_id,
+                    obj.pcb_serial_number, obj.inverter_specs, obj.inverter_ratings, obj.battery, obj.no_of_mppt, obj.current_mppt, obj.pcb_quantity,
+                    obj.received_from_location, obj.received_from_district, obj.received_from_state, obj.pincode, obj.received_by, obj.reason,
+                    obj.transportation_mode, obj.awb_lr_number, get_user_display(obj)
                 ])
-        
-        elif form_type == 'outward':
-            writer.writerow(['Inverter ID', 'Sent To', 'Location', 'Sent By', 'Approved By', 'AWB Number', 'Date'])
-            for form in queryset:
+            elif form_type == 'outward':
                 writer.writerow([
-                    form.inverter_id_outward,
-                    form.sent_to_company,
-                    f"{form.sent_to_district}, {form.sent_to_state}",
-                    form.sent_by,
-                    form.approved_by,
-                    form.awb_number,
-                    form.created_at.strftime('%Y-%m-%d')
+                    obj.created_at.strftime('%d %b %Y'), obj.outward_object, obj.inverter_id_outward, obj.inverter_spec, obj.inverter_rating, obj.battery,
+                    obj.battery_id, obj.sent_to_company, obj.sent_to_address, obj.sent_to_district, obj.sent_to_state, obj.pincode, obj.sent_by,
+                    obj.approved_by, obj.control_card_changed, obj.new_serial_number, obj.inverter_id_inward, obj.inverter_replaced,
+                    obj.delivered_through, obj.awb_number, obj.remarks, get_user_display(obj)
                 ])
-        
-        elif form_type == 'service':
-            writer.writerow(['Engineer', 'Customer', 'Product Type', 'Serial Number', 'Service Date', 'Location', 'Created'])
-            for form in queryset:
+            elif form_type == 'service':
                 writer.writerow([
-                    f"{form.engineer_first_name} {form.engineer_last_name}",
-                    f"{form.customer_first_name} {form.customer_last_name}",
-                    form.product_type,
-                    form.serial_number,
-                    form.date_of_service.strftime('%Y-%m-%d') if form.date_of_service else 'N/A',
-                    f"{form.address_city}, {form.address_state}",
-                    form.created_at.strftime('%Y-%m-%d')
+                    f"{obj.engineer_first_name} {obj.engineer_last_name}", f"{obj.customer_first_name} {obj.customer_last_name}", obj.product_type,
+                    obj.serial_number, obj.date_of_service.strftime('%d %b %Y') if obj.date_of_service else 'N/A',
+                    f"{obj.address_street}, {obj.address_city}, {obj.address_state}, {obj.address_zip}", obj.battery_type, obj.battery_make,
+                    obj.battery_voltage, obj.pv_capacity_kw, obj.ac_cable_size, obj.physical_observation, obj.actual_work_done,
+                    obj.cause_of_failure, obj.conclusion, obj.customer_ratings, obj.suggestions, obj.created_at.strftime('%d %b %Y'), get_user_display(obj)
                 ])
-        
-        elif form_type == 'stock-req':
-            writer.writerow(['Serial Number', 'Component Type', 'Description', 'Qty Required', 'Qty Approved', 'Required To', 'Status', 'Created'])
-            for req in queryset:
-                writer.writerow([
-                    req.serial_number,
-                    req.component_type,
-                    req.description,
-                    req.quantity_required,
-                    req.approved_quantity or '—',
-                    req.required_to,
-                    req.get_status_display(),
-                    req.created_at.strftime('%Y-%m-%d')
-                ])
-        
-        elif form_type == 'stock-disp':
-            writer.writerow(['Serial Number', 'Component', 'Quantity', 'Engineer', 'Location', 'Courier', 'Tracking', 'Dispatch Date'])
-            for stock in queryset:
-                writer.writerow([
-                    stock.serial_number,
-                    stock.component_type,
-                    stock.quantity_dispatched,
-                    stock.engineer_name,
-                    stock.dispatch_location,
-                    stock.courier_name,
-                    stock.tracking_number,
-                    stock.dispatch_date.strftime('%Y-%m-%d')
-                ])
-        
         return response
-    
     elif format == 'xlsx':
-        try:
-            from openpyxl import Workbook
-            from openpyxl.styles import Font, PatternFill, Alignment
-        except ImportError:
-            return HttpResponse("openpyxl library not installed. Please install it using: pip install openpyxl", status=500)
-        
+        from openpyxl import Workbook
+        from openpyxl.styles import Font, PatternFill
         wb = Workbook()
         ws = wb.active
         ws.title = filename_prefix.replace('_', ' ').title()
-        
-        # Set headers based on form type
-        if form_type == 'repairing':
-            headers = ['Case Number', 'Customer', 'Object', 'Inverter ID', 'Repaired By', 'Tested By', 'Date', 'Status']
-            ws.append(headers)
-            for cell in ws[1]:
-                cell.font = Font(color="FFFFFF", bold=True)
-                cell.fill = PatternFill(start_color="667EEA", end_color="667EEA", fill_type="solid")
-            for form in queryset:
+        header_fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
+        header_font = Font(color="FFFFFF", bold=True)
+        ws.append(headers)
+        for cell in ws[1]:
+            cell.fill = header_fill
+            cell.font = header_font
+        for obj in queryset:
+            if form_type == 'repairing':
                 ws.append([
-                    form.case_number,
-                    form.customer_abbrev,
-                    form.repairing_object,
-                    form.inverter_id,
-                    form.repaired_by,
-                    form.tested_by,
-                    form.repaired_on_date,
-                    form.remark or 'Completed'
+                    obj.created_at.strftime('%d %b %Y'), obj.case_number, obj.customer_abbrev, obj.repairing_object, obj.inverter_id,
+                    obj.pcb_serial_number, getattr(obj, 'pcb_specification', ''), getattr(obj, 'pcb_rating', ''), obj.inverter_spec, obj.inverter_rating, obj.battery,
+                    obj.fault_location, obj.repair_content, obj.repaired_by, obj.tested_by, get_user_display(obj)
                 ])
-        
-        elif form_type == 'inward':
-            headers = ['Customer', 'Inverter ID', 'From Location', 'Received By', 'Reason', 'AWB/LR', 'Date']
-            ws.append(headers)
-            for cell in ws[1]:
-                cell.font = Font(color="FFFFFF", bold=True)
-                cell.fill = PatternFill(start_color="667EEA", end_color="667EEA", fill_type="solid")
-            for form in queryset:
+            elif form_type == 'inward':
                 ws.append([
-                    form.customer_name,
-                    form.inverter_id,
-                    f"{form.received_from_location}, {form.received_from_state}",
-                    form.received_by,
-                    form.reason,
-                    form.awb_lr_number,
-                    form.created_at.strftime('%Y-%m-%d')
+                    obj.created_at.strftime('%d %b %Y'), obj.inward_object, obj.customer_abbrev, obj.customer_name, obj.inverter_id, obj.battery_id,
+                    obj.pcb_serial_number, obj.inverter_specs, obj.inverter_ratings, obj.battery, obj.no_of_mppt, obj.current_mppt, obj.pcb_quantity,
+                    obj.received_from_location, obj.received_from_district, obj.received_from_state, obj.pincode, obj.received_by, obj.reason,
+                    obj.transportation_mode, obj.awb_lr_number, get_user_display(obj)
                 ])
-        
-        elif form_type == 'outward':
-            headers = ['Inverter ID', 'Sent To', 'Location', 'Sent By', 'Approved By', 'AWB Number', 'Date']
-            ws.append(headers)
-            for cell in ws[1]:
-                cell.font = Font(color="FFFFFF", bold=True)
-                cell.fill = PatternFill(start_color="667EEA", end_color="667EEA", fill_type="solid")
-            for form in queryset:
+            elif form_type == 'outward':
                 ws.append([
-                    form.inverter_id_outward,
-                    form.sent_to_company,
-                    f"{form.sent_to_district}, {form.sent_to_state}",
-                    form.sent_by,
-                    form.approved_by,
-                    form.awb_number,
-                    form.created_at.strftime('%Y-%m-%d')
+                    obj.created_at.strftime('%d %b %Y'), obj.outward_object, obj.inverter_id_outward, obj.inverter_spec, obj.inverter_rating, obj.battery,
+                    obj.battery_id, obj.sent_to_company, obj.sent_to_address, obj.sent_to_district, obj.sent_to_state, obj.pincode, obj.sent_by,
+                    obj.approved_by, obj.control_card_changed, obj.new_serial_number, obj.inverter_id_inward, obj.inverter_replaced,
+                    obj.delivered_through, obj.awb_number, obj.remarks, get_user_display(obj)
                 ])
-        
-        elif form_type == 'service':
-            headers = ['Engineer', 'Customer', 'Product Type', 'Serial Number', 'Service Date', 'Location', 'Created']
-            ws.append(headers)
-            for cell in ws[1]:
-                cell.font = Font(color="FFFFFF", bold=True)
-                cell.fill = PatternFill(start_color="667EEA", end_color="667EEA", fill_type="solid")
-            for form in queryset:
+            elif form_type == 'service':
                 ws.append([
-                    f"{form.engineer_first_name} {form.engineer_last_name}",
-                    f"{form.customer_first_name} {form.customer_last_name}",
-                    form.product_type,
-                    form.serial_number,
-                    form.date_of_service.strftime('%Y-%m-%d') if form.date_of_service else 'N/A',
-                    f"{form.address_city}, {form.address_state}",
-                    form.created_at.strftime('%Y-%m-%d')
+                    f"{obj.engineer_first_name} {obj.engineer_last_name}", f"{obj.customer_first_name} {obj.customer_last_name}", obj.product_type,
+                    obj.serial_number, obj.date_of_service.strftime('%d %b %Y') if obj.date_of_service else 'N/A',
+                    f"{obj.address_street}, {obj.address_city}, {obj.address_state}, {obj.address_zip}", obj.battery_type, obj.battery_make,
+                    obj.battery_voltage, obj.pv_capacity_kw, obj.ac_cable_size, obj.physical_observation, obj.actual_work_done,
+                    obj.cause_of_failure, obj.conclusion, obj.customer_ratings, obj.suggestions, obj.created_at.strftime('%d %b %Y'), get_user_display(obj)
                 ])
-        
-        elif form_type == 'stock-req':
-            headers = ['Serial Number', 'Component Type', 'Description', 'Qty Required', 'Qty Approved', 'Required To', 'Status', 'Created']
-            ws.append(headers)
-            for cell in ws[1]:
-                cell.font = Font(color="FFFFFF", bold=True)
-                cell.fill = PatternFill(start_color="667EEA", end_color="667EEA", fill_type="solid")
-            for req in queryset:
-                ws.append([
-                    req.serial_number,
-                    req.component_type,
-                    req.description,
-                    req.quantity_required,
-                    req.approved_quantity or '—',
-                    req.required_to,
-                    req.get_status_display(),
-                    req.created_at.strftime('%Y-%m-%d')
-                ])
-        
-        elif form_type == 'stock-disp':
-            headers = ['Serial Number', 'Component', 'Quantity', 'Engineer', 'Location', 'Courier', 'Tracking', 'Dispatch Date']
-            ws.append(headers)
-            for cell in ws[1]:
-                cell.font = Font(color="FFFFFF", bold=True)
-                cell.fill = PatternFill(start_color="667EEA", end_color="667EEA", fill_type="solid")
-            for stock in queryset:
-                ws.append([
-                    stock.serial_number,
-                    stock.component_type,
-                    stock.quantity_dispatched,
-                    stock.engineer_name,
-                    stock.dispatch_location,
-                    stock.courier_name,
-                    stock.tracking_number,
-                    stock.dispatch_date.strftime('%Y-%m-%d')
-                ])
-        
-        # Save to response
         output = io.BytesIO()
         wb.save(output)
         output.seek(0)
-        
         response = HttpResponse(
             output.read(),
             content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         )
         response['Content-Disposition'] = f'attachment; filename="{filename_prefix}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx"'
-        
         return response
-    
     else:
         return HttpResponse("Invalid format. Use 'csv' or 'xlsx'.", status=400)
     """Export employee data to CSV or XLSX"""
@@ -2140,9 +2296,11 @@ def team_data_view(request):
         # Superuser sees all data
         team_users = User.objects.all()
         view_mode = 'all'
-    elif hasattr(user, 'profile') and user.profile.team_members.exists():
-        # Manager sees only their team's data
+    elif hasattr(user, 'profile') and user.profile.get_team_members().exists():
+        # Manager sees their team's data and their own data
         team_users = user.profile.get_team_members()
+        if user not in team_users:
+            team_users = team_users | User.objects.filter(pk=user.pk)
         view_mode = 'team'
     else:
         # Regular user - redirect to personal data view
@@ -2186,8 +2344,8 @@ def team_data_view(request):
         # Superuser - get all records
         repairing_forms = RepairingForm.objects.all()
     else:
-        # Manager - filter by team members
-        repairing_q = Q()
+        # Manager - filter by team members (user who filled the form or name match)
+        repairing_q = Q(user__in=team_users)
         for name in team_names:
             repairing_q |= Q(repaired_by__icontains=name) | Q(tested_by__icontains=name)
         repairing_forms = RepairingForm.objects.filter(repairing_q)
@@ -2207,10 +2365,12 @@ def team_data_view(request):
     repairing_forms = repairing_forms.order_by('-created_at')
     
     # Inward Forms
-    if view_mode == 'all':
+    if user.is_superuser:
+        inward_forms = InwardForm.objects.all()
+    elif view_mode == 'all':
         inward_forms = InwardForm.objects.all()
     else:
-        inward_q = Q()
+        inward_q = Q(user__in=team_users)
         for email in team_emails:
             inward_q |= Q(email=email)
         for name in team_names:
@@ -2235,7 +2395,7 @@ def team_data_view(request):
     if view_mode == 'all':
         outward_forms = OutwardForm.objects.all()
     else:
-        outward_q = Q()
+        outward_q = Q(user__in=team_users)
         for name in team_names:
             outward_q |= Q(sent_by__icontains=name) | Q(approved_by__icontains=name)
         outward_forms = OutwardForm.objects.filter(outward_q)
@@ -2258,7 +2418,7 @@ def team_data_view(request):
     if view_mode == 'all':
         service_forms = ServiceReportForm.objects.all()
     else:
-        service_q = Q()
+        service_q = Q(user__in=team_users)
         for email in team_emails:
             service_q |= Q(email=email)
         for user_obj in team_users:
@@ -2283,7 +2443,7 @@ def team_data_view(request):
     if view_mode == 'all':
         stock_requisitions = StockRequisition.objects.all()
     else:
-        stock_req_q = Q()
+        stock_req_q = Q(user__in=team_users)
         for name in team_names:
             stock_req_q |= Q(manager_name__icontains=name)
         stock_requisitions = StockRequisition.objects.filter(stock_req_q)
@@ -2308,7 +2468,7 @@ def team_data_view(request):
     if view_mode == 'all':
         dispatched_stock = DispatchedStock.objects.all()
     else:
-        dispatched_q = Q()
+        dispatched_q = Q(user__in=team_users)
         for name in team_names:
             dispatched_q |= Q(dispatched_by__icontains=name) | Q(engineer_name__icontains=name)
         dispatched_stock = DispatchedStock.objects.filter(dispatched_q)
@@ -2349,6 +2509,94 @@ def team_data_view(request):
     for form in service_forms:
         form.duplicate_count = service_serials.get(form.serial_number, 0) if service_serials.get(form.serial_number, 0) > 1 else 0
     
+    # Stock Inverters: InwardForm entries whose inverter_id is NOT in OutwardForm, filtered by team
+    outward_ids = set(OutwardForm.objects.values_list('inverter_id_outward', flat=True))
+    if view_mode == 'all':
+        stock_inverters_qs = InwardForm.objects.exclude(inverter_id__in=outward_ids)
+    else:
+        stock_inverters_qs = InwardForm.objects.exclude(inverter_id__in=outward_ids).filter(user__in=team_users)
+    # Apply Stock Inverters tab filters (date/search)
+    stock_inv_date_from = request.GET.get('stock_inv_date_from', '')
+    stock_inv_date_to = request.GET.get('stock_inv_date_to', '')
+    stock_inv_search = request.GET.get('stock_inv_search', '')
+    if stock_inv_date_from:
+        from_date = datetime.strptime(stock_inv_date_from, '%Y-%m-%d')
+        stock_inverters_qs = stock_inverters_qs.filter(created_at__gte=from_date)
+    if stock_inv_date_to:
+        to_date = datetime.strptime(stock_inv_date_to, '%Y-%m-%d')
+        end_date = to_date + timedelta(days=1)
+        stock_inverters_qs = stock_inverters_qs.filter(created_at__lt=end_date)
+    if stock_inv_search:
+        stock_inverters_qs = stock_inverters_qs.filter(
+            Q(inverter_id__icontains=stock_inv_search) |
+            Q(customer_name__icontains=stock_inv_search) |
+            Q(received_from_location__icontains=stock_inv_search) |
+            Q(received_from_state__icontains=stock_inv_search) |
+            Q(received_by__icontains=stock_inv_search) |
+            Q(reason__icontains=stock_inv_search) |
+            Q(awb_lr_number__icontains=stock_inv_search)
+        )
+    stock_inverters = stock_inverters_qs.order_by('-created_at')
+
+    # Add 'Filled By' and 'Date Filled' columns for stock inverters
+    stock_inverters_display = []
+    for form in stock_inverters:
+        stock_inverters_display.append({
+            'form': form,
+            'filled_by': form.user.get_full_name() if form.user else '',
+            'date_filled': form.created_at.strftime('%Y-%m-%d'),
+        })
+
+    # Build unified all_entries list for 'All Entries' tab
+    all_entries = []
+    for form in repairing_forms:
+        all_entries.append({
+            'form_type': 'Repairing',
+            'serial': getattr(form, 'inverter_id', ''),
+            'customer': getattr(form, 'customer_abbrev', ''),
+            'date': form.created_at.strftime('%Y-%m-%d'),
+            'remark': getattr(form, 'remark', getattr(form, 'status', '')),
+        })
+    for form in inward_forms:
+        all_entries.append({
+            'form_type': 'Inward',
+            'serial': getattr(form, 'inverter_id', ''),
+            'customer': getattr(form, 'customer_name', ''),
+            'date': form.created_at.strftime('%Y-%m-%d'),
+            'remark': getattr(form, 'remark', '')
+        })
+    for form in outward_forms:
+        all_entries.append({
+            'form_type': 'Outward',
+            'serial': getattr(form, 'inverter_id_outward', ''),
+            'customer': getattr(form, 'sent_to_company', ''),
+            'date': form.created_at.strftime('%Y-%m-%d'),
+            'remark': getattr(form, 'remark', '')
+        })
+    for form in service_forms:
+        all_entries.append({
+            'form_type': 'Service',
+            'serial': getattr(form, 'serial_number', ''),
+            'customer': f"{getattr(form, 'customer_first_name', '')} {getattr(form, 'customer_last_name', '')}",
+            'date': form.created_at.strftime('%Y-%m-%d'),
+            'remark': getattr(form, 'actual_work_done', getattr(form, 'suggestions', ''))
+        })
+    for form in stock_requisitions:
+        all_entries.append({
+            'form_type': 'Stock Requisition',
+            'serial': getattr(form, 'serial_number', ''),
+            'customer': getattr(form, 'component_type', ''),
+            'date': form.created_at.strftime('%Y-%m-%d'),
+            'remark': getattr(form, 'description', '')
+        })
+    for form in dispatched_stock:
+        all_entries.append({
+            'form_type': 'Dispatched Stock',
+            'serial': getattr(form, 'serial_number', ''),
+            'customer': getattr(form, 'engineer_name', ''),
+            'date': form.created_at.strftime('%Y-%m-%d'),
+            'remark': getattr(form, 'dispatch_remarks', '')
+        })
     context = {
         'user': user,
         'view_mode': view_mode,
@@ -2359,6 +2607,11 @@ def team_data_view(request):
         'service_forms': service_forms,
         'stock_requisitions': stock_requisitions,
         'dispatched_stock': dispatched_stock,
+        'stock_inverters': stock_inverters,
+        'stock_inverters_display': stock_inverters_display,
+        'stock_inv_date_from': stock_inv_date_from,
+        'stock_inv_date_to': stock_inv_date_to,
+        'stock_inv_search': stock_inv_search,
         # Repairing filters
         'repairing_date_from': repairing_date_from,
         'repairing_date_to': repairing_date_to,
@@ -2384,6 +2637,7 @@ def team_data_view(request):
         'stock_disp_date_from': stock_disp_date_from,
         'stock_disp_date_to': stock_disp_date_to,
         'stock_disp_search': stock_disp_search,
+        'all_entries': all_entries,
     }
     
     return render(request, 'forms/team_data.html', context)
@@ -2438,7 +2692,10 @@ def export_team_data(request, form_type, format):
             )
         queryset = queryset.order_by('-created_at')
         filename_prefix = "team_repairing_forms"
-        headers = ['Case Number', 'Customer', 'Object', 'Inverter ID', 'Repaired By', 'Tested By', 'Date', 'Status']
+        headers = [
+            'Date', 'Case Number', 'Customer', 'Object', 'Inverter ID', 'PCB Serial Number', 'PCB Specification', 'PCB Rating',
+            'Inverter Spec', 'Inverter Rating', 'Battery', 'Fault Location', 'Repair Content', 'Repaired By', 'Tested By', 'Filled By'
+        ]
         
     elif form_type == 'inward':
         date_from = request.GET.get('inward_date_from', '')
@@ -2469,7 +2726,12 @@ def export_team_data(request, form_type, format):
             )
         queryset = queryset.order_by('-created_at')
         filename_prefix = "team_inward_forms"
-        headers = ['Customer', 'Inverter ID', 'From Location', 'Received By', 'Reason', 'AWB/LR', 'Date']
+        headers = [
+            'Date', 'Inward Object', 'Customer Abbreviation', 'Customer Name', 'Inverter ID', 'Battery ID', 'PCB Serial Number',
+            'Inverter Specification', 'Inverter Ratings', 'Battery Model', 'No of MPPT', 'Current/MPPT', 'PCB Quantity',
+            'Received From Location', 'Received From District', 'Received From State', 'Pincode', 'Received By', 'Reason',
+            'Transportation Mode', 'AWB Number', 'Filled By'
+        ]
         
     elif form_type == 'outward':
         date_from = request.GET.get('outward_date_from', '')
@@ -2498,7 +2760,12 @@ def export_team_data(request, form_type, format):
             )
         queryset = queryset.order_by('-created_at')
         filename_prefix = "team_outward_forms"
-        headers = ['Inverter ID', 'Company', 'Sent To', 'Sent By', 'Courier', 'AWB', 'Date']
+        headers = [
+            'Date', 'Outward Object', 'Inverter ID (Outward)', 'Inverter Spec', 'Inverter Rating', 'Battery', 'Battery ID',
+            'Sent To Company', 'Sent To Address', 'Sent To District', 'Sent To State', 'Pincode', 'Sent By', 'Approved By',
+            'Control Card Changed', 'New Serial Number', 'Inverter ID (Inward)', 'Inverter Replaced', 'Delivered Through',
+            'AWB Number', 'Remarks', 'Filled By'
+        ]
         
     elif form_type == 'service':
         date_from = request.GET.get('service_date_from', '')
@@ -2529,7 +2796,11 @@ def export_team_data(request, form_type, format):
             )
         queryset = queryset.order_by('-created_at')
         filename_prefix = "team_service_reports"
-        headers = ['Serial Number', 'Customer', 'Engineer', 'Date', 'Location']
+        headers = [
+            'Engineer', 'Customer', 'Product Type', 'Serial Number', 'Service Date', 'Address', 'Battery Type', 'Battery Make',
+            'Battery Voltage', 'PV Capacity (kW)', 'AC Cable Size', 'Physical Observation', 'Actual Work Done', 'Cause of Failure',
+            'Conclusion', 'Customer Ratings', 'Suggestions', 'Created', 'Filled By'
+        ]
         
     elif form_type == 'stock-req':
         date_from = request.GET.get('stock_req_date_from', '')
@@ -2596,6 +2867,11 @@ def export_team_data(request, form_type, format):
         return HttpResponse("Invalid form type", status=400)
     
     # Export based on format
+    def get_user_display(obj):
+        if hasattr(obj, 'user') and obj.user:
+            return obj.user.get_full_name() or obj.user.username
+        return '-'
+
     if format == 'csv':
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = f'attachment; filename="{filename_prefix}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv"'
@@ -2605,20 +2881,40 @@ def export_team_data(request, form_type, format):
         
         for obj in queryset:
             if form_type == 'repairing':
-                writer.writerow([obj.case_number, obj.customer_abbrev, obj.repairing_object, obj.inverter_id, obj.repaired_by, obj.tested_by, obj.repaired_on_date, obj.remark or 'Completed'])
+                writer.writerow([
+                    obj.created_at.strftime('%d %b %Y'), obj.case_number, obj.customer_abbrev, obj.repairing_object, obj.inverter_id,
+                    obj.pcb_serial_number, obj.pcb_specification, obj.pcb_rating, obj.inverter_spec, obj.inverter_rating, obj.battery,
+                    obj.fault_location, obj.repair_content, obj.repaired_by, obj.tested_by, get_user_display(obj)
+                ])
             elif form_type == 'inward':
-                writer.writerow([obj.customer_name, obj.inverter_id, f"{obj.received_from_location}, {obj.received_from_state}", obj.received_by, obj.reason, obj.awb_lr_number, obj.created_at.strftime('%Y-%m-%d')])
+                writer.writerow([
+                    obj.created_at.strftime('%d %b %Y'), obj.inward_object, obj.customer_abbrev, obj.customer_name, obj.inverter_id, obj.battery_id,
+                    obj.pcb_serial_number, obj.inverter_specs, obj.inverter_ratings, obj.battery, obj.no_of_mppt, obj.current_mppt, obj.pcb_quantity,
+                    obj.received_from_location, obj.received_from_district, obj.received_from_state, obj.pincode, obj.received_by, obj.reason,
+                    obj.transportation_mode, obj.awb_lr_number, get_user_display(obj)
+                ])
             elif form_type == 'outward':
-                writer.writerow([obj.inverter_id_outward, obj.company_abbrev, f"{obj.sent_to_company}, {obj.sent_to_state}", obj.sent_by, obj.courier_name, obj.awb_number, obj.created_at.strftime('%Y-%m-%d')])
+                writer.writerow([
+                    obj.created_at.strftime('%d %b %Y'), obj.outward_object, obj.inverter_id_outward, obj.inverter_spec, obj.inverter_rating, obj.battery,
+                    obj.battery_id, obj.sent_to_company, obj.sent_to_address, obj.sent_to_district, obj.sent_to_state, obj.pincode, obj.sent_by,
+                    obj.approved_by, obj.control_card_changed, obj.new_serial_number, obj.inverter_id_inward, obj.inverter_replaced,
+                    obj.delivered_through, obj.awb_number, obj.remarks, get_user_display(obj)
+                ])
             elif form_type == 'service':
-                writer.writerow([obj.serial_number, f"{obj.customer_first_name} {obj.customer_last_name}", f"{obj.engineer_first_name} {obj.engineer_last_name}", obj.date_of_service or obj.created_at.strftime('%Y-%m-%d'), f"{obj.address_city}, {obj.address_state}"])
+                writer.writerow([
+                    f"{obj.engineer_first_name} {obj.engineer_last_name}", f"{obj.customer_first_name} {obj.customer_last_name}", obj.product_type,
+                    obj.serial_number, obj.date_of_service.strftime('%d %b %Y') if obj.date_of_service else 'N/A',
+                    f"{obj.address_street}, {obj.address_city}, {obj.address_state}, {obj.address_zip}", obj.battery_type, obj.battery_make,
+                    obj.battery_voltage, obj.pv_capacity_kw, obj.ac_cable_size, obj.physical_observation, obj.actual_work_done,
+                    obj.cause_of_failure, obj.conclusion, obj.customer_ratings, obj.suggestions, obj.created_at.strftime('%d %b %Y'), get_user_display(obj)
+                ])
             elif form_type == 'stock-req':
-                writer.writerow([obj.serial_number, obj.component_type, obj.quantity_requested, obj.manager_name, obj.status, obj.created_at.strftime('%Y-%m-%d')])
+                writer.writerow([obj.serial_number, obj.component_type, obj.quantity_required, obj.manager_name, obj.status, obj.created_at.strftime('%Y-%m-%d')])
             elif form_type == 'stock-disp':
                 writer.writerow([obj.serial_number, obj.component_type, obj.quantity_dispatched, obj.engineer_name, obj.courier_name, obj.tracking_number, obj.dispatch_date.strftime('%Y-%m-%d')])
         
         return response
-    
+
     elif format == 'xlsx':
         from openpyxl import Workbook
         from openpyxl.styles import Font, PatternFill
@@ -2638,15 +2934,35 @@ def export_team_data(request, form_type, format):
         
         for obj in queryset:
             if form_type == 'repairing':
-                ws.append([obj.case_number, obj.customer_abbrev, obj.repairing_object, obj.inverter_id, obj.repaired_by, obj.tested_by, obj.repaired_on_date.strftime('%Y-%m-%d') if obj.repaired_on_date else '', obj.remark or 'Completed'])
+                ws.append([
+                    obj.created_at.strftime('%d %b %Y'), obj.case_number, obj.customer_abbrev, obj.repairing_object, obj.inverter_id,
+                    obj.pcb_serial_number, obj.pcb_specification, obj.pcb_rating, obj.inverter_spec, obj.inverter_rating, obj.battery,
+                    obj.fault_location, obj.repair_content, obj.repaired_by, obj.tested_by, get_user_display(obj)
+                ])
             elif form_type == 'inward':
-                ws.append([obj.customer_name, obj.inverter_id, f"{obj.received_from_location}, {obj.received_from_state}", obj.received_by, obj.reason, obj.awb_lr_number, obj.created_at.strftime('%Y-%m-%d')])
+                ws.append([
+                    obj.created_at.strftime('%d %b %Y'), obj.inward_object, obj.customer_abbrev, obj.customer_name, obj.inverter_id, obj.battery_id,
+                    obj.pcb_serial_number, obj.inverter_specs, obj.inverter_ratings, obj.battery, obj.no_of_mppt, obj.current_mppt, obj.pcb_quantity,
+                    obj.received_from_location, obj.received_from_district, obj.received_from_state, obj.pincode, obj.received_by, obj.reason,
+                    obj.transportation_mode, obj.awb_lr_number, get_user_display(obj)
+                ])
             elif form_type == 'outward':
-                ws.append([obj.inverter_id_outward, obj.company_abbrev, f"{obj.sent_to_company}, {obj.sent_to_state}", obj.sent_by, obj.courier_name, obj.awb_number, obj.created_at.strftime('%Y-%m-%d')])
+                ws.append([
+                    obj.created_at.strftime('%d %b %Y'), obj.outward_object, obj.inverter_id_outward, obj.inverter_spec, obj.inverter_rating, obj.battery,
+                    obj.battery_id, obj.sent_to_company, obj.sent_to_address, obj.sent_to_district, obj.sent_to_state, obj.pincode, obj.sent_by,
+                    obj.approved_by, obj.control_card_changed, obj.new_serial_number, obj.inverter_id_inward, obj.inverter_replaced,
+                    obj.delivered_through, obj.awb_number, obj.remarks, get_user_display(obj)
+                ])
             elif form_type == 'service':
-                ws.append([obj.serial_number, f"{obj.customer_first_name} {obj.customer_last_name}", f"{obj.engineer_first_name} {obj.engineer_last_name}", obj.date_of_service.strftime('%Y-%m-%d') if obj.date_of_service else obj.created_at.strftime('%Y-%m-%d'), f"{obj.address_city}, {obj.address_state}"])
+                ws.append([
+                    f"{obj.engineer_first_name} {obj.engineer_last_name}", f"{obj.customer_first_name} {obj.customer_last_name}", obj.product_type,
+                    obj.serial_number, obj.date_of_service.strftime('%d %b %Y') if obj.date_of_service else 'N/A',
+                    f"{obj.address_street}, {obj.address_city}, {obj.address_state}, {obj.address_zip}", obj.battery_type, obj.battery_make,
+                    obj.battery_voltage, obj.pv_capacity_kw, obj.ac_cable_size, obj.physical_observation, obj.actual_work_done,
+                    obj.cause_of_failure, obj.conclusion, obj.customer_ratings, obj.suggestions, obj.created_at.strftime('%d %b %Y'), get_user_display(obj)
+                ])
             elif form_type == 'stock-req':
-                ws.append([obj.serial_number, obj.component_type, obj.quantity_requested, obj.manager_name, obj.status, obj.created_at.strftime('%Y-%m-%d')])
+                ws.append([obj.serial_number, obj.component_type, obj.quantity_required, obj.manager_name, obj.status, obj.created_at.strftime('%Y-%m-%d')])
             elif form_type == 'stock-disp':
                 ws.append([obj.serial_number, obj.component_type, obj.quantity_dispatched, obj.engineer_name, obj.courier_name, obj.tracking_number, obj.dispatch_date.strftime('%Y-%m-%d')])
         
@@ -2661,6 +2977,8 @@ def export_team_data(request, form_type, format):
         response['Content-Disposition'] = f'attachment; filename="{filename_prefix}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx"'
         
         return response
-    
+
     else:
         return HttpResponse("Invalid format. Use 'csv' or 'xlsx'.", status=400)
+# Import login_required decorator
+from django.contrib.auth.decorators import login_required

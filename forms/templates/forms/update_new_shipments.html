@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+	<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Update New Shipments</title>
+		{% load static %}
+		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+		<style>
+			body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f8fafc; color: #0f172a; padding: 24px; }
+			.container { max-width: 700px; margin: 0 auto; }
+			.header { margin-bottom: 32px; }
+			.header h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; background: linear-gradient(135deg, #059669, #10b981); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+			.subtitle { color: #64748b; font-size: 15px; }
+			.form-container { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 32px; box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08); }
+			.form-group { margin-bottom: 20px; }
+			.form-group label { display: block; font-size: 14px; font-weight: 600; color: #475569; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+			.form-control { width: 100%; padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px; font-weight: 500; color: #0f172a; background: #f8fafc; transition: all 0.2s; font-family: inherit; box-sizing: border-box; }
+			.form-control:hover { border-color: #cbd5e1; background: #ffffff; }
+			.form-control:focus { outline: none; border-color: #059669; box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1); background: #ffffff; }
+			textarea.form-control { resize: vertical; min-height: 100px; }
+			.errorlist { list-style: none; padding: 0; margin-bottom: 12px; }
+			.errorlist li { background: #fee2e2; border-left: 4px solid #dc2626; color: #991b1b; padding: 10px 12px; border-radius: 4px; font-size: 13px; }
+			.success-message { background: #dcfce7; border-left: 4px solid #16a34a; color: #166534; padding: 14px 16px; border-radius: 6px; margin-bottom: 20px; font-size: 14px; font-weight: 600; }
+			.button-group { display: flex; gap: 12px; margin-top: 28px; }
+			.btn { padding: 12px 24px; border-radius: 8px; font-weight: 700; font-size: 14px; cursor: pointer; border: none; transition: all 0.2s; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px; box-sizing: border-box; }
+			.btn-submit { background: linear-gradient(135deg, #059669, #047857); color: white; box-shadow: 0 6px 20px rgba(5, 150, 105, 0.25); flex: 1; }
+			.btn-submit:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(5, 150, 105, 0.32); }
+			.btn-back { background: #f8fafc; color: #0f172a; border: 1px solid #e2e8f0; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06); }
+			.btn-back:hover { background: #e2e8f0; }
+			.sn-suggestions-list { position: absolute; left: 0; right: 0; top: 100%; margin-top: 2px; z-index: 20; background: white; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 8px 24px rgba(15,23,42,0.12); display: none; max-height: 260px; overflow-y: auto; }
+			.suggest-item { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; cursor: pointer; }
+			.suggest-item:hover { background: #f1f5f9; }
+			.suggest-item:last-child { border-bottom: none; }
+			#shipments-table input, #shipments-table select, #shipments-table textarea { margin: 0; }
+			#shipments-table th, #shipments-table td { vertical-align: top; }
+		</style>
+	</head>
+	<body>
+		<div class="container">
+			<div class="header">
+				<h1>➕ Update New Shipments</h1>
+				<p class="subtitle">Add new shipments to received and remaining stock</p>
+			</div>
+			<div class="form-container">
+				{% if success_message %}
+					<div class="success-message">{{ success_message }}</div>
+				{% endif %}
+				<form method="post" autocomplete="off">
+					{% csrf_token %}
+					{{ item_formset.management_form }}
+					<table id="shipments-table" style="width:100%; border-collapse:collapse; margin-bottom:20px;">
+						<thead>
+							<tr style="background:#f1f5f9;">
+								<th style="padding:12px 8px; border:1px solid #e2e8f0;">Serial Number</th>
+								<th style="padding:12px 8px; border:1px solid #e2e8f0;">Component Type</th>
+								<th style="padding:12px 8px; border:1px solid #e2e8f0;">Description</th>
+								<th style="padding:12px 8px; border:1px solid #e2e8f0;">Qty Received</th>
+								<th style="padding:12px 8px; border:1px solid #e2e8f0;">Remove</th>
+							</tr>
+						</thead>
+						<tbody>
+							{% for form in item_formset %}
+							<tr class="form-row">
+								<td style="padding:8px; border:1px solid #e2e8f0;">
+									<div style="position:relative;">
+										{{ form.serial_number }}
+										<div class="sn-suggestions-list"></div>
+									</div>
+									{% if form.serial_number.errors %}{{ form.serial_number.errors }}{% endif %}
+								</td>
+								<td style="padding:8px; border:1px solid #e2e8f0;">
+									{{ form.component_type }}
+									{% if form.component_type.errors %}{{ form.component_type.errors }}{% endif %}
+								</td>
+								<td style="padding:8px; border:1px solid #e2e8f0;">
+									{{ form.description }}
+									{% if form.description.errors %}{{ form.description.errors }}{% endif %}
+								</td>
+								<td style="padding:8px; border:1px solid #e2e8f0;">
+									{{ form.quantity_received }}
+									{% if form.quantity_received.errors %}{{ form.quantity_received.errors }}{% endif %}
+								</td>
+								<td style="padding:8px; border:1px solid #e2e8f0; text-align:center;">
+									{{ form.DELETE }}
+									<button type="button" class="btn btn-back remove-row-btn" style="padding:4px 10px; font-size:13px; margin-top:4px;">Remove</button>
+								</td>
+							</tr>
+							{% endfor %}
+						</tbody>
+					</table>
+					<div style="font-weight:600; color:#059669; margin-bottom:12px;">
+						Total Qty Received: <span id="total-qty-received">0</span>
+					</div>
+					<div style="display: flex; gap: 12px; margin-bottom: 16px;">
+						<button type="button" id="add-row-btn" class="btn btn-back" style="flex: 1;">+ Add Another Item</button>
+					</div>
+					<div class="button-group">
+						<button type="submit" class="btn btn-submit">Update Shipments</button>
+						<button type="button" id="add-unique-btn" class="btn btn-back">Add Unique Item</button>
+						<a href="{% url 'forms:stock' %}" class="btn btn-back">Back to Stock</a>
+					</div>
+				</form>
+            
+				<!-- Unique Item Modal -->
+				<div id="unique-item-modal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center; padding:20px;">
+					<div style="background:white; border-radius:12px; padding:32px; max-width:400px; width:90%; max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(15,23,42,0.3);">
+						<h2 style="margin:0 0 20px 0; font-size:22px; color:#059669;">Add Unique Item</h2>
+						<form id="unique-item-form">
+							<div style="margin-bottom:16px;">
+								<label style="display:block; font-size:14px; font-weight:600; color:#475569; margin-bottom:6px;">Serial Number</label>
+								<input type="text" id="unique-serial" class="form-control" required style="margin:0;">
+							</div>
+							<div style="margin-bottom:16px;">
+								<label style="display:block; font-size:14px; font-weight:600; color:#475569; margin-bottom:6px;">Component Type</label>
+								<input type="text" id="unique-type" class="form-control" required style="margin:0;">
+							</div>
+							<div style="margin-bottom:16px;">
+								<label style="display:block; font-size:14px; font-weight:600; color:#475569; margin-bottom:6px;">Description</label>
+								<textarea id="unique-desc" class="form-control" rows="3" style="margin:0;"></textarea>
+							</div>
+							<div style="margin-bottom:20px;">
+								<label style="display:block; font-size:14px; font-weight:600; color:#475569; margin-bottom:6px;">Quantity</label>
+								<input type="number" id="unique-qty" class="form-control" min="0" value="0" required style="margin:0;">
+							</div>
+							<div style="display:flex; gap:12px;">
+								<button type="submit" class="btn btn-submit" style="flex:1;">Add Item</button>
+								<button type="button" id="close-unique-modal" class="btn btn-back" style="flex:1;">Cancel</button>
+							</div>
+						</form>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<script>
+		document.addEventListener('DOMContentLoaded', function() {
+			// Serial number suggestions
+			function initSuggestions() {
+				document.querySelectorAll('input[name$="serial_number"]').forEach(function(input) {
+					if (!input.classList.contains('serial-number-input')) {
+						input.classList.add('serial-number-input');
+					}
+					if (!input.dataset.suggestionBound) {
+						input.dataset.suggestionBound = 'true';
+						let timer = null;
+						const row = input.closest('tr');
+						const list = row ? row.querySelector('.sn-suggestions-list') : null;
+						function hideList() { if (list) { list.style.display = 'none'; list.innerHTML = ''; } }
+						function showSuggestions(items) {
+							if (!list) return;
+							if (!items.length) { hideList(); return; }
+							list.innerHTML = items.map(it => `
+								<div class="suggest-item" data-sn="${it.pcba_sn_new}" data-type="${it.component_type}" data-spec="${it.specification}" style="padding:10px 12px; border-bottom:1px solid #f1f5f9; cursor:pointer;">
+									<div style="font-weight:700; color:#0f172a;">${it.pcba_sn_new}</div>
+									<div style="font-size:12px; color:#64748b;">${it.component_type || '-'} • ${it.specification || '-'}</div>
+								</div>
+							`).join('');
+							list.style.display = 'block';
+							Array.from(list.querySelectorAll('.suggest-item')).forEach(el => {
+								el.addEventListener('click', () => {
+									input.value = el.getAttribute('data-sn');
+									// Autofill component type (support both select and input)
+									let compSelect = row.querySelector('select');
+									let compInput = row.querySelector('input[name$="-component_type"]');
+									let descInput = row.querySelector('textarea');
+									if (compSelect) {
+										for (let i = 0; i < compSelect.options.length; i++) {
+											if (compSelect.options[i].value === el.getAttribute('data-type')) {
+												compSelect.selectedIndex = i;
+												break;
+											}
+										}
+									} else if (compInput) {
+										compInput.value = el.getAttribute('data-type') || '';
+									}
+									if (descInput) descInput.value = el.getAttribute('data-spec') || '';
+									hideList();
+								});
+							});
+						}
+						function fetchSuggestions(q) {
+							fetch("{% url 'forms:stock_serial_search' %}?q=" + encodeURIComponent(q), { credentials: 'same-origin' })
+								.then(r => r.json())
+								.then(data => showSuggestions(data.results || []))
+								.catch(() => hideList());
+						}
+						input.addEventListener('input', function() {
+							const q = input.value.trim();
+							if (timer) clearTimeout(timer);
+							if (!q) { hideList(); return; }
+							timer = setTimeout(() => fetchSuggestions(q), 150);
+						});
+						input.addEventListener('blur', () => { setTimeout(hideList, 200); });
+						input.addEventListener('change', function() {
+							let sn = input.value.trim();
+							if (!sn) return;
+							fetch('{% url 'forms:stock_serial_details' %}?sn=' + encodeURIComponent(sn), { credentials: 'same-origin' })
+								.then(resp => resp.json())
+								.then(data => {
+									if (data.found) {
+										let compSelect = row.querySelector('select');
+										let compInput = row.querySelector('input[name$="-component_type"]');
+										let descInput = row.querySelector('textarea');
+										if (compSelect && data.component_type) {
+											for (let i = 0; i < compSelect.options.length; i++) {
+												if (compSelect.options[i].value === data.component_type) {
+													compSelect.selectedIndex = i;
+													break;
+												}
+											}
+										} else if (compInput && data.component_type) {
+											compInput.value = data.component_type;
+										}
+										if (descInput && data.specification) {
+											descInput.value = data.specification;
+										}
+									}
+								});
+						});
+					}
+				});
+			}
+
+			// Add row button
+			const addBtn = document.getElementById('add-row-btn');
+			const tableBody = document.querySelector('#shipments-table tbody');
+			const totalFormsInput = document.querySelector('input[name="form-TOTAL_FORMS"]');
+        
+			if (addBtn && tableBody && totalFormsInput) {
+				addBtn.addEventListener('click', function() {
+					const formIdx = parseInt(totalFormsInput.value);
+					const newRow = document.createElement('tr');
+					newRow.className = 'form-row';
+					newRow.innerHTML = `
+						<td style="padding:8px; border:1px solid #e2e8f0;">
+							<div style="position:relative;">
+								<input type="text" name="form-${formIdx}-serial_number" class="form-control serial-number-input" required>
+								<div class="sn-suggestions-list"></div>
+							</div>
+						</td>
+						<td style="padding:8px; border:1px solid #e2e8f0;">
+							<input type="text" name="form-${formIdx}-component_type" class="form-control" required>
+						</td>
+						<td style="padding:8px; border:1px solid #e2e8f0;">
+							<textarea name="form-${formIdx}-description" class="form-control" rows="2"></textarea>
+						</td>
+						<td style="padding:8px; border:1px solid #e2e8f0;">
+							<input type="number" name="form-${formIdx}-quantity_received" class="form-control" min="0" value="0" required>
+						</td>
+						<td style="padding:8px; border:1px solid #e2e8f0; text-align:center;">
+							<button type="button" class="btn btn-back remove-row-btn" style="padding:4px 10px; font-size:13px;">Remove</button>
+						</td>
+					`;
+					tableBody.appendChild(newRow);
+					totalFormsInput.value = formIdx + 1;
+					initSuggestions();
+					attachRemoveHandlers();
+				});
+			}
+
+			// Remove row handlers
+			function attachRemoveHandlers() {
+				document.querySelectorAll('.remove-row-btn').forEach(btn => {
+					btn.onclick = function() {
+						const row = this.closest('tr');
+						row.remove();
+						const totalForms = document.querySelector('input[name="form-TOTAL_FORMS"]');
+						totalForms.value = Math.max(0, parseInt(totalForms.value) - 1);
+					};
+				});
+			}
+
+			// Unique item modal
+			const uniqueBtn = document.getElementById('add-unique-btn');
+			const modal = document.getElementById('unique-item-modal');
+			const closeBtn = document.getElementById('close-unique-modal');
+			const uniqueForm = document.getElementById('unique-item-form');
+
+			if (uniqueBtn && modal && closeBtn && uniqueForm) {
+				uniqueBtn.onclick = () => modal.style.display = 'flex';
+				closeBtn.onclick = () => modal.style.display = 'none';
+				modal.onclick = (e) => { if (e.target === modal) modal.style.display = 'none'; };
+
+				uniqueForm.onsubmit = function(e) {
+					e.preventDefault();
+					const serial = document.getElementById('unique-serial').value.trim();
+					const type = document.getElementById('unique-type').value.trim();
+					const desc = document.getElementById('unique-desc').value.trim();
+					const qty = document.getElementById('unique-qty').value;
+
+					if (!serial || !type || !qty) return;
+
+					const formIdx = parseInt(totalFormsInput.value);
+					const newRow = document.createElement('tr');
+					newRow.className = 'form-row';
+					newRow.innerHTML = `
+						<td style="padding:8px; border:1px solid #e2e8f0;">
+							<div style="position:relative;">	
+								<input type="text" name="form-${formIdx}-serial_number" value="${serial}" class="form-control serial-number-input" required>
+								<div class="sn-suggestions-list"></div>
+							</div>
+						</td>
+						<td style="padding:8px; border:1px solid #e2e8f0;">
+							<input type="text" name="form-${formIdx}-component_type" value="${type}" class="form-control" required>
+						</td>
+						<td style="padding:8px; border:1px solid #e2e8f0;">
+							<textarea name="form-${formIdx}-description" class="form-control" rows="2">${desc}</textarea>
+						</td>
+						<td style="padding:8px; border:1px solid #e2e8f0;">
+							<input type="number" name="form-${formIdx}-quantity_received" value="${qty}" class="form-control" min="0" required>
+						</td>
+						<td style="padding:8px; border:1px solid #e2e8f0; text-align:center;">
+							<button type="button" class="btn btn-back remove-row-btn" style="padding:4px 10px; font-size:13px;">Remove</button>
+						</td>
+					`;
+					tableBody.appendChild(newRow);
+					totalFormsInput.value = formIdx + 1;
+                
+					modal.style.display = 'none';
+					uniqueForm.reset();
+					initSuggestions();
+					attachRemoveHandlers();
+				};
+			}
+
+			// Initialize
+			initSuggestions();
+			attachRemoveHandlers();
+		});
+		</script>
+	</body>
+	</html>

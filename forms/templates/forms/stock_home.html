@@ -127,6 +127,12 @@
         <div class="header">
             <h1>📦 Stock Management</h1>
             <p class="subtitle">Select an option to manage your inventory</p>
+            <!-- Update New Shipments -->
+            <a href="{% url 'forms:update_new_shipments' %}" class="stock-card send">
+                <div class="stock-icon">➕</div>
+                <h2>Update New Shipments</h2>
+                <p class="stock-description">Add new shipments to received and remaining stock</p>
+            </a>
         </div>
         
         <div class="stock-grid">
@@ -157,6 +163,12 @@
                 <h2>Dispatched Stock</h2>
                 <p class="stock-description">Track dispatched and delivered stock shipments</p>
             </a>
+                <!-- Request Required Stock -->
+                <a href="{% url 'forms:request_required_stock' %}" class="stock-card send">
+                    <div class="stock-icon">📝</div>
+                    <h2>Request Required Stock</h2>
+                    <p class="stock-description">Submit a request for stock you need to be procured or replenished</p>
+                </a>
         </div>
         
         <div class="back-container">

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Request Required Stock</title>
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #f8fafc; color: #0f172a; }
+        .container { max-width: 600px; margin: 40px auto; background: #fff; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); padding: 32px; }
+        h1 { color: #2563eb; font-size: 28px; margin-bottom: 18px; }
+        label { font-weight: 600; display: block; margin-top: 18px; }
+        input, textarea, select { width: 100%; padding: 10px; border: 1.5px solid #e2e8f0; border-radius: 8px; margin-top: 6px; font-size: 15px; }
+        button { margin-top: 24px; background: linear-gradient(135deg, #2563eb, #7c3aed); color: #fff; border: none; border-radius: 8px; padding: 12px 32px; font-weight: 700; font-size: 16px; cursor: pointer; transition: background 0.2s; }
+        button:hover { background: linear-gradient(135deg, #7c3aed, #2563eb); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo-section" style="margin-bottom: 10px;">
+            <a href="/" style="text-decoration: none;">
+                <img src="{% static 'admin/Images/logo-deye-300x225.webp' %}" alt="DEYE" style="height:36px;">
+            </a>
+        </div>
+        <h1 style="color:#667eea; font-size:2em; margin-bottom:10px;">📋 Required Stock List</h1>
+        <div style="margin-bottom:24px; background:#f8fafc; padding:18px 24px; border-radius:12px; box-shadow:0 2px 8px rgba(102,126,234,0.06);">
+            <form method="get" style="display:flex; gap:18px; flex-wrap:wrap; align-items:flex-end;">
+                <div style="flex:1; min-width:180px;">
+                    <label style="font-weight:600; color:#333;">Serial Number</label>
+                    <input type="text" name="serial" value="{{ serial_filter }}" placeholder="Search serial..." style="width:100%; padding:8px; border-radius:8px; border:1.5px solid #e2e8f0;">
+                </div>
+                <div style="flex:1; min-width:180px;">
+                    <label style="font-weight:600; color:#333;">Component Type</label>
+                    <input type="text" name="component" value="{{ component_filter }}" placeholder="Search component..." style="width:100%; padding:8px; border-radius:8px; border:1.5px solid #e2e8f0;">
+                </div>
+                <div style="width:120px;">
+                    <label style="font-weight:600; color:#333;">Min Qty</label>
+                    <input type="number" name="min_qty" value="{{ min_qty }}" min="0" style="width:100%; padding:8px; border-radius:8px; border:1.5px solid #e2e8f0;">
+                </div>
+                <div style="width:120px;">
+                    <label style="font-weight:600; color:#333;">Max Qty</label>
+                    <input type="number" name="max_qty" value="{{ max_qty }}" min="0" style="width:100%; padding:8px; border-radius:8px; border:1.5px solid #e2e8f0;">
+                </div>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <button type="submit" style="padding:10px 22px; background:#667eea; color:white; border:none; border-radius:8px; font-weight:600; cursor:pointer;">Filter</button>
+                    <a href="?" style="padding:10px 22px; background:#6c757d; color:white; border:none; border-radius:8px; font-weight:600; text-decoration:none;">Clear</a>
+                </div>
+                <div style="margin-left:auto;">
+                    <a href="?export=csv&serial={{ serial_filter }}&component={{ component_filter }}&min_qty={{ min_qty }}&max_qty={{ max_qty }}" style="padding:10px 22px; background:#28a745; color:white; border:none; border-radius:8px; font-weight:600; text-decoration:none;">Export CSV</a>
+                </div>
+            </form>
+        </div>
+        {% if required_stock and required_stock|length > 0 %}
+        <div style="margin-bottom:18px; display:flex; gap:32px; align-items:center;">
+            <span style="font-size:1.1em; color:#667eea; font-weight:600;">Total Components: {{ total_components }}</span>
+            <span style="font-size:1.1em; color:#dc2626; font-weight:600;">Total Qty Needed: {{ total_qty }}</span>
+        </div>
+        <div style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse; margin-top:10px; background:white; border-radius:12px; box-shadow:0 2px 8px rgba(102,126,234,0.06);">
+            <thead style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:white;">
+                <tr>
+                    <th style="padding:14px; border-bottom:2px solid #e2e8f0;">Serial Number</th>
+                    <th style="padding:14px; border-bottom:2px solid #e2e8f0;">Component Type</th>
+                    <th style="padding:14px; border-bottom:2px solid #e2e8f0;">Description</th>
+                    <th style="padding:14px; border-bottom:2px solid #e2e8f0;">Quantity Needed</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in required_stock %}
+                <tr>
+                    <td style="padding:12px; border-bottom:1px solid #e2e8f0;">{{ row.serial_number }}</td>
+                    <td style="padding:12px; border-bottom:1px solid #e2e8f0;">{{ row.component_type }}</td>
+                    <td style="padding:12px; border-bottom:1px solid #e2e8f0;">{{ row.description }}</td>
+                    <td style="padding:12px; border-bottom:1px solid #e2e8f0; font-weight:700; color:#dc2626;">{{ row.quantity_needed }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
+        {% else %}
+        <p style="margin-top:32px; color:#64748b;">No required stock at the moment. All requisitions are fulfilled.</p>
+        {% endif %}
+    </div>
+</body>
+</html>

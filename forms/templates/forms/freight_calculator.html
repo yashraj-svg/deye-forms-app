@@ -34,7 +34,7 @@
   <main class="grid">
     <section class="card col-6">
       <h4>Inputs</h4>
-      <form method="post">
+      <form method="post" id="calculator-form">
         {% csrf_token %}
         <div class="grid">
           <div class="col-6">{{ form.from_pincode.label_tag }}{{ form.from_pincode }}
@@ -43,15 +43,40 @@
           <div class="col-6">{{ form.to_pincode.label_tag }}{{ form.to_pincode }}
             <div id="to-pin-info" class="muted">City: -  |  State: -</div>
           </div>
-          <div class="col-4">{{ form.weight_kg.label_tag }}{{ form.weight_kg }}</div>
-          <div class="col-4">{{ form.length_cm.label_tag }}{{ form.length_cm }}</div>
-          <div class="col-4">{{ form.breadth_cm.label_tag }}{{ form.breadth_cm }}</div>
-          <div class="col-4">{{ form.height_cm.label_tag }}{{ form.height_cm }}</div>
+        </div>
+        
+        <h5 style="margin-top: 1.5rem; margin-bottom: 0.5rem;">Items in Shipment</h5>
+        <div id="items-container">
+          <!-- First item row -->
+          <div class="item-row" style="border: 1px solid #e5e7eb; padding: 12px; margin-bottom: 12px; border-radius: 6px; position: relative;">
+            <div class="grid">
+              <div class="col-3">
+                <label>Weight (kg)</label>
+                {{ form.weight_kg }}
+              </div>
+              <div class="col-3">
+                <label>Length (cm)</label>
+                {{ form.length_cm }}
+              </div>
+              <div class="col-3">
+                <label>Breadth (cm)</label>
+                {{ form.breadth_cm }}
+              </div>
+              <div class="col-3">
+                <label>Height (cm)</label>
+                {{ form.height_cm }}
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <button type="button" id="add-item-btn" class="secondary" style="width: auto; margin-bottom: 1rem; cursor: pointer; padding: 10px 16px; font-weight: 600; border: none; background: #475569; color: white; border-radius: 6px;">+ Add More Item</button>
+        
+        <h5 style="margin-top: 1rem; margin-bottom: 0.5rem;">Additional Options</h5>
+        <div class="grid">
           <div class="col-4" style="display:flex;align-items:end;gap:8px;">{{ form.reverse_pickup }} {{ form.reverse_pickup.label_tag }}</div>
           <div class="col-4">{{ form.insured_value.label_tag }}{{ form.insured_value }}</div>
           <div class="col-4">{{ form.days_in_transit_storage.label_tag }}{{ form.days_in_transit_storage }}</div>
-          <div class="col-4">{{ form.pieces_max_weight_kg.label_tag }}{{ form.pieces_max_weight_kg }}</div>
-          <div class="col-4">{{ form.longest_side_cm.label_tag }}{{ form.longest_side_cm }}</div>
         </div>
         <br>
         <button type="submit">Calculate</button>
@@ -75,52 +100,82 @@
       </div>
       {% endif %}
       {% if results %}
-      <table>
-        <thead>
-          <tr>
-            <th>Partner</th>
-            <th>From</th>
-            <th>To</th>
-            <th>Chargeable (kg)</th>
-            <th>Base</th>
-            <th>Fuel</th>
-            <th>ODA/Metro</th>
-            <th>Waybill</th>
-            <th>GST</th>
-            <th>Total</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for r in results %}
-          <tr>
-            <td>{{ r.partner_name }} {% if not r.deliverable %}<span class="badge">ND</span>{% endif %}</td>
-            <td>{{ r.from_zone|default:"-" }}</td>
-            <td>{{ r.to_zone|default:"-" }}</td>
-            <td>{{ r.chargeable_weight_kg|floatformat:2 }}</td>
-            <td>{{ r.base_freight|floatformat:2 }}</td>
-            <td>{{ r.surcharges.fuel_surcharge|default:0|floatformat:2 }}</td>
-            <td>{% firstof r.surcharges.oda r.surcharges.metro_charge 0 %}</td>
-            <td>{{ r.surcharges.waybill|default:r.surcharges.docket|default:0|floatformat:2 }}</td>
-            <td>{{ r.gst_amount|floatformat:2 }}</td>
-            <td><strong>{{ r.total_after_gst|floatformat:2 }}</strong></td>
-          </tr>
-          {% if r.rate_details %}
-          <tr>
-            <td colspan="10" class="muted" style="font-size: 0.85em; padding: 0.3rem 0.5rem;">
-              <strong>Rate Details:</strong> ₹{{ r.rate_per_kg|floatformat:2 }}/kg
-              {% if r.rate_details.region_code %}(Region: {{ r.rate_details.region_code }}){% endif %}
-              | Actual: {{ r.actual_weight_kg|floatformat:2 }}kg
-              {% if r.volumetric_weight_kg > 0 %}
-              | Volumetric: {{ r.volumetric_weight_kg|floatformat:2 }}kg 
-              {% if r.rate_details.volumetric_divisor %}(L×B×H/{{ r.rate_details.volumetric_divisor|floatformat:0 }}){% endif %}
+      <div style="margin-top: 16px;">
+        <!-- QUICK COMPARISON TABLE - SORTED BY PRICE -->
+        <div style="background: linear-gradient(135deg, #f0fdf4, #ecfdf5); border: 2px solid #10b981; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
+          <h4 style="margin: 0 0 12px 0; color: #047857; text-align: center;">Quick Rate Comparison (Lowest to Highest)</h4>
+          <div id="quick-rates"></div>
+        </div>
+
+        <!-- DETAILED BREAKDOWN FOR EACH PARTNER -->
+        <h4 style="color: #1f2937; margin-bottom: 12px;">Detailed Breakdown</h4>
+        {% for r in results %}
+        <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+          <h5 style="margin: 0 0 12px 0; color: #1f2937;">
+            {{ r.partner_name }} 
+            {% if not r.deliverable %}<span class="badge" style="background: #fee2e2; color: #991b1b;">Not Deliverable</span>{% endif %}
+          </h5>
+          
+          <!-- Weight & Zone Info -->
+          <div style="font-size: 13px; color: #6b7280; margin-bottom: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div>From: <strong>{{ r.from_zone|default:"-" }}</strong></div>
+            <div>To: <strong>{{ r.to_zone|default:"-" }}</strong></div>
+            <div>Actual Weight: <strong>{{ r.actual_weight_kg|floatformat:2 }}kg</strong></div>
+            <div>Chargeable Weight: <strong>{{ r.chargeable_weight_kg|floatformat:2 }}kg</strong></div>
+            {% if r.volumetric_weight_kg > 0 %}
+            <div>Volumetric Weight: <strong>{{ r.volumetric_weight_kg|floatformat:2 }}kg</strong>
+              {% if r.rate_details.volumetric_divisor %}
+              <span class="muted">(L×B×H/{{ r.rate_details.volumetric_divisor|floatformat:0 }})</span>
               {% endif %}
-              | Chargeable: {{ r.chargeable_weight_kg|floatformat:2 }}kg
-            </td>
-          </tr>
-          {% endif %}
-          {% endfor %}
-        </tbody>
-      </table>
+            </div>
+            {% endif %}
+            <div>Rate: <strong>₹{{ r.rate_per_kg|floatformat:2 }}/kg</strong></div>
+          </div>
+          
+          <!-- Detailed Charge Breakdown -->
+          <table style="width: 100%; font-size: 13px; margin-bottom: 12px;">
+            <tbody>
+              <tr style="border-bottom: 1px solid #e5e7eb;">
+                <td style="padding: 8px 4px; text-align: left;">1. Basic Freight</td>
+                <td style="padding: 8px 4px; text-align: right;"><strong>₹{{ r.base_freight|floatformat:2 }}</strong></td>
+              </tr>
+              {% for key, value in r.surcharges.items %}
+              <tr style="border-bottom: 1px solid #e5e7eb;">
+                <td style="padding: 8px 4px; text-align: left;">
+                  {% if key == 'waybill' %}2. Waybill Charge{% endif %}
+                  {% if key == 'value_surcharge' %}3. Value Surcharge{% endif %}
+                  {% if key == 'ucc' %}4. UCC (Urban City Center){% endif %}
+                  {% if key == 'oda' %}5. ODA (Out of Delivery Area){% endif %}
+                  {% if key == 'metro_charge' %}6. Metro Surcharge{% endif %}
+                  {% if key == 'osc' %}7. OSC (Min Freight Adjustment){% endif %}
+                  {% if key == 'reverse_pickup' %}8. Reverse Pickup{% endif %}
+                  {% if key == 'state_surcharge' %}9. State Surcharge{% endif %}
+                  {% if key == 'fuel_surcharge' %}10. Fuel Surcharge{% endif %}
+                  {% if key == 'docket' %}Docket Charge{% endif %}
+                  {% if key == 'handling' %}Handling Charge{% endif %}
+                  {% if key == 'band' %}Band Surcharge{% endif %}
+                  {{ key|title }}
+                </td>
+                <td style="padding: 8px 4px; text-align: right;">₹{{ value|floatformat:2 }}</td>
+              </tr>
+              {% endfor %}
+              <tr style="border-bottom: 2px solid #1f2937; font-weight: bold;">
+                <td style="padding: 8px 4px; text-align: left;">Subtotal (Before GST)</td>
+                <td style="padding: 8px 4px; text-align: right;">₹{{ r.total_before_gst|floatformat:2 }}</td>
+              </tr>
+              <tr style="border-bottom: 1px solid #e5e7eb;">
+                <td style="padding: 8px 4px; text-align: left;">GST (18%)</td>
+                <td style="padding: 8px 4px; text-align: right;">₹{{ r.gst_amount|floatformat:2 }}</td>
+              </tr>
+              <tr style="background: #dbeafe; font-weight: bold;">
+                <td style="padding: 8px 4px; text-align: left;">GRAND TOTAL</td>
+                <td style="padding: 8px 4px; text-align: right; color: #0369a1;">₹{{ r.total_after_gst|floatformat:2 }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        {% endfor %}
+      </div>
       {% else %}
       <p class="muted">Fill inputs and click Calculate to see quotes.</p>
       {% endif %}
@@ -129,32 +184,227 @@
 </body>
 </html>
 <script>
-// City/State inline hints for From/To pincodes using backend API with fallback
-(function(){
-  function attach(selector, infoId){
-    const el = document.querySelector(selector);
-    const info = document.getElementById(infoId);
-    if(!el || !info) return;
-    function setInfo(text, ok=true){ info.textContent = text || 'City: -  |  State: -'; info.style.color = ok ? '#6b7280' : '#b91c1c'; }
-    el.addEventListener('input', function(e){
-      const pin = e.target.value.trim();
-      if(pin.length !== 6 || !/^\d{6}$/.test(pin)){ setInfo('City: -  |  State: -'); return; }
-      fetch(`/api/pincode/?pin=${encodeURIComponent(pin)}`)
-        .then(r=>r.json())
-        .then(j=>{
-          if(j && j.ok && j.data){ 
-            let odaText = j.data.oda === true ? ' | ODA' : (j.data.oda === false ? ' | Non-ODA' : '');
-            setInfo(`City: ${j.data.city||'-'}  |  State: ${j.data.state||'-'}${odaText}`); 
-            return; 
-          }
-          return fetch(`https://api.postalpincode.in/pincode/${pin}`).then(r=>r.json()).then(d=>{
-            if(d && d[0] && d[0].Status==='Success' && d[0].PostOffice){ const po=d[0].PostOffice[0]; setInfo(`City: ${po.District||po.Name||'-'}  |  State: ${po.State||'-'}`);} else { setInfo('Pincode not found', false); }
-          });
-        })
-        .catch(()=>setInfo('Lookup failed', false));
+let itemCounter = 1;
+
+function addItemRow() {
+  const container = document.getElementById('items-container');
+  if(!container) return;
+  
+  const newRow = document.createElement('div');
+  newRow.className = 'item-row';
+  newRow.style.cssText = 'border: 1px solid #e5e7eb; padding: 12px; margin-bottom: 12px; border-radius: 6px; position: relative;';
+  
+  const removeBtn = document.createElement('button');
+  removeBtn.type = 'button';
+  removeBtn.style.cssText = 'position: absolute; top: 8px; right: 8px; padding: 4px 12px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; z-index: 10;';
+  removeBtn.textContent = 'Remove';
+  removeBtn.onclick = function() { this.closest('.item-row').remove(); };
+  
+  const gridDiv = document.createElement('div');
+  gridDiv.style.cssText = 'display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 8px;';
+  
+  // Create 4 input fields
+  const fields = ['Weight (kg)', 'Length (cm)', 'Breadth (cm)', 'Height (cm)'];
+  const fieldNames = [`weight_kg_${itemCounter}`, `length_cm_${itemCounter}`, `breadth_cm_${itemCounter}`, `height_cm_${itemCounter}`];
+  
+  fields.forEach((label, idx) => {
+    const colDiv = document.createElement('div');
+    colDiv.style.cssText = 'display: flex; flex-direction: column; gap: 4px;';
+    
+    const inputId = fieldNames[idx]; // Use field name as ID
+    
+    const labelEl = document.createElement('label');
+    labelEl.htmlFor = inputId; // Associate label with input by ID
+    labelEl.textContent = label;
+    labelEl.style.cssText = 'font-size: 14px; font-weight: 500; color: #333;';
+    
+    const inputEl = document.createElement('input');
+    inputEl.id = inputId; // Add ID to input
+    inputEl.type = 'number';
+    inputEl.step = '0.01';
+    inputEl.min = '0';
+    inputEl.name = fieldNames[idx];
+    inputEl.required = true;
+    inputEl.style.cssText = 'padding: 8px 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; width: 100%;';
+    
+    colDiv.appendChild(labelEl);
+    colDiv.appendChild(inputEl);
+    gridDiv.appendChild(colDiv);
+  });
+  
+  newRow.appendChild(removeBtn);
+  newRow.appendChild(gridDiv);
+  container.appendChild(newRow);
+  itemCounter++;
+}
+
+function removeItemRow(btn) {
+  btn.closest('.item-row').remove();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('[INIT] DOMContentLoaded fired');
+  
+  const addBtn = document.getElementById('add-item-btn');
+  if(addBtn) {
+    addBtn.addEventListener('click', function() {
+      addItemRow();
     });
+    console.log('[INIT] Add Item button event attached');
   }
-  attach('input[name="from_pincode"]','from-pin-info');
-  attach('input[name="to_pincode"]','to-pin-info');
-})();
+  
+  setupPincodeField('input[name="from_pincode"]', 'from-pin-info');
+  setupPincodeField('input[name="to_pincode"]', 'to-pin-info');
+  console.log('[INIT] Pincode fields setup done');
+  
+  // Try to populate quick rates now and watch for new results
+  console.log('[INIT] Calling populateQuickRates immediately');
+  populateQuickRates();
+  
+  // Also try again after a short delay in case results take time to render
+  setTimeout(() => {
+    console.log('[INIT] Calling populateQuickRates again after 500ms');
+    populateQuickRates();
+  }, 500);
+  
+  setTimeout(() => {
+    console.log('[INIT] Calling populateQuickRates again after 1000ms');
+    populateQuickRates();
+  }, 1000);
+});
+
+function setupPincodeField(fieldSelector, infoId) {
+  const field = document.querySelector(fieldSelector);
+  const infoEl = document.getElementById(infoId);
+  
+  console.log('[PINCODE DEBUG] Setup - Field:', field, 'InfoEl:', infoEl);
+  if(!field || !infoEl) {
+    console.error('[PINCODE DEBUG] Missing field or info element');
+    return;
+  }
+  
+  field.addEventListener('input', function() {
+    const pin = this.value.trim();
+    console.log('[PINCODE DEBUG] Input event - Pin:', pin);
+    
+    if(pin.length !== 6 || !/^\d{6}$/.test(pin)) {
+      infoEl.textContent = 'City: -  |  State: -';
+      infoEl.style.color = '#6b7280';
+      return;
+    }
+    
+    const apiUrl = '/forms/api/pincode/?pin=' + encodeURIComponent(pin);
+    console.log('[PINCODE DEBUG] Calling API:', apiUrl);
+    
+    fetch(apiUrl)
+      .then(r => {
+        console.log('[PINCODE DEBUG] Response status:', r.status);
+        if(!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(j => {
+        console.log('[PINCODE DEBUG] API Response:', j);
+        if(j && j.ok && j.data) {
+          let odaText = j.data.oda === true ? ' | ODA' : (j.data.oda === false ? ' | Non-ODA' : '');
+          const text = `City: ${j.data.city || '-'}  |  State: ${j.data.state || '-'}${odaText}`;
+          console.log('[PINCODE DEBUG] Setting text:', text);
+          infoEl.textContent = text;
+          infoEl.style.color = '#059669';
+        } else {
+          console.log('[PINCODE DEBUG] API error - not ok:', j);
+          throw new Error('API error');
+        }
+      })
+      .catch(err => {
+        console.log('[PINCODE DEBUG] Catch - trying fallback:', err);
+        fetch('https://api.postalpincode.in/pincode/' + pin)
+          .then(r => r.json())
+          .then(d => {
+            console.log('[PINCODE DEBUG] Fallback response:', d);
+            if(d && d[0] && d[0].Status === 'Success' && d[0].PostOffice) {
+              const po = d[0].PostOffice[0];
+              const text = `City: ${po.District || po.Name || '-'}  |  State: ${po.State || '-'}`;
+              console.log('[PINCODE DEBUG] Fallback success:', text);
+              infoEl.textContent = text;
+              infoEl.style.color = '#059669';
+            } else {
+              console.log('[PINCODE DEBUG] Fallback - no data');
+              infoEl.textContent = 'Pincode not found';
+              infoEl.style.color = '#b91c1c';
+            }
+          })
+          .catch(err2 => {
+            console.error('[PINCODE DEBUG] Fallback error:', err2);
+            infoEl.textContent = 'Lookup failed';
+            infoEl.style.color = '#b91c1c';
+          });
+      });
+  });
+}
+
+function populateQuickRates() {
+  const quickRatesDiv = document.getElementById('quick-rates');
+  console.log('[RATES DEBUG] Quick rates div found:', !!quickRatesDiv);
+  
+  if(!quickRatesDiv) {
+    console.error('[RATES DEBUG] quick-rates div not found!');
+    return;
+  }
+  
+  const resultCards = document.querySelectorAll('[style*="f9fafb"]');
+  console.log('[RATES DEBUG] Result cards found:', resultCards.length);
+  
+  if(resultCards.length === 0) {
+    console.log('[RATES DEBUG] No result cards, skipping');
+    return;
+  }
+  
+  const rates = [];
+  resultCards.forEach((card, cardIdx) => {
+    const h5 = card.querySelector('h5');
+    const partnerName = h5 ? h5.textContent.trim().split('\n')[0] : 'Unknown';
+    const isNotDeliverable = card.querySelector('.badge') !== null;
+    
+    const tds = Array.from(card.querySelectorAll('td'));
+    console.log('[RATES DEBUG] Card', cardIdx, '- Partner:', partnerName, '- TDs found:', tds.length);
+    
+    let totalAmount = 0;
+    
+    for(let i = 0; i < tds.length; i++) {
+      if(tds[i].textContent.includes('GRAND TOTAL')) {
+        const nextTd = tds[i + 1];
+        if(nextTd) {
+          totalAmount = parseFloat(nextTd.textContent.replace(/[^0-9.]/g, ''));
+          console.log('[RATES DEBUG] Card', cardIdx, '- Found GRAND TOTAL:', totalAmount);
+        }
+        break;
+      }
+    }
+    
+    if(totalAmount > 0) {
+      rates.push({ name: partnerName, total: totalAmount, isND: isNotDeliverable });
+    }
+  });
+  
+  console.log('[RATES DEBUG] Rates collected:', rates);
+  
+  rates.sort((a, b) => a.total - b.total);
+  
+  if(rates.length > 0) {
+    console.log('[RATES DEBUG] Generating table for', rates.length, 'rates');
+    let html = '<table style="width: 100%; font-size: 14px; font-weight: 600;"><tbody>';
+    rates.forEach((r, idx) => {
+      const ndBadge = r.isND ? '<span style="background: #fee2e2; color: #991b1b; padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-left: 6px;">NOT DELIVERABLE</span>' : '';
+      const label = idx === 0 ? `${idx + 1}. ${r.name} (Cheapest)` : `${idx + 1}. ${r.name}`;
+      html += `<tr style="border-bottom: 1px solid #d1fae5;"><td style="padding: 10px 12px; text-align: left; color: #065f46;"><strong>${label}${ndBadge}</strong></td><td style="padding: 10px 12px; text-align: right; color: #059669; font-size: 16px; font-weight: bold;">₹${r.total.toFixed(2)}</td></tr>`;
+    });
+    html += '</tbody></table>';
+    quickRatesDiv.innerHTML = html;
+    console.log('[RATES DEBUG] Table populated successfully');
+  } else {
+    console.log('[RATES DEBUG] No rates to display');
+  }
+}
 </script>
+</body>
+</html>

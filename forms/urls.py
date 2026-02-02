@@ -1,9 +1,12 @@
 from django.urls import path
 from . import views
+from .views_request_required_stock import request_required_stock
+from .views import available_inverter_serials, available_battery_serials
 
 app_name = 'forms'
 
 urlpatterns = [
+    path('hierarchy/', views.hierarchy_static_view, name='hierarchy'),
     path('', views.simple_home, name='simple_home'),
     path('calculator/', views.freight_calculator, name='calculator'),
     path('stock/', views.stock_home, name='stock'),
@@ -11,6 +14,8 @@ urlpatterns = [
     path('stock/remaining/', views.remaining_stock, name='remaining_stock'),
     path('stock/send/', views.send_stock, name='send_stock'),
     path('stock/dispatched/', views.dispatched_stock, name='dispatched_stock'),
+    path('stock/request-required/', request_required_stock, name='request_required_stock'),
+    path('stock/update-new-shipments/', views.update_new_shipments, name='update_new_shipments'),
     path('api/pincode/', views.pincode_lookup_api, name='pincode_lookup'),
     # Stock APIs
     path('api/stock/serial-search/', views.stock_serial_search, name='stock_serial_search'),
@@ -37,6 +42,7 @@ urlpatterns = [
     path('my-data/export/<str:form_type>/<str:format>/', views.export_employee_data, name='export_employee_data'),
     path('team-data/', views.team_data_view, name='team_data'),
     path('team-data/export/<str:form_type>/<str:format>/', views.export_team_data, name='export_team_data'),
+    path('team-data/stock-inverters/', views.stock_inverters_view, name='stock_inverters'),
 
     path('leave/', views.leave_home, name='leave_home'),
     path('leave/apply/', views.apply_leave, name='apply_leave'),
@@ -53,4 +59,6 @@ urlpatterns = [
     path('leave/email/approve/<int:leave_id>/', views.approve_leave_email, name='approve_leave_email'),
     path('leave/email/reject/<int:leave_id>/', views.reject_leave_email, name='reject_leave_email'),
 
+    path('api/available-inverter-serials/', available_inverter_serials, name='available_inverter_serials'),
+    path('api/available-battery-serials/', available_battery_serials, name='available_battery_serials'),
 ]

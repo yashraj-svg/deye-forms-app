@@ -1,67 +1,312 @@
+
 <!DOCTYPE html>
 <html lang="en">
+{% load static %}
 <head>
 <meta charset="UTF-8">
 <title>DEYE Inverter Service Report</title>
 
 <style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  padding: 20px 0;
+}
+
 /* Header */
 .header {
   position: sticky;
   top: 0;
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-  padding: 18px 60px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px 40px;
   z-index: 1000;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
 }
 
 .logo-section {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 15px;
 }
 
 .logo-section img {
-  height: 36px;
+  height: 40px;
+  filter: brightness(0) invert(1);
 }
 
-body {
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-  background: #f3f5f7;
-  margin: 0;
+.logo-section h2 {
+  color: white;
+  font-size: 18px;
+  font-weight: 600;
 }
+
 .container {
-  max-width: 1200px;
-  margin: 28px auto;
+  max-width: 1100px;
+  margin: 30px auto;
   background: #fff;
-  padding: 32px;
-  border-radius: 8px;
-  box-shadow: 0 4px 14px rgba(0,0,0,.08);
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
 }
+
 h1 {
   text-align: center;
+  color: #667eea;
+  margin-bottom: 30px;
+  font-size: 32px;
+  font-weight: 700;
 }
+
 h2 {
-  margin-top: 28px;
-  border-bottom: 2px solid #e0e3e7;
-  padding-bottom: 6px;
+  margin-top: 32px;
+  margin-bottom: 20px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #667eea20 0%, #764ba220 100%);
+  border-left: 4px solid #667eea;
+  color: #333;
+  font-size: 18px;
+  font-weight: 600;
+  border-radius: 6px;
 }
+
+h3 {
+  margin-top: 18px;
+  color: #667eea;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
 label {
   display: block;
-  margin-top: 14px;
-  font-weight: 500;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
 }
+
+label .required {
+  color: #e74c3c;
+}
+
 input, select, textarea {
   width: 100%;
-  margin-top: 6px;
-  padding: 8px;
-  border: 1px solid #ccd0d5;
-  border-radius: 4px;
-  box-sizing: border-box;
+  padding: 12px 14px;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  transition: all 0.3s ease;
+  background: #fafafa;
 }
-textarea { min-height: 80px; }
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: #667eea;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23667eea' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 20px;
+  padding-right: 36px;
+}
+
+textarea {
+  resize: vertical;
+  min-height: 100px;
+  font-family: 'Courier New', monospace;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 15px;
+}
+
+/* Checkboxes and Radio styling */
+.checkbox-group, .radio-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-top: 10px;
+}
+
+.checkbox-item, .radio-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+input[type="checkbox"], input[type="radio"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: #667eea;
+  margin: 0;
+  padding: 0;
+}
+
+.checkbox-label, .radio-label {
+  margin: 0;
+  font-weight: 500;
+  cursor: pointer;
+  color: #555;
+}
+
+/* Table styling */
+.table-wrapper {
+  overflow-x: auto;
+  margin-top: 20px;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+}
+
+th {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 14px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+td {
+  border: 1px solid #e0e0e0;
+  padding: 10px;
+  text-align: center;
+}
+
+td input {
+  margin: 0;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+td:first-child {
+  background: #f8f9fa;
+  font-weight: 600;
+  color: #667eea;
+  min-width: 80px;
+}
+
+tbody tr:hover {
+  background: #f8f9fa;
+}
+
+/* Star Rating */
+.star-rating {
+  display: inline-flex;
+  flex-direction: row-reverse;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 6px;
+  font-size: 34px;
+  line-height: 1;
+}
+
+.star-rating input[type="radio"] {
+  display: none;
+}
+
+.star-rating label.star {
+  cursor: pointer;
+  color: #ddd;
+  transition: color 0.2s;
+}
+
+.star-rating input[type="radio"]:checked ~ label.star,
+.star-rating label.star:hover,
+.star-rating label.star:hover ~ label.star {
+  color: #ffd700;
+}
+
+/* Canvas and Signature */
+canvas {
+  width: 100%;
+  height: 150px;
+  border: 2px dashed #667eea;
+  background: #fafafa;
+  border-radius: 6px;
+}
+
+.sig-actions {
+  margin-top: 10px;
+  display: flex;
+  gap: 10px;
+}
+
+button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 14px;
+}
+
+.submit-btn {
+  width: 100%;
+  margin-top: 40px;
+  padding: 14px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-size: 16px;
+  font-weight: 700;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.submit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+}
+
+.clear-btn {
+  background: #e0e0e0;
+  color: #333;
+  flex: 1;
+}
+
+.clear-btn:hover {
+  background: #d0d0d0;
+}
 
 /* Hide browser validation popups */
 input:invalid {
@@ -71,63 +316,6 @@ input:invalid {
 input::-webkit-validation-bubble-message {
   display: none;
 }
-
-.grid-2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-.grid-3 {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 14px;
-}
-th, td {
-  border: 1px solid #d0d5da;
-  padding: 6px;
-  text-align: center;
-}
-th {
-  background: #f5f7fa;
-  font-weight: 600;
-}
-
-canvas {
-  width: 100%;
-  height: 150px;
-  border: 1px solid #ccc;
-  background: #fff;
-}
-.sig-actions {
-  margin-top: 6px;
-  display: flex;
-  gap: 8px;
-}
-button {
-  padding: 8px 14px;
-  border: none;
-  border-radius: 4px;
-  background: #1a73e8;
-  color: white;
-  cursor: pointer;
-}
-button:hover { background: #1558b0; }
-.clear-btn {
-  background: #e0e0e0;
-  color: #000;
-}
-.submit-btn {
-  width: 100%;
-  margin-top: 32px;
-  font-size: 16px;
-  padding: 12px;
-}
 </style>
 </head>
 
@@ -136,10 +324,22 @@ button:hover { background: #1558b0; }
 <div class="header">
   <div class="logo-section">
     <a href="/" style="text-decoration: none;">
-      <img src="https://www.deyeinverter.com/template/en/images/logo.png" alt="DEYE">
+      <img src="{% static 'admin/Images/logo-deye-300x225.webp' %}" alt="DEYE">
     </a>
+    <h2>DEYE Inverter Service Report</h2>
   </div>
 </div>
+
+<!-- Success Message -->
+<script>
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.get('success') === '1') {
+  const successDiv = document.createElement('div');
+  successDiv.style.cssText = 'background:#d4edda;color:#155724;border:1px solid #c3e6cb;padding:12px 20px;border-radius:6px;margin:20px auto;max-width:1200px;';
+  successDiv.innerHTML = '<strong>✓ Service Report Submitted Successfully!</strong>';
+  document.body.insertBefore(successDiv, document.body.firstChild);
+}
+</script>
 
 {% if form_errors %}
 <div style="background:#fdecea;color:#611a15;border:1px solid #f5c6cb;padding:8px 12px;border-radius:6px;margin:12px 0;">
@@ -200,28 +400,20 @@ button:hover { background: #1558b0; }
 <h2>Product & Device Information</h2>
 <label>Product Type *</label>
 <select name="product_type" required>
-  <option value="">Select</option>
-  <option>Inverter</option>
+  <option value="">Please Select</option>
+  <option>Single Phase Ongrid</option>
+  <option>Three Phase Ongrid</option>
+  <option>Single Phase Hybrid</option>
+  <option>Three Phase Hybrid</option>
+  <option>Micro Inverter</option>
   <option>Battery</option>
 </select>
 
 <div class="grid-2">
   <div>
-    <label>Inverter Specification</label>
-    <select name="inverter_spec">
-      <option value="">Select</option>
-      <option>1PH - Hybrid</option>
-      <option>3PH - Hybrid</option>
-      <option>1PH - Ongrid</option>
-      <option>3PH - Ongrid</option>
-      <option>All In One - Hybrid</option>
-      <option>Micro Inverter</option>
-    </select>
-  </div>
-  <div>
-    <label>Inverter Rating</label>
-    <select name="inverter_rating">
-      <option value="">Select</option>
+    <label>Inverter Capacity <span class="required">*</span></label>
+    <select name="inverter_capacity" required>
+      <option value="">Please Select</option>
       <option>2.2 KW</option>
       <option>3 KW</option>
       <option>3.3 KW</option>
@@ -241,159 +433,322 @@ button:hover { background: #1558b0; }
       <option>40 KW</option>
       <option>50 KW</option>
       <option>60 KW</option>
-      <option>75 KW</option>
+      <option>70 KW</option>
       <option>80 KW</option>
       <option>100 KW</option>
       <option>125 KW</option>
       <option>136 KW</option>
     </select>
   </div>
+  <div>
+    <label>Serial Number <span class="required">*</span></label>
+    <input name="serial_number" required placeholder="Enter serial number">
+  </div>
 </div>
 
 <div class="grid-3">
-  <div><label>Inverter Capacity *</label><input name="inverter_capacity" required></div>
-  <div><label>Serial Number *</label><input name="serial_number" required></div>
-  <div><label>LCD Version *</label><input name="lcd_version" required></div>
+  <div><label>LCD Version <span class="required">*</span></label><input name="lcd_version" required></div>
+  <div><label>MCU Version <span class="required">*</span></label><input name="mcu_version" required></div>
+  <div><label>PV Capacity (KW) <span class="required">*</span></label><input name="pv_capacity_kw" required></div>
 </div>
 
-<div class="grid-3">
-  <div><label>MCU Version *</label><input name="mcu_version" required></div>
-  <div><label>PV Capacity (KW) *</label><input name="pv_capacity_kw" required></div>
-  <div><label>No of MPPT *</label><input name="no_of_mppt" required></div>
+<div class="form-group">
+  <label>No of MPPT <span class="required">*</span></label>
+  <select name="no_of_mppt" required>
+    <option value="">Please Select</option>
+    <option>1</option>
+    <option>2</option>
+    <option>4</option>
+    <option>6</option>
+    <option>8</option>
+  </select>
 </div>
 
 <!-- Component Checks -->
-<h3>DC Side Components</h3>
-<div class="grid-3">
-  <label><input type="checkbox" name="dc_spd"> SPD</label>
-  <label><input type="checkbox" name="dc_switch"> Switch</label>
-  <label><input type="checkbox" name="dc_fuse"> Fuse</label>
+<h2>Component Checks</h2>
+
+<h3>DC Side Components <span class="required">*</span></h3>
+<div class="checkbox-group">
+  <div class="checkbox-item">
+    <input type="checkbox" id="dc_spd" name="dc_spd">
+    <label for="dc_spd" class="checkbox-label">SPD</label>
+  </div>
+  <div class="checkbox-item">
+    <input type="checkbox" id="dc_switch" name="dc_switch">
+    <label for="dc_switch" class="checkbox-label">Switch</label>
+  </div>
+  <div class="checkbox-item">
+    <input type="checkbox" id="dc_fuse" name="dc_fuse">
+    <label for="dc_fuse" class="checkbox-label">Fuse</label>
+  </div>
+</div>F
+
+<h3>AC Side Components <span class="required">*</span></h3>
+<div class="checkbox-group">
+  <div class="checkbox-item">
+    <input type="checkbox" id="ac_spd" name="ac_spd">
+    <label for="ac_spd" class="checkbox-label">SPD</label>
+  </div>
+  <div class="checkbox-item">
+    <input type="checkbox" id="ac_switch" name="ac_switch">
+    <label for="ac_switch" class="checkbox-label">Switch</label>
+  </div>
+  <div class="checkbox-item">
+    <input type="checkbox" id="ac_MCB" name="ac_MCB">
+    <label for="ac_MCB" class="checkbox-label">MCB</label>
+  </div>
 </div>
 
-
-<h3>AC Side Components</h3>
-<div class="grid-3">
-  <label><input type="checkbox" name="ac_spd"> SPD</label>
-  <label><input type="checkbox" name="ac_switch"> Switch</label>
-  <label><input type="checkbox" name="ac_fuse"> Fuse</label>
+<h3>Earthing <span class="required">*</span></h3>
+<div class="checkbox-group">
+  <div class="checkbox-item">
+    <input type="checkbox" id="earthing_panel" name="earthing_panel">
+    <label for="earthing_panel" class="checkbox-label">Panel</label>
+  </div>
+  <div class="checkbox-item">
+    <input type="checkbox" id="earthing_inverter" name="earthing_inverter">
+    <label for="earthing_inverter" class="checkbox-label">Inverter</label>
+  </div>
+  <div class="checkbox-item">
+    <input type="checkbox" id="earthing_ac_neutral" name="earthing_ac_neutral">
+    <label for="earthing_ac_neutral" class="checkbox-label">AC Neutral</label>
+  </div>
 </div>
 
-<label>Earthing</label><input name="earthing_panel">
-<label>Panel / Inverter</label><input name="earthing_inverter">
-<label>AC Neutral To Earth</label><input name="earthing_ac_neutral">
-<label>AC Neutral To Earth Voltage (V)</label><input name="ac_neutral_earth_voltage">
-<label>AC Cable Size / Type</label><input name="ac_cable_size">
+<div class="grid-2">
+  <div>
+    <label>Neutral To Earth Voltage (V) <span class="required">*</span></label>
+    <input type="number" name="ac_neutral_earth_voltage" required step="0.01" placeholder="Enter voltage">
+  </div>
+  <div>
+    <label>AC Cable Size / Type <span class="required">*</span></label>
+    <input name="ac_cable_size" required placeholder="e.g., 4 sq mm / Aluminum">
+  </div>
+</div>
 
 <!-- Physical Observation -->
 <h2>Physical Observation</h2>
-<label>Physical Observation Details</label>
-<textarea name="physical_observation"></textarea>
+<div class="form-group">
+  <label>Physical Observation Details <span class="required">*</span></label>
+  <textarea name="physical_observation" required placeholder="Describe any physical observations..."></textarea>
+</div>
 
 <!-- DC Side Measurements -->
 <h2>DC Side Measurements (PV Data)</h2>
+<div class="table-wrapper">
 <table>
 <tr>
   <th>PV</th><th>Voltage (V)</th><th>Current (A)</th>
   <th>Earthing</th><th>PV Panel</th><th>Observation</th>
 </tr>
-<tr><td>PV1</td><td><input></td><td><input></td><td><input></td><td><input></td><td><input></td></tr>
-<tr><td>PV2</td><td><input></td><td><input></td><td><input></td><td><input></td><td><input></td></tr>
-<tr><td>PV3</td><td><input></td><td><input></td><td><input></td><td><input></td><td><input></td></tr>
-<tr><td>PV4</td><td><input></td><td><input></td><td><input></td><td><input></td><td><input></td></tr>
-<tr><td>PV5</td><td><input></td><td><input></td><td><input></td><td><input></td><td><input></td></tr>
-<tr><td>PV6</td><td><input></td><td><input></td><td><input></td><td><input></td><td><input></td></tr>
-<tr><td>PV7</td><td><input></td><td><input></td><td><input></td><td><input></td><td><input></td></tr>
-<tr><td>PV8</td><td><input></td><td><input></td><td><input></td><td><input></td><td><input></td></tr>
+<tr><td>PV 1</td><td><input name="pv1_voltage" type="number" step="0.01"></td><td><input name="pv1_current" type="number" step="0.01"></td><td><input name="pv1_earthing" type="number" step="0.01"></td><td><input name="pv1_panel"></td><td><input name="pv1_observation"></td></tr>
+<tr><td>PV 2</td><td><input name="pv2_voltage" type="number" step="0.01"></td><td><input name="pv2_current" type="number" step="0.01"></td><td><input name="pv2_earthing" type="number" step="0.01"></td><td><input name="pv2_panel"></td><td><input name="pv2_observation"></td></tr>
+<tr><td>PV 3</td><td><input name="pv3_voltage" type="number" step="0.01"></td><td><input name="pv3_current" type="number" step="0.01"></td><td><input name="pv3_earthing" type="number" step="0.01"></td><td><input name="pv3_panel"></td><td><input name="pv3_observation"></td></tr>
+<tr><td>PV 4</td><td><input name="pv4_voltage" type="number" step="0.01"></td><td><input name="pv4_current" type="number" step="0.01"></td><td><input name="pv4_earthing" type="number" step="0.01"></td><td><input name="pv4_panel"></td><td><input name="pv4_observation"></td></tr>
+<tr><td>PV 5</td><td><input name="pv5_voltage" type="number" step="0.01"></td><td><input name="pv5_current" type="number" step="0.01"></td><td><input name="pv5_earthing" type="number" step="0.01"></td><td><input name="pv5_panel"></td><td><input name="pv5_observation"></td></tr>
+<tr><td>PV 6</td><td><input name="pv6_voltage" type="number" step="0.01"></td><td><input name="pv6_current" type="number" step="0.01"></td><td><input name="pv6_earthing" type="number" step="0.01"></td><td><input name="pv6_panel"></td><td><input name="pv6_observation"></td></tr>
+<tr><td>PV 7</td><td><input name="pv7_voltage" type="number" step="0.01"></td><td><input name="pv7_current" type="number" step="0.01"></td><td><input name="pv7_earthing" type="number" step="0.01"></td><td><input name="pv7_panel"></td><td><input name="pv7_observation"></td></tr>
+<tr><td>PV 8</td><td><input name="pv8_voltage" type="number" step="0.01"></td><td><input name="pv8_current" type="number" step="0.01"></td><td><input name="pv8_earthing" type="number" step="0.01"></td><td><input name="pv8_panel"></td><td><input name="pv8_observation"></td></tr>
 </table>
+</div>
 
 <!-- AC Side Measurements -->
 <h2>AC Side Measurements</h2>
+<div class="table-wrapper">
 <table>
 <tr><th>Phase</th><th>Voltage (V)</th><th>Current (A)</th><th>Earthing</th></tr>
-<tr><td>R TO N</td><td><input></td><td><input></td><td><input></td></tr>
-<tr><td>Y TO N</td><td><input></td><td><input></td><td><input></td></tr>
-<tr><td>B TO N</td><td><input></td><td><input></td><td><input></td></tr>
-<tr><td>R TO Y</td><td><input></td><td><input></td><td><input></td></tr>
-<tr><td>Y TO B</td><td><input></td><td><input></td><td><input></td></tr>
-<tr><td>B TO R</td><td><input></td><td><input></td><td><input></td></tr>
-<tr><td>N TO PE</td><td><input></td><td><input></td><td><input></td></tr>
+<tr><td>R-N</td><td><input name="ac_rn_voltage" type="number" step="0.01"></td><td><input name="ac_rn_current" type="number" step="0.01"></td><td><input name="ac_rn_earthing" type="number" step="0.01"></td></tr>
+<tr><td>Y-N</td><td><input name="ac_yn_voltage" type="number" step="0.01"></td><td><input name="ac_yn_current" type="number" step="0.01"></td><td><input name="ac_yn_earthing" type="number" step="0.01"></td></tr>
+<tr><td>B-N</td><td><input name="ac_bn_voltage" type="number" step="0.01"></td><td><input name="ac_bn_current" type="number" step="0.01"></td><td><input name="ac_bn_earthing" type="number" step="0.01"></td></tr>
+<tr><td>R-Y</td><td><input name="ac_ry_voltage" type="number" step="0.01"></td><td><input name="ac_ry_current" type="number" step="0.01"></td><td><input name="ac_ry_earthing" type="number" step="0.01"></td></tr>
+<tr><td>Y-B</td><td><input name="ac_yb_voltage" type="number" step="0.01"></td><td><input name="ac_yb_current" type="number" step="0.01"></td><td><input name="ac_yb_earthing" type="number" step="0.01"></td></tr>
+<tr><td>B-R</td><td><input name="ac_br_voltage" type="number" step="0.01"></td><td><input name="ac_br_current" type="number" step="0.01"></td><td><input name="ac_br_earthing" type="number" step="0.01"></td></tr>
+<tr><td>N-PE</td><td><input name="ac_npe_voltage" type="number" step="0.01"></td><td><input name="ac_npe_current" type="number" step="0.01"></td><td><input name="ac_npe_earthing" type="number" step="0.01"></td></tr>
 </table>
-
-<!-- Repair Details -->
-<h2>Repair Details</h2>
-<div class="grid-2">
-  <div><label>Inverter</label><input name="repair_inverter"></div>
-  <div><label>Dust</label><input name="repair_dust"></div>
-  <div><label>Cabling</label><input name="repair_cabling"></div>
-  <div><label>Other</label><input name="repair_other"></div>
 </div>
 
-<label>Actual Work Done at Site</label>
-<textarea name="actual_work_done"></textarea>
+<!-- Repair Details -->
+<h2>Repair & Maintenance Details</h2>
 
-<label>Cause of Failure</label>
-<textarea name="cause_of_failure"></textarea>
+<div class="grid-2">
+  <div>
+    <label>Inverter</label>
+    <input name="repair_inverter" placeholder="Describe inverter issues/repairs">
+  </div>
+  <div>
+    <label>Dust</label>
+    <input name="repair_dust" placeholder="Dust cleaning details">
+  </div>
+</div>
+
+<div class="grid-2">
+  <div>
+    <label>Cabling</label>
+    <input name="repair_cabling" placeholder="Cable issues/repairs">
+  </div>
+  <div>
+    <label>Other</label>
+    <input name="repair_other" placeholder="Other repairs">
+  </div>
+</div>
+
+<div class="form-group">
+  <label>Actual Work Done at Site <span class="required">*</span></label>
+  <textarea name="actual_work_done" required placeholder="Describe the work performed..."></textarea>
+</div>
+
+<div class="form-group">
+  <label>Cause of Failure <span class="required">*</span></label>
+  <textarea name="cause_of_failure" required placeholder="Describe the root cause..."></textarea>
+</div>
 
 <!-- Battery Information -->
 <h2>Battery Information</h2>
+
 <div class="grid-3">
-  <div><label>Battery Type</label><input name="battery_type"></div>
-  <div><label>Make</label><input name="battery_make"></div>
-  <div><label>Voltage</label><input name="battery_voltage"></div>
+  <div>
+    <label>Battery Type</label>
+    <select name="battery_type">
+      <option value="">Please Select</option>
+      <option>RW - L 2.5 Neutral</option>
+      <option>RW - M 5.3 Neutral</option>
+      <option>RW - M 5.3 Pro Neutral (M6)</option>
+      <option>RW - M 6.1 Neutral</option>
+      <option>RW - M 6.1 B Neutral No Remark</option>
+      <option>SE - G 5.1 - Pro B Neutral No Remark</option>
+      <option>AI - W 5.1 Neutral</option>
+      <option>AI - W 5.1 - B Neutral No Remark</option>
+      <option>BOS - GM 5.1 Neutral</option>
+      <option>GB - LM 4.0 Neutral</option>
+      <option>GB - LB GB - LB Neutral</option>
+      <option>SE - G 5.3 SE - G 5.3</option>
+      <option>SE - G 5.3 Pro</option>
+      <option>SE - F 5</option>
+      <option>Other</option>
+    </select>
+  </div>
+  <div>
+    <label>Make</label>
+    <input name="battery_make" placeholder="e.g., Luminous">
+  </div>
+  <div>
+    <label>Voltage</label>
+    <input name="battery_voltage" placeholder="e.g., 48V">
+  </div>
 </div>
+
 <div class="grid-3">
-  <div><label>Protection</label><input name="battery_protection"></div>
-  <div><label>No. of Battery</label><input id="id_no_of_battery" name="no_of_battery" type="number" min="0" step="1"></div>
-  <div><label>BMS Make</label><input name="battery_bms_make"></div>
+  <div>
+    <label>Protection</label>
+    <input name="battery_protection" placeholder="e.g., With BMS">
+  </div>
+  <div>
+    <label>No. of Battery</label>
+    <input type="number" name="no_of_battery" min="0" step="1" placeholder="Enter quantity">
+  </div>
+  <div>
+    <label>BMS Make</label>
+    <input name="battery_bms_make" placeholder="e.g., Celona">
+  </div>
 </div>
+
 <div class="grid-2">
-  <div><label>BMS Model</label><input name="battery_bms_model"></div>
-  <div><label>BMS Ratings</label><input name="battery_bms_ratings"></div>
+  <div>
+    <label>BMS Model</label>
+    <input name="battery_bms_model" placeholder="e.g., BMS-LI-100">
+  </div>
+  <div>
+    <label>BMS Ratings</label>
+    <input name="battery_bms_ratings" placeholder="e.g., 48V/100A">
+  </div>
 </div>
 
 <!-- Final Assessment -->
 <h2>Final Assessment</h2>
-<label>Protocol *</label><input name="protocol" required>
-<label>Conclusion *</label><input name="conclusion" required>
-<label>Customer Ratings</label><input name="customer_ratings">
-<label>Any Suggestions</label><textarea name="suggestions"></textarea>
 
-<!-- Signatures -->
-<h2>Signatures</h2>
-<label>Engineer Signature</label>
-<div class="grid-2">
-  <div>
-    <label style="margin-top: 0; font-size: 0.9em;">Draw Signature</label>
-    <canvas id="engSig" style="border:1px solid #000; width:100%; height:150px;"></canvas>
-    <div class="sig-actions">
-      <button type="button" class="clear-btn" onclick="clearSig('engSig')">Clear</button>
-    </div>
-  </div>
-  <div>
-    <label style="margin-top: 0; font-size: 0.9em;">Or Upload Signature</label>
-    <input type="file" id="engUpload" accept="image/*" onchange="handleEngUpload(event)">
+<div class="form-group">
+  <label>Protocol <span class="required">*</span></label>
+  <select name="protocol" required>
+    <option value="">Please Select</option>
+    <option>CAN</option>
+    <option>RS485</option>
+    <option>Other</option>
+    <option>Not Applicable</option>
+  </select>
+</div>
+
+<div class="form-group">
+  <label>Conclusion <span class="required">*</span></label>
+  <select name="conclusion" required>
+    <option value="">Please Select</option>
+    <option>Inverter is Working OK</option>
+    <option>Inverter needs to Repair</option>
+    <option>Inverter needs to Replace</option>
+  </select>
+</div>
+
+<div class="form-group">
+  <label>Customer Ratings <span class="required">*</span></label>
+  <div class="star-rating">
+    <input type="radio" id="star5" name="customer_ratings" value="5" required>
+    <label for="star5" class="star">★</label>
+    <input type="radio" id="star4" name="customer_ratings" value="4">
+    <label for="star4" class="star">★</label>
+    <input type="radio" id="star3" name="customer_ratings" value="3">
+    <label for="star3" class="star">★</label>
+    <input type="radio" id="star2" name="customer_ratings" value="2">
+    <label for="star2" class="star">★</label>
+    <input type="radio" id="star1" name="customer_ratings" value="1">
+    <label for="star1" class="star">★</label>
   </div>
 </div>
 
-<label>Customer Signature</label>
+<div class="form-group">
+  <label>Any Suggestions</label>
+  <textarea name="suggestions" placeholder="Provide feedback and suggestions..."></textarea>
+</div>
+
+<!-- Signatures -->
+<h2>Signatures</h2>
+<!-- Signatures -->
+<h2>Digital Signatures</h2>
+
+<h3>Engineer Signature <span class="required">*</span></h3>
 <div class="grid-2">
   <div>
-    <label style="margin-top: 0; font-size: 0.9em;">Draw Signature</label>
-    <canvas id="custSig" style="border:1px solid #000; width:100%; height:150px;"></canvas>
+    <label style="font-size: 13px; font-weight: 600; color: #666;">✎ Draw Your Signature Below</label>
+    <canvas id="engSig"></canvas>
     <div class="sig-actions">
-      <button type="button" class="clear-btn" onclick="clearSig('custSig')">Clear</button>
+      <button type="button" class="clear-btn" onclick="clearSig('engSig')">🗑️ Clear</button>
     </div>
   </div>
   <div>
-    <label style="margin-top: 0; font-size: 0.9em;">Or Upload Signature</label>
+    <label style="font-size: 13px; font-weight: 600; color: #666;">📤 Or Upload Signature Image</label>
+    <input type="file" id="engUpload" accept="image/*" onchange="handleEngUpload(event)">
+    <small style="color: #999; display: block; margin-top: 8px;">Accepted formats: JPG, PNG, GIF (Max 2MB)</small>
+  </div>
+</div>
+
+<h3>Customer Signature <span class="required">*</span></h3>
+<div class="grid-2">
+  <div>
+    <label style="font-size: 13px; font-weight: 600; color: #666;">✎ Draw Your Signature Below</label>
+    <canvas id="custSig"></canvas>
+    <div class="sig-actions">
+      <button type="button" class="clear-btn" onclick="clearSig('custSig')">🗑️ Clear</button>
+    </div>
+  </div>
+  <div>
+    <label style="font-size: 13px; font-weight: 600; color: #666;">📤 Or Upload Signature Image</label>
     <input type="file" id="custUpload" accept="image/*" onchange="handleCustUpload(event)">
+    <small style="color: #999; display: block; margin-top: 8px;">Accepted formats: JPG, PNG, GIF (Max 2MB)</small>
   </div>
 </div>
 
 <input type="hidden" id="engData" name="engData">
 <input type="hidden" id="custData" name="custData">
 
-<button class="submit-btn" type="submit">Submit</button>
+<button class="submit-btn" type="submit">✓ Submit Service Report</button>
 
 <script>
 function initCanvas(id){
@@ -542,6 +897,8 @@ if (serviceParams.get('success') === '1') {
   serviceParams.delete('success');
   const newUrl = `${window.location.pathname}${serviceParams.toString() ? '?' + serviceParams.toString() : ''}`;
   window.history.replaceState({}, '', newUrl);
+  // Clear form data from localStorage after successful submission
+  try { localStorage.removeItem('service_form_data_v1'); } catch(_) {}
 }
 </script>
 
@@ -587,14 +944,19 @@ if (serviceParams.get('success') === '1') {
     });
   }
 
-  // Restore on load
-  restoreData();
-  // Save on change
-  form.addEventListener('input', saveData);
-  form.addEventListener('change', saveData);
-  // Clear storage on success
-  const params = new URLSearchParams(window.location.search);
-  if (params.get('success') === '1') {
+  // Check if there are validation errors on page load
+  const hasValidationErrors = document.querySelector('[style*="fdecea"]') || 
+                              document.querySelector('.error-box') ||
+                              document.querySelector('div[style*="background:#fdecea"]');
+
+  // Only restore data if there are validation errors
+  // If page is fresh (no errors), don't restore old data
+  if (hasValidationErrors) {
+    restoreData();
+    form.addEventListener('input', saveData);
+    form.addEventListener('change', saveData);
+  } else {
+    // Clear old data on fresh page load
     try { localStorage.removeItem(STORAGE_KEY); } catch(_) {}
   }
 

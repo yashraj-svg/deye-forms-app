@@ -1,0 +1,558 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>DEYE Inverter Service Report</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            font-size: 9pt;
+            color: #333;
+            line-height: 1.4;
+            background: #f5f5f5;
+        }
+        
+        .page {
+            page-break-after: always;
+            padding: 20px;
+            background: white;
+            margin-bottom: 10px;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #0066cc;
+        }
+        
+        .logo {
+            font-size: 24pt;
+            font-weight: bold;
+            color: #0066cc;
+        }
+        
+        .report-title {
+            text-align: center;
+            font-size: 14pt;
+            font-weight: bold;
+            color: #0066cc;
+            flex: 1;
+        }
+        
+        .report-date {
+            text-align: right;
+            font-size: 8pt;
+            color: #666;
+        }
+        
+        .section {
+            margin-bottom: 12px;
+        }
+        
+        .section-title {
+            font-size: 10pt;
+            font-weight: bold;
+            color: #0066cc;
+            background: #e6f2ff;
+            padding: 4px 6px;
+            margin-bottom: 6px;
+        }
+        
+        .field-row {
+            display: flex;
+            margin-bottom: 3px;
+            padding: 3px 0;
+            border-bottom: 1px dotted #ddd;
+        }
+        
+        .field-label {
+            font-weight: bold;
+            color: #0066cc;
+            width: 35%;
+            padding-right: 10px;
+        }
+        
+        .field-value {
+            width: 65%;
+            color: #333;
+            word-wrap: break-word;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 8pt;
+            font-weight: bold;
+        }
+        
+        .badge-success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .badge-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 8px 0;
+            font-size: 8pt;
+            table-layout: fixed;
+        }
+        
+        th {
+            background: #e6f2ff;
+            color: #0066cc;
+            font-weight: bold;
+            padding: 5px;
+            border: 1px solid #0066cc;
+            text-align: center;
+            word-wrap: break-word;
+        }
+        
+        td {
+            padding: 4px 3px;
+            border: 1px solid #ddd;
+            text-align: center;
+            word-wrap: break-word;
+            height: auto;
+        }
+        
+        td:first-child {
+            text-align: left;
+            font-weight: bold;
+            background: #f9f9f9;
+        }
+        
+        .check {
+            color: #00aa00;
+            font-weight: bold;
+        }
+        
+        .signature-box {
+            text-align: center;
+            margin: 10px 0;
+            display: inline-block;
+            width: 48%;
+        }
+        
+        .sig-image {
+            max-width: 150px;
+            max-height: 60px;
+            border: 1px solid #ccc;
+            margin: 5px 0;
+        }
+        
+        .sig-line {
+            border-top: 1px solid #333;
+            width: 100px;
+            display: inline-block;
+            margin-top: 5px;
+            font-size: 8pt;
+        }
+        
+        .component-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 5px 0;
+        }
+        
+        .component-item {
+            background: #e6f2ff;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 8pt;
+            color: #0066cc;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<!-- PAGE 1 -->
+<div class="page">
+    <div class="header">
+        <div class="logo">Deye</div>
+        <div class="report-title">DEYE INVERTER SERVICE REPORT</div>
+        <div class="report-date">{{ report.created_at|date:"l, F j, Y" }}</div>
+    </div>
+    
+    <!-- Contact Information -->
+    <div class="section">
+        <div class="section-title">CONTACT & ENGINEER INFORMATION</div>
+        <div class="field-row">
+            <span class="field-label">Engineer Name</span>
+            <span class="field-value"><strong>{{ engineer_name }}</strong></span>
+        </div>
+        <div class="field-row">
+            <span class="field-label">Customer Name</span>
+            <span class="field-value">{{ customer_name }}</span>
+        </div>
+        <div class="field-row">
+            <span class="field-label">Date Of Service</span>
+            <span class="field-value">{{ report.date_of_service|date:"l, F j, Y"|default:"—" }}</span>
+        </div>
+        <div class="field-row">
+            <span class="field-label">Address</span>
+            <span class="field-value">{{ full_address }}</span>
+        </div>
+        <div class="field-row">
+            <span class="field-label">Phone Number</span>
+            <span class="field-value">{{ report.phone_number }}</span>
+        </div>
+        <div class="field-row">
+            <span class="field-label">Customer E-mail ID</span>
+            <span class="field-value">{{ report.email }}</span>
+        </div>
+        {% if report.contact_no %}
+        <div class="field-row">
+            <span class="field-label">Contact No</span>
+            <span class="field-value">{{ report.contact_no }}</span>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Product Information -->
+    <div class="section">
+        <div class="section-title">PRODUCT INFORMATION</div>
+        <div class="field-row">
+            <span class="field-label">Product Type</span>
+            <span class="field-value"><span class="badge badge-success">{{ report.product_type }}</span></span>
+        </div>
+        <div class="field-row">
+            <span class="field-label">Inverter Capacity</span>
+            <span class="field-value">{{ report.inverter_capacity }}</span>
+        </div>
+        <div class="field-row">
+            <span class="field-label">Serial Number</span>
+            <span class="field-value"><strong>{{ report.serial_number }}</strong></span>
+        </div>
+        <div class="field-row">
+            <span class="field-label">No Of MPPT</span>
+            <span class="field-value">{{ report.no_of_mppt }} MPPT</span>
+        </div>
+        <div class="field-row">
+            <span class="field-label">PV Capacity (KW)</span>
+            <span class="field-value">{{ report.pv_capacity_kw }} KW</span>
+        </div>
+        <div class="field-row">
+            <span class="field-label">LCD Version</span>
+            <span class="field-value">{{ report.lcd_version }}</span>
+        </div>
+        <div class="field-row">
+            <span class="field-label">MCU Version</span>
+            <span class="field-value">{{ report.mcu_version }}</span>
+        </div>
+    </div>
+    
+    <!-- Component Checks -->
+    <div class="section">
+        <div class="section-title">DC SIDE COMPONENT</div>
+        <div class="component-grid">
+            {% if report.dc_spd %}<div class="component-item">SPD</div>{% endif %}
+            {% if report.dc_switch %}<div class="component-item">Switch</div>{% endif %}
+            {% if report.dc_fuse %}<div class="component-item">Fuse</div>{% endif %}
+        </div>
+    </div>
+    
+    <div class="section">
+        <div class="section-title">AC SIDE COMPONENT</div>
+        <div class="component-grid">
+            {% if report.ac_spd %}<div class="component-item">SPD</div>{% endif %}
+            {% if report.ac_switch %}<div class="component-item">Switch</div>{% endif %}
+            {% if report.ac_fuse %}<div class="component-item">Fuse</div>{% endif %}
+        </div>
+    </div>
+    
+    <div class="section">
+        <div class="section-title">EARTHING</div>
+        <div class="component-grid">
+            {% if report.earthing_panel %}<div class="component-item">Panel</div>{% endif %}
+            {% if report.earthing_inverter %}<div class="component-item">Inverter</div>{% endif %}
+            {% if report.earthing_ac_neutral %}<div class="component-item">AC</div>{% endif %}
+        </div>
+    </div>
+    
+    <!-- Voltage & Cable Info -->
+    <div class="section">
+        <div class="field-row">
+            <span class="field-label">Neutral To Earth Voltage</span>
+            <span class="field-value">{{ report.ac_neutral_earth_voltage|default:"—" }}</span>
+        </div>
+        <div class="field-row">
+            <span class="field-label">AC Cable Size / Type:</span>
+            <span class="field-value">{{ report.ac_cable_size|default:"—" }}</span>
+        </div>
+    </div>
+    
+    <!-- Physical Observation -->
+    <div class="section">
+        <div class="section-title">PHYSICAL OBSERVATION:</div>
+        <div style="background: #f9f9f9; padding: 5px; border: 1px solid #ddd; min-height: 35px; font-size: 9pt;">
+            {{ report.physical_observation }}
+        </div>
+    </div>
+</div>
+
+<!-- PAGE 2 - DATA TABLES -->
+<div class="page">
+    <div class="header">
+        <div class="logo">Deye</div>
+        <div class="report-title">DC Side</div>
+        <div class="report-date">Page 2</div>
+    </div>
+    
+    <!-- DC Side Data Table - Always Show -->
+    <div class="section">
+        <div class="section-title">DC SIDE - PV STRING DATA</div>
+        <table style="width: 100%; border-collapse: collapse; margin: 8px 0;">
+            <thead>
+                <tr>
+                    <th style="width: 15%; padding: 5px; border: 1px solid #0066cc; background: #e6f2ff; color: #0066cc; font-weight: bold; text-align: center;">PV String</th>
+                    <th style="width: 17%; padding: 5px; border: 1px solid #0066cc; background: #e6f2ff; color: #0066cc; font-weight: bold; text-align: center;">Voltage (V)</th>
+                    <th style="width: 17%; padding: 5px; border: 1px solid #0066cc; background: #e6f2ff; color: #0066cc; font-weight: bold; text-align: center;">Current (A)</th>
+                    <th style="width: 17%; padding: 5px; border: 1px solid #0066cc; background: #e6f2ff; color: #0066cc; font-weight: bold; text-align: center;">Earthing</th>
+                    <th style="width: 17%; padding: 5px; border: 1px solid #0066cc; background: #e6f2ff; color: #0066cc; font-weight: bold; text-align: center;">PV Panel</th>
+                    <th style="width: 17%; padding: 5px; border: 1px solid #0066cc; background: #e6f2ff; color: #0066cc; font-weight: bold; text-align: center;">Observation</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if report.pv_data %}
+                    {% for pv in report.pv_data %}
+                    <tr>
+                        <td style="width: 15%; padding: 4px 3px; border: 1px solid #ddd; background: #f9f9f9; font-weight: bold; text-align: left;">PV {{ forloop.counter }}</td>
+                        <td style="width: 17%; padding: 4px 3px; border: 1px solid #ddd; text-align: center;">{{ pv.voltage|default:"" }}</td>
+                        <td style="width: 17%; padding: 4px 3px; border: 1px solid #ddd; text-align: center;">{{ pv.current|default:"" }}</td>
+                        <td style="width: 17%; padding: 4px 3px; border: 1px solid #ddd; text-align: center;">{{ pv.earthing|default:"" }}</td>
+                        <td style="width: 17%; padding: 4px 3px; border: 1px solid #ddd; text-align: center;">{{ pv.panel|default:"" }}</td>
+                        <td style="width: 17%; padding: 4px 3px; border: 1px solid #ddd; text-align: center;">{{ pv.observation|default:"" }}</td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <!-- Show 8 empty rows if no data -->
+                    {% for i in "12345678" %}
+                    <tr>
+                        <td style="width: 15%; padding: 4px 3px; border: 1px solid #ddd; background: #f9f9f9; font-weight: bold; text-align: left;">PV {{ forloop.counter }}</td>
+                        <td style="width: 17%; padding: 4px 3px; border: 1px solid #ddd; text-align: center;"></td>
+                        <td style="width: 17%; padding: 4px 3px; border: 1px solid #ddd; text-align: center;"></td>
+                        <td style="width: 17%; padding: 4px 3px; border: 1px solid #ddd; text-align: center;"></td>
+                        <td style="width: 17%; padding: 4px 3px; border: 1px solid #ddd; text-align: center;"></td>
+                        <td style="width: 17%; padding: 4px 3px; border: 1px solid #ddd; text-align: center;"></td>
+                    </tr>
+                    {% endfor %}
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- AC Side Data Table - Always Show -->
+    <div class="section">
+        <div class="section-title">AC SIDE - PHASE DATA</div>
+        <table style="width: 100%; border-collapse: collapse; margin: 8px 0;">
+            <thead>
+                <tr>
+                    <th style="width: 20%; padding: 5px; border: 1px solid #0066cc; background: #e6f2ff; color: #0066cc; font-weight: bold; text-align: center;">Phase</th>
+                    <th style="width: 27%; padding: 5px; border: 1px solid #0066cc; background: #e6f2ff; color: #0066cc; font-weight: bold; text-align: center;">Voltage (V)</th>
+                    <th style="width: 27%; padding: 5px; border: 1px solid #0066cc; background: #e6f2ff; color: #0066cc; font-weight: bold; text-align: center;">Current (A)</th>
+                    <th style="width: 26%; padding: 5px; border: 1px solid #0066cc; background: #e6f2ff; color: #0066cc; font-weight: bold; text-align: center;">Earthing</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if report.ac_data %}
+                    {% for key, value in report.ac_data.items %}
+                    <tr>
+                        <td style="width: 20%; padding: 4px 3px; border: 1px solid #ddd; background: #f9f9f9; font-weight: bold; text-align: left;">{{ key }}</td>
+                        <td style="width: 27%; padding: 4px 3px; border: 1px solid #ddd; text-align: center;">{{ value.voltage|default:"" }}</td>
+                        <td style="width: 27%; padding: 4px 3px; border: 1px solid #ddd; text-align: center;">{{ value.current|default:"" }}</td>
+                        <td style="width: 26%; padding: 4px 3px; border: 1px solid #ddd; text-align: center;">{{ value.earthing|default:"" }}</td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <!-- Show all standard AC phases if no data -->
+                    <tr><td style="width: 20%; padding: 4px 3px; border: 1px solid #ddd; background: #f9f9f9; font-weight: bold; text-align: left;">R-N</td><td style="width: 27%; padding: 4px 3px; border: 1px solid #ddd; text-align: center;"></td><td style="width: 27%; padding: 4px 3px; border: 1px solid #ddd; text-align: center;"></td><td style="width: 26%; padding: 4px 3px; border: 1px solid #ddd; text-align: center;"></td></tr>
+                    <tr><td style="width: 20%; padding: 4px 3px; border: 1px solid #ddd; background: #f9f9f9; font-weight: bold; text-align: left;">Y-N</td><td style="width: 27%; padding: 4px 3px; border: 1px solid #ddd; text-align: center;"></td><td style="width: 27%; padding: 4px 3px; border: 1px solid #ddd; text-align: center;"></td><td style="width: 26%; padding: 4px 3px; border: 1px solid #ddd; text-align: center;"></td></tr>
+                    <tr><td style="width: 20%; padding: 4px 3px; border: 1px solid #ddd; background: #f9f9f9; font-weight: bold; text-align: left;">B-N</td><td style="width: 27%; padding: 4px 3px; border: 1px solid #ddd; text-align: center;"></td><td style="width: 27%; padding: 4px 3px; border: 1px solid #ddd; text-align: center;"></td><td style="width: 26%; padding: 4px 3px; border: 1px solid #ddd; text-align: center;"></td></tr>
+                    <tr><td style="width: 20%; padding: 4px 3px; border: 1px solid #ddd; background: #f9f9f9; font-weight: bold; text-align: left;">R-Y</td><td style="width: 27%; padding: 4px 3px; border: 1px solid #ddd; text-align: center;"></td><td style="width: 27%; padding: 4px 3px; border: 1px solid #ddd; text-align: center;"></td><td style="width: 26%; padding: 4px 3px; border: 1px solid #ddd; text-align: center;"></td></tr>
+                    <tr><td style="width: 20%; padding: 4px 3px; border: 1px solid #ddd; background: #f9f9f9; font-weight: bold; text-align: left;">Y-B</td><td style="width: 27%; padding: 4px 3px; border: 1px solid #ddd; text-align: center;"></td><td style="width: 27%; padding: 4px 3px; border: 1px solid #ddd; text-align: center;"></td><td style="width: 26%; padding: 4px 3px; border: 1px solid #ddd; text-align: center;"></td></tr>
+                    <tr><td style="width: 20%; padding: 4px 3px; border: 1px solid #ddd; background: #f9f9f9; font-weight: bold; text-align: left;">B-R</td><td style="width: 27%; padding: 4px 3px; border: 1px solid #ddd; text-align: center;"></td><td style="width: 27%; padding: 4px 3px; border: 1px solid #ddd; text-align: center;"></td><td style="width: 26%; padding: 4px 3px; border: 1px solid #ddd; text-align: center;"></td></tr>
+                    <tr><td style="width: 20%; padding: 4px 3px; border: 1px solid #ddd; background: #f9f9f9; font-weight: bold; text-align: left;">N-PE</td><td style="width: 27%; padding: 4px 3px; border: 1px solid #ddd; text-align: center;"></td><td style="width: 27%; padding: 4px 3px; border: 1px solid #ddd; text-align: center;"></td><td style="width: 26%; padding: 4px 3px; border: 1px solid #ddd; text-align: center;"></td></tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Repair Details - Always Show -->
+    <div class="section">
+        <div class="section-title">REPAIR & MAINTENANCE DETAILS</div>
+        <div class="field-row">
+            <span class="field-label">Repair Inverter:</span>
+            <span class="field-value">{{ report.repair_inverter|default:"" }}</span>
+        </div>
+        <div class="field-row">
+            <span class="field-label">Repair Dust:</span>
+            <span class="field-value">{{ report.repair_dust|default:"" }}</span>
+        </div>
+        <div class="field-row">
+            <span class="field-label">Repair Cabling:</span>
+            <span class="field-value">{{ report.repair_cabling|default:"" }}</span>
+        </div>
+        <div class="field-row">
+            <span class="field-label">Repair Other:</span>
+            <span class="field-value">{{ report.repair_other|default:"" }}</span>
+        </div>
+    </div>
+    
+    <!-- Work Details -->
+    <div class="section">
+        <div class="section-title">WORK DETAILS</div>
+        <div class="field-row">
+            <span class="field-label">Actual Work Done:</span>
+            <span class="field-value">{{ report.actual_work_done }}</span>
+        </div>
+        <div class="field-row">
+            <span class="field-label">Cause of Failure:</span>
+            <span class="field-value">{{ report.cause_of_failure }}</span>
+        </div>
+    </div>
+    
+    <!-- Battery Information - Always Show -->
+    <div class="section">
+        <div class="section-title">BATTERY INFORMATION</div>
+        <div class="field-row">
+            <span class="field-label">Battery Type:</span>
+            <span class="field-value">{{ report.battery_type|default:"" }}</span>
+        </div>
+        <div class="field-row">
+            <span class="field-label">Battery Make:</span>
+            <span class="field-value">{{ report.battery_make|default:"" }}</span>
+        </div>
+        <div class="field-row">
+            <span class="field-label">Battery Voltage:</span>
+            <span class="field-value">{{ report.battery_voltage|default:"" }}</span>
+        </div>
+        <div class="field-row">
+            <span class="field-label">Battery Protection:</span>
+            <span class="field-value">{{ report.battery_protection|default:"" }}</span>
+        </div>
+        <div class="field-row">
+            <span class="field-label">No of Battery:</span>
+            <span class="field-value">{{ report.no_of_battery|default:"" }}</span>
+        </div>
+        <div class="field-row">
+            <span class="field-label">Battery BMS Make:</span>
+            <span class="field-value">{{ report.battery_bms_make|default:"" }}</span>
+        </div>
+        <div class="field-row">
+            <span class="field-label">Battery BMS Model:</span>
+            <span class="field-value">{{ report.battery_bms_model|default:"" }}</span>
+        </div>
+        <div class="field-row">
+            <span class="field-label">Battery BMS Ratings:</span>
+            <span class="field-value">{{ report.battery_bms_ratings|default:"" }}</span>
+        </div>
+    </div>
+    
+    <!-- Conclusion -->
+    <div class="section">
+        <div class="section-title">CONCLUSION</div>
+        <div class="field-row">
+            <span class="field-label">Conclusion</span>
+            <span class="field-value">
+                {% if "OK" in report.conclusion or "Working" in report.conclusion %}
+                <span class="badge badge-success">{{ report.conclusion }}</span>
+                {% else %}
+                <span class="badge badge-warning">{{ report.conclusion }}</span>
+                {% endif %}
+            </span>
+        </div>
+        {% if report.customer_ratings %}
+        <div class="field-row">
+            <span class="field-label">Customer Ratings</span>
+            <span class="field-value">{{ report.customer_ratings }}</span>
+        </div>
+        {% endif %}
+        {% if report.suggestions %}
+        <div class="field-row">
+            <span class="field-label">Any Suggestion</span>
+            <span class="field-value">{{ report.suggestions }}</span>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- PAGE 3 - SIGNATURES -->
+<div class="page">
+    <div class="header">
+        <div class="logo">Deye</div>
+        <div class="report-title">AUTHORIZED SIGNATURES</div>
+        <div class="report-date"></div>
+    </div>
+    
+    <div style="margin-top: 40px;">
+        <div class="signature-box" style="margin-right: 15px;">
+            <strong>Engineer Signature</strong><br/>
+            {% if report.engineer_signature_data %}
+            <img src="{{ report.engineer_signature_data }}" class="sig-image" alt="Engineer Signature"/>
+            {% else %}
+            <div style="height: 60px; border: 1px dotted #ccc; margin: 5px 0;"></div>
+            {% endif %}
+            <div class="sig-line"></div>
+            <div style="font-size: 8pt; margin-top: 3px;">{{ engineer_name }}</div>
+        </div>
+        
+        <div class="signature-box">
+            <strong>Customer Signature</strong><br/>
+            {% if report.customer_signature_data %}
+            <img src="{{ report.customer_signature_data }}" class="sig-image" alt="Customer Signature"/>
+            {% else %}
+            <div style="height: 60px; border: 1px dotted #ccc; margin: 5px 0;"></div>
+            {% endif %}
+            <div class="sig-line"></div>
+            <div style="font-size: 8pt; margin-top: 3px;">{{ customer_name }}</div>
+        </div>
+    </div>
+    
+    <!-- Summary Section -->
+    <div style="margin-top: 60px; padding: 15px; background: #f5f5f5; border: 1px solid #ddd;">
+        <div class="section-title">REPORT SUMMARY</div>
+        <div class="field-row">
+            <span class="field-label">Report Date:</span>
+            <span class="field-value">{{ report.created_at|date:"d/m/Y H:i" }}</span>
+        </div>
+        <div class="field-row">
+            <span class="field-label">Report ID:</span>
+            <span class="field-value">#{{ report.id }}</span>
+        </div>
+        <div class="field-row">
+            <span class="field-label">Serial Number:</span>
+            <span class="field-value">{{ report.serial_number }}</span>
+        </div>
+        <div class="field-row">
+            <span class="field-label">Status:</span>
+            <span class="field-value">
+                {% if "OK" in report.conclusion or "Working" in report.conclusion %}
+                <span class="badge badge-success">✓ PASS</span>
+                {% else %}
+                <span class="badge badge-warning">⚠ NEEDS REPAIR</span>
+                {% endif %}
+            </span>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

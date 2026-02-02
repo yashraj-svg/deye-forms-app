@@ -1,0 +1,20 @@
+# .railwayignore - Files to exclude from Railway deployment
+__pycache__
+*.pyc
+.git
+.gitignore
+.venv
+node_modules
+db.sqlite3
+.env.local
+*.log
+*.pot
+.DS_Store
+.vscode/
+.idea/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+htmlcov/
+.coverage

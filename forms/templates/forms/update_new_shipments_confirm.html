@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container">
+    <div class="header">
+        <h1>➕ Update New Shipments - Confirm</h1>
+        <p class="subtitle">Review all shipments before confirming</p>
+    </div>
+    <div class="form-container">
+        {% if success_message %}
+            <div class="success-message">{{ success_message }}</div>
+        {% endif %}
+        <form method="post">
+            {% csrf_token %}
+            {{ item_formset.management_form }}
+            <table style="width:100%; border-collapse:collapse; margin-bottom:20px;">
+                <thead>
+                    <tr style="background:#f1f5f9;">
+                        <th style="padding:8px; border:1px solid #e2e8f0;">Serial Number</th>
+                        <th style="padding:8px; border:1px solid #e2e8f0;">Component Type</th>
+                        <th style="padding:8px; border:1px solid #e2e8f0;">Description</th>
+                        <th style="padding:8px; border:1px solid #e2e8f0;">Qty Received</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for form in item_formset %}
+                    {% if not form.cleaned_data.DELETE %}
+                    <tr>
+                        <td style="padding:8px; border:1px solid #e2e8f0;">
+                            {% with field=form.serial_number %}
+                                <input type="text" name="{{ field.html_name }}" value="{{ field.value }}" class="form-control" readonly tabindex="-1" />
+                            {% endwith %}
+                        </td>
+                        <td style="padding:8px; border:1px solid #e2e8f0;">
+                            {% with field=form.component_type %}
+                                {% if field.field.widget.input_type == 'select' %}
+                                    <select class="form-control" disabled tabindex="-1">
+                                        {% for option in field.field.choices %}
+                                            <option value="{{ option.0 }}" {% if option.0 == field.value %}selected{% endif %}>{{ option.1 }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}" />
+                                {% else %}
+                                    <input type="text" name="{{ field.html_name }}" value="{{ field.value }}" class="form-control" readonly tabindex="-1" />
+                                {% endif %}
+                            {% endwith %}
+                        </td>
+                        <td style="padding:8px; border:1px solid #e2e8f0;">
+                            {% with field=form.description %}
+                                <textarea name="{{ field.html_name }}" class="form-control" readonly tabindex="-1">{{ field.value }}</textarea>
+                            {% endwith %}
+                        </td>
+                        <td style="padding:8px; border:1px solid #e2e8f0;">
+                            {% with field=form.quantity_received %}
+                                <input type="number" name="{{ field.html_name }}" value="{{ field.value }}" class="form-control" readonly tabindex="-1" />
+                            {% endwith %}
+                        </td>
+                        {{ form.DELETE.as_hidden }}
+                    </tr>
+                    {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+            <div style="font-weight:600; color:#059669; margin-bottom:12px;">Total Qty Received: <span>{{ total_qty }}</span></div>
+            <div class="form-group" style="margin-bottom:18px;">
+                <label for="shipment_date" style="font-weight:600; color:#475569;">Date of Shipment <span style="color:#dc2626;">*</span></label>
+                {% if shipment_date %}
+                    <input type="date" id="shipment_date" name="shipment_date" class="form-control" value="{{ shipment_date }}" readonly>
+                    <div style="color:#059669; font-size:15px; margin-top:6px;">Date saved: {{ shipment_date }}</div>
+                {% else %}
+                    <input type="date" id="shipment_date" name="shipment_date" class="form-control" required>
+                {% endif %}
+            </div>
+            <div class="button-group">
+                <button type="submit" name="confirm_update" value="1" class="btn btn-submit">Confirm Update</button>
+                <a href="javascript:history.back()" class="btn btn-back">Back to Edit</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

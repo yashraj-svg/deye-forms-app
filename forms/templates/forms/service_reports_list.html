@@ -1,0 +1,572 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Service Reports - DEYE</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f7fa;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 40px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: white;
+            color: #667eea;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #059669;
+        }
+        
+        .btn-pdf {
+            background: #ef4444;
+            color: white;
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+        
+        .btn-pdf:hover {
+            background: #dc2626;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        
+        .stat-label {
+            color: #6b7280;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+        
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1f2937;
+        }
+        
+        .table-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+        
+        .table-header {
+            padding: 20px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .table-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+        
+        .search-box {
+            padding: 8px 15px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            width: 300px;
+        }
+        
+        .table-wrapper {
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        thead {
+            background: #f9fafb;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        
+        th {
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #f3f4f6;
+            font-size: 14px;
+            color: #374151;
+        }
+        
+        tbody tr:hover {
+            background: #f9fafb;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .badge-success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .badge-warning {
+            background: #fed7aa;
+            color: #92400e;
+        }
+        
+        .signature-img {
+            max-width: 80px;
+            max-height: 40px;
+            border: 1px solid #e5e7eb;
+            border-radius: 4px;
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 60px 20px;
+            color: #9ca3af;
+        }
+        
+        .no-data-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            overflow: auto;
+        }
+        
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 0;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 900px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        
+        .modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px 8px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header h2 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .close {
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1;
+            transition: all 0.2s;
+        }
+        
+        .close:hover {
+            transform: scale(1.1);
+        }
+        
+        .modal-body {
+            padding: 25px;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        
+        .data-table th,
+        .data-table td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .data-table th {
+            background: #f3f4f6;
+            font-weight: 600;
+            color: #374151;
+        }
+        
+        .data-table tbody tr:hover {
+            background-color: #f9fafb;
+        }
+        
+        .clickable-cell {
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .clickable-cell:hover {
+            background-color: #eff6ff !important;
+        }
+        
+        .clickable-cell::after {
+            content: '🔍';
+            position: absolute;
+            right: 5px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        
+        .clickable-cell:hover::after {
+            opacity: 0.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <h1>📋 Service Reports Database</h1>
+            <div class="header-actions">
+                <a href="{% url 'forms:service_form' %}" class="btn btn-success">+ New Service Report</a>
+                <a href="{% url 'forms:simple_home' %}" class="btn btn-primary">← Back to Forms</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Total Reports</div>
+                <div class="stat-value">{{ reports.count }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">This Month</div>
+                <div class="stat-value">{{ reports|length }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Engineers</div>
+                <div class="stat-value">{{ reports|length }}</div>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <div class="table-header">
+                <div class="table-title">📋 Service Reports Management Panel</div>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <form method="GET" style="display: flex; gap: 10px; align-items: center;">
+                        <input type="text" name="search" value="{{ search }}" placeholder="🔍 Search..." class="search-box" style="max-width: 200px;">
+                        <input type="date" name="date_from" value="{{ date_from }}" class="search-box" style="max-width: 150px;">
+                        <input type="date" name="date_to" value="{{ date_to }}" class="search-box" style="max-width: 150px;">
+                        <button type="submit" class="btn btn-primary">Filter</button>
+                        {% if search or date_from or date_to %}
+                        <a href="{% url 'forms:service_reports_list' %}" class="btn btn-primary">Clear</a>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+            
+            <div class="table-wrapper">
+                {% if reports %}
+                <table id="reportsTable" style="margin-bottom: 20px;">
+                    <thead>
+                        <tr>
+                            <th style="width: 40px;">#</th>
+                            <th style="width: 100px;">Submission</th>
+                            <th style="width: 120px;">Engineer</th>
+                            <th style="width: 120px;">Customer</th>
+                            <th style="width: 80px;">Serial #</th>
+                            <th style="width: 80px;">Product</th>
+                            <th style="width: 100px;">Service Date</th>
+                            <th style="width: 120px;">Address</th>
+                            <th style="width: 80px;">PV Cap</th>
+                            <th style="width: 80px;">MPPT</th>
+                            <th style="width: 150px;">Conclusion</th>
+                            <th style="width: 80px;">Battery</th>
+                            <th style="width: 150px;">Work Done</th>
+                            <th style="width: 100px;">Filled By</th>
+                            <th style="width: 150px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for report in reports %}
+                        <tr>
+                            <td><strong>{{ forloop.counter }}</strong></td>
+                            <td>{{ report.created_at|date:"M d, Y" }}</td>
+                            <td><strong>{{ report.engineer_first_name }} {{ report.engineer_last_name }}</strong></td>
+                            <td>{{ report.customer_first_name }} {{ report.customer_last_name }}</td>
+                            <td><code style="background: #f0f0f0; padding: 4px 8px; border-radius: 4px;">{{ report.serial_number }}</code></td>
+                            <td>{{ report.product_type }}</td>
+                            <td>{{ report.date_of_service|date:"M d, Y"|default:"—" }}</td>
+                            <td style="max-width: 120px; overflow: hidden; text-overflow: ellipsis;" title="{{ report.address_street }}, {{ report.address_city }}, {{ report.address_state }}">{{ report.address_city }}, {{ report.address_state }}</td>
+                            <td>{{ report.pv_capacity_kw }} KW</td>
+                            <td>{{ report.no_of_mppt }}</td>
+                            <td>
+                                {% if "OK" in report.conclusion or "Working" in report.conclusion %}
+                                <span class="badge" style="background: #10b981; color: white; padding: 4px 8px; border-radius: 4px;">✓ {{ report.conclusion|truncatewords:2 }}</span>
+                                {% elif "Repair" in report.conclusion %}
+                                <span class="badge" style="background: #f59e0b; color: white; padding: 4px 8px; border-radius: 4px;">⚠ {{ report.conclusion|truncatewords:2 }}</span>
+                                {% else %}
+                                <span class="badge" style="background: #ef4444; color: white; padding: 4px 8px; border-radius: 4px;">✗ {{ report.conclusion|truncatewords:2 }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ report.battery_type|default:"—" }}</td>
+                            <td class="clickable-cell" data-type="text" data-title="Actual Work Done" data-content="{{ report.actual_work_done }}" style="cursor: pointer; color: #667eea; text-decoration: underline; max-width: 150px; overflow: hidden; text-overflow: ellipsis;" title="Click to expand">{{ report.actual_work_done|truncatewords:4 }}</td>
+                            <td>{{ report.filled_by }}</td>
+                            <td style="display: flex; gap: 8px;">
+                                <a href="{% url 'forms:service_report_pdf' report.id %}" class="btn btn-pdf" target="_blank" title="Download PDF">📄</a>
+                                {% if request.user.is_superuser or request.user.id == report.user.id %}
+                                <a href="{% url 'forms:edit_service_report' report.id %}" class="btn" style="background: #3b82f6; color: white; padding: 6px 12px; text-decoration: none;" title="Edit Report">✏️</a>
+                                <form method="POST" action="{% url 'forms:service_reports_list' %}" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this report?');">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="delete_id" value="{{ report.id }}">
+                                    <button type="submit" class="btn" style="background: #ef4444; color: white; padding: 6px 12px; border: none; cursor: pointer;" title="Delete Report">🗑️</button>
+                                </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                {% else %}
+                <div class="no-data">
+                    <div class="no-data-icon">📭</div>
+                    <h3>No Service Reports Yet</h3>
+                    <p>Service reports will appear here once submitted.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for showing table data -->
+    <div id="dataModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Data Details</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Table data will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('keyup', function() {
+            const searchValue = this.value.toLowerCase();
+            const table = document.getElementById('reportsTable');
+            if (!table) return;
+            
+            const rows = table.querySelectorAll('tbody tr');
+            
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                if (text.includes(searchValue)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+        
+        // Modal functionality
+        const modal = document.getElementById('dataModal');
+        const closeBtn = document.querySelector('.close');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalBody = document.getElementById('modalBody');
+        
+        // Close modal when X is clicked
+        closeBtn.onclick = function() {
+            modal.style.display = 'none';
+        }
+        
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        }
+        
+        // Function to parse and display PV data
+        function showPVData(pvDataStr) {
+            try {
+                const pvData = JSON.parse(pvDataStr);
+                let html = '<table class="data-table"><thead><tr>';
+                html += '<th>PV String</th><th>Voltage (V)</th><th>Current (A)</th>';
+                html += '<th>Earthing</th><th>PV Panel</th><th>Observation</th></tr></thead><tbody>';
+                
+                if (pvData && pvData.length > 0) {
+                    pvData.forEach((pv, index) => {
+                        html += `<tr>
+                            <td>PV ${index + 1}</td>
+                            <td>${pv.voltage || '—'}</td>
+                            <td>${pv.current || '—'}</td>
+                            <td>${pv.earthing || '—'}</td>
+                            <td>${pv.panel || '—'}</td>
+                            <td>${pv.observation || '—'}</td>
+                        </tr>`;
+                    });
+                } else {
+                    html += '<tr><td colspan="6" style="text-align:center; color:#999;">No PV data available</td></tr>';
+                }
+                
+                html += '</tbody></table>';
+                return html;
+            } catch(e) {
+                return '<p style="color:#999;">No PV data available</p>';
+            }
+        }
+        
+        // Function to parse and display AC data
+        function showACData(acDataStr) {
+            try {
+                const acData = JSON.parse(acDataStr);
+                let html = '<table class="data-table"><thead><tr>';
+                html += '<th>Phase</th><th>Voltage (V)</th><th>Current (A)</th><th>Earthing</th>';
+                html += '</tr></thead><tbody>';
+                
+                if (acData && Object.keys(acData).length > 0) {
+                    Object.entries(acData).forEach(([phase, values]) => {
+                        html += `<tr>
+                            <td><strong>${phase}</strong></td>
+                            <td>${values.voltage || '—'}</td>
+                            <td>${values.current || '—'}</td>
+                            <td>${values.earthing || '—'}</td>
+                        </tr>`;
+                    });
+                } else {
+                    html += '<tr><td colspan="4" style="text-align:center; color:#999;">No AC data available</td></tr>';
+                }
+                
+                html += '</tbody></table>';
+                return html;
+            } catch(e) {
+                return '<p style="color:#999;">No AC data available</p>';
+            }
+        }
+        
+        // Add click event to PV and AC data cells
+        document.addEventListener('DOMContentLoaded', function() {
+            // Make Physical Observation, Repair, and other text cells clickable
+            document.querySelectorAll('.clickable-cell').forEach(cell => {
+                cell.addEventListener('click', function() {
+                    const type = this.getAttribute('data-type');
+                    const content = this.getAttribute('data-content');
+                    
+                    if (type === 'pv') {
+                        modalTitle.textContent = 'DC Side - PV String Data';
+                        modalBody.innerHTML = showPVData(content);
+                    } else if (type === 'ac') {
+                        modalTitle.textContent = 'AC Side Data';
+                        modalBody.innerHTML = showACData(content);
+                    } else if (type === 'text') {
+                        const title = this.getAttribute('data-title');
+                        modalTitle.textContent = title;
+                        modalBody.innerHTML = `<div style="padding: 10px; line-height: 1.6;">${content || '<p style="color:#999;">No data available</p>'}</div>`;
+                    }
+                    
+                    modal.style.display = 'block';
+                });
+            });
+        });
+    </script>
+</body>
+</html>

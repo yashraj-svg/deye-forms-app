@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Deye Organizational Hierarchy</title>
+    {% load static %}
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * {
@@ -46,11 +47,18 @@
         .logo-section {
             display: flex;
             align-items: center;
+            margin-left: 8px;
+            background: #fff;
+            border-radius: 6px;
+            padding: 2px 10px 2px 2px;
         }
 
         .logo-section img {
             height: 36px;
             object-fit: contain;
+            background: #fff;
+            border-radius: 4px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.07);
         }
         
         body { 
@@ -129,17 +137,47 @@
             font-weight: 500;
         }
         
-        .level-director {
-            background: linear-gradient(90deg, #2b6cb0 0%, #5536d7 100%);
-            color: white;
-            border-color: rgba(255, 255, 255, 0.2);
-            width: 95%;
-            max-width: none;
-            min-width: 600px;
-            margin: 0 auto 32px auto;
-            font-size: 1.1em;
-            box-shadow: 0 6px 24px rgba(43,108,176,0.10);
-        }
+      .level-director {
+    background: linear-gradient(90deg, #2b6cb0 0%, #5536d7 100%);
+    color: white;
+    border-color: rgba(255, 255, 255, 0.2);
+    width: 400px;
+    margin: 50px auto 32px auto;
+    font-size: 1.3em;
+    box-shadow: 0 6px 24px rgba(43,108,176,0.10);
+    border-radius: 12px;
+    font-weight: 700;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+}
+
+.director-animated {
+    animation: directorFloat 4s ease-in-out infinite;
+}
+
+.director-animated::before {
+    content: '';
+    position: absolute;
+    inset: -8px;
+    border-radius: 20px;
+    background: linear-gradient(120deg, rgba(255,255,255,0.3), rgba(255,255,255,0.05), rgba(255,255,255,0.3));
+    opacity: 0.6;
+    animation: glowSweep 3s linear infinite;
+    pointer-events: none;
+    z-index: -1;
+}
+
+@keyframes directorFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+}
+
+@keyframes glowSweep {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
         
         .level-manager {
             background: linear-gradient(135deg, var(--success) 0%, var(--success-dark) 100%);
@@ -300,6 +338,45 @@
                 gap: 16px;
             }
         }
+
+        /* ---------- Page-level animation ---------- */
+body {
+    background-size: 200% 200%;
+    animation: bgShift 18s ease infinite;
+}
+
+@keyframes bgShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* ---------- Node entrance animation ---------- */
+.node {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
+    animation: nodeEnter 0.6s ease forwards;
+}
+
+@keyframes nodeEnter {
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* 🔧 Fix: Make director visible */
+.level-director {
+    opacity: 1 !important;
+    transform: none !important;
+}
+
+/* Combine both animations properly */
+.director-animated {
+    animation:
+        nodeEnter 0.6s ease forwards,
+        directorFloat 4s ease-in-out infinite 0.6s;
+}
     </style>
 </head>
 <body>
@@ -307,7 +384,7 @@
     <div class="nav-header">
         <div class="logo-section">
             <a href="/" style="text-decoration: none;">
-                <img src="https://www.deyeinverter.com/template/en/images/logo.png" alt="DEYE">
+                <img src="{% static 'admin/Images/logo-deye-300x225.webp' %}" alt="DEYE">
             </a>
         </div>
     </div>
@@ -319,8 +396,228 @@
     
     <div class="container">
         <div class="tree">
-            <p>Hierarchy view is currently disabled.</p>
+            <div class="node level-director director-animated director-sticky" style="margin-top: 0; margin-bottom: 32px;">
+                <div class="node-name">🎯 Akshay Dehedkar</div>
+                <div class="node-title">Director – Technical &amp; Service India</div>
+            </div>
+            <div class="tree">
+                <div class="children">
+                    <div class="manager-section">
+                        <div class="node level-manager expandable" data-target="rakesh-employees">Rakesh Kumar<br>Manager - Technical &amp; Service North <span class="arrow">▶</span></div>
+                        <div class="children collapsible-group" id="rakesh-employees">
+                            <div class="node level-engineer">Ranjan Kumar Yadav<br>Service Engineer</div>
+                            <div class="node level-engineer">Mohit Kumawat<br>Service Engineer</div>
+                            <div class="node level-engineer">Uttam Naskar<br>Senior Service Engineer</div>
+                            <div class="node level-engineer">Sandeep Kumar<br>Senior Service Engineer</div>
+                            <div class="node level-engineer">Harpreet Singh<br>Field Service Engineer</div>
+                            <div class="node level-engineer">Mukesh Kumar<br>Service Engineer</div>
+                            <div class="node level-engineer">Rahul Saini<br>Service Engineer</div>
+                            <div class="node level-engineer">Subodh Kumar<br>Service Engineer</div>
+                        </div>
+                    </div>
+                    <div class="manager-section">
+                        <div class="node level-manager expandable" data-target="pranav-employees">Pranav Dalwadi<br>Manager - Technical &amp; Service West <span class="arrow">▶</span></div>
+                        <div class="children collapsible-group" id="pranav-employees">
+                            <div class="node level-engineer">Vishal Prajapati<br>Service Engineer</div>
+                            <div class="node level-engineer">Jayesh Solanki<br>Service Engineer</div>
+                            <div class="node level-engineer">Sagar Wagh<br>Service Engineer</div>
+                            <div class="node level-engineer">Kankan Mandal<br>Service Engineer</div>
+                        </div>
+                    </div>
+                    <div class="manager-section">
+                        <div class="node level-manager expandable" data-target="bhuvan-employees">Bhuvan D<br>Manager - Technical &amp; Service South <span class="arrow">▶</span></div>
+                        <div class="children collapsible-group" id="bhuvan-employees">
+                            <div class="node level-engineer">Tirupathi Vasu<br>Service Engineer</div>
+                            <div class="node level-engineer">Prilulal M R<br>Service Engineer</div>
+                            <div class="node level-engineer">Sanjay Kumar C N<br>Service Engineer</div>
+                            <div class="node level-engineer">Harihara Vishnu Prabu B<br>Senior Service Engineer</div>
+                            <div class="node level-engineer">Anandhu Anil<br>Service Engineer</div>
+                        </div>
+                    </div>
+                    <div class="manager-section">
+                        <div class="node level-manager expandable" data-target="sagar-employees">Sagar Katkar<br>Manager - Technical &amp; Service Maharashtra <span class="arrow">▶</span></div>
+                        <div class="children collapsible-group" id="sagar-employees">
+                            <div class="node level-engineer">Arun Kardile<br>Service Engineer</div>
+                            <div class="node level-engineer">Shrikant Rathod<br>Service Engineer</div>
+                            <div class="node level-engineer">Rishikesh Kolape<br>Service Engineer</div>
+                            <div class="node level-engineer">Vinayak Sutar<br>Service Engineer</div>
+                        </div>
+                    </div>
+                    <div class="manager-section">
+                        <div class="node level-manager">Mahamad Mahagonde<br>Manager - Technical &amp; Service Customer Support North &amp; South</div>
+                    </div>
+                    <div class="manager-section">
+                        <div class="node level-manager">Tanaji Jadhav<br>Manager - Technical &amp; Service Customer Support West</div>
+                    </div>
+                    <div class="manager-section">
+                        <div class="node level-manager">Aboli Salpe<br>Manager - Technical &amp; Service Customer Support India &amp; South Africa</div>
+                    </div>
+                    <div class="manager-section">
+                        <div class="node level-manager">Snehal Shinde<br>Manager - Inventory &amp; Technical Support</div>
+                    </div>
+                </div>
+                <div class="children" style="margin-top:40px;">
+                    <div class="node level-manager">Paramjeet Rathod<br>Service Engineer - Technical Support South Africa</div>
+                    <div class="node level-manager">Nilesh Bagad<br>Assistant Store Manager</div>
+                    <div class="node level-manager">Sakshi Chorghe<br>Customer Feedback Specialist</div>
+                    <div class="node level-manager">Yashraj Bhoite<br>Data Analyst</div>
+                    <div class="node level-manager">Vaishnavi Lunkad<br>Accountant</div>
+                    <div class="node level-manager">Mukta Paranjape<br>HR Executive</div>
+                </div>
+            </div>
         </div>
     </div>
+<style>
+    .collapsible-group {
+        display: none;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 12px;
+        margin-top: 18px;
+        opacity: 0;
+        max-height: 0;
+        overflow: hidden;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .collapsible-group.active {
+        display: flex;
+        opacity: 1;
+        max-height: 500px;
+        animation: fadeIn 0.4s ease-in-out;
+    }
+    .expandable {
+        cursor: pointer;
+        position: relative;
+        user-select: none;
+        transition: box-shadow 0.2s, border 0.2s;
+    }
+    .expandable:hover {
+        border: 2px solid var(--primary-dark);
+        box-shadow: 0 0 0 4px rgba(102,126,234,0.10);
+        background: linear-gradient(90deg, #7f9cf5 0%, #b39ddb 100%);
+    }
+    .expandable .arrow {
+        position: absolute;
+        right: 16px;
+        top: 50%;
+        transform: translateY(-50%) rotate(0deg);
+        font-size: 1.3em;
+        color: #fff;
+        opacity: 0.8;
+        transition: transform 0.3s;
+    }
+    .expandable.expanded .arrow {
+        transform: translateY(-50%) rotate(90deg);
+    }
+    .director-sticky {
+        position: sticky;
+        top: 24px;
+        z-index: 10;
+        box-shadow: 0 8px 32px rgba(43,108,176,0.18);
+        border: 3px solid #ffd700;
+        background: linear-gradient(90deg, #2b6cb0 0%, #ffd700 100%);
+        margin-bottom: 48px;
+    }
+</style>
+<style>
+/* ---------- Page-level animation ---------- */
+body {
+    background-size: 200% 200%;
+    animation: bgShift 18s ease infinite;
+}
+
+@keyframes bgShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* ---------- Node entrance animation ---------- */
+.node {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
+    animation: nodeEnter 0.6s ease forwards;
+}
+
+@keyframes nodeEnter {
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* 🔧 Fix: Make director visible */
+.level-director {
+    opacity: 1 !important;
+    transform: none !important;
+}
+
+/* Combine both animations properly */
+.director-animated {
+    animation:
+        nodeEnter 0.6s ease forwards,
+        directorFloat 4s ease-in-out infinite 0.6s;
+}
+</style>
+<style>
+/* ---------- Director spotlight animation ---------- */
+.director-animated {
+    position: relative;
+    animation: directorFloat 4s ease-in-out infinite;
+    overflow: hidden;
+}
+
+/* subtle floating authority */
+@keyframes directorFloat {
+    0%   { transform: translateY(0); }
+    50%  { transform: translateY(-6px); }
+    100% { transform: translateY(0); }
+}
+
+/* glowing leadership ring */
+.director-animated::before {
+    content: '';
+    position: absolute;
+    inset: -6px;
+    border-radius: 24px;
+    background: linear-gradient(
+        120deg,
+        rgba(255,255,255,0.25),
+        rgba(255,255,255,0.05),
+        rgba(255,255,255,0.25)
+    );
+    opacity: 0.6;
+    animation: glowSweep 3s linear infinite;
+}
+
+@keyframes glowSweep {
+    0%   { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.expandable').forEach(manager => {
+        const targetId = manager.dataset.target;
+        const group = document.getElementById(targetId);
+
+        if (!group) return;
+
+        group.style.maxHeight = '0px';
+
+        manager.addEventListener('click', () => {
+            const isOpen = group.classList.toggle('active');
+            manager.classList.toggle('expanded', isOpen);
+
+            if (isOpen) {
+                group.style.maxHeight = group.scrollHeight + 'px';
+            } else {
+                group.style.maxHeight = '0px';
+            }
+        });
+    });
+});
+</script>
 </body>
 </html>

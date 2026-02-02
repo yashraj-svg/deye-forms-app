@@ -1,7 +1,25 @@
-﻿from datetime import date, timedelta
+﻿
+from datetime import date, timedelta
 from django.db import models
 from django.core.validators import RegexValidator
 from django.contrib.auth.models import User
+
+# Model for future extensibility (not strictly needed for dynamic aggregation, but useful if you want to persist requests)
+class RequiredStock(models.Model):
+    serial_number = models.CharField(max_length=100, db_index=True)
+    component_type = models.CharField(max_length=100)
+    quantity_required = models.IntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'required_stock'
+        verbose_name = 'Required Stock'
+        verbose_name_plural = 'Required Stock'
+        unique_together = ('serial_number', 'component_type')
+
+    def __str__(self):
+        return f"{self.serial_number} - {self.component_type} (Need: {self.quantity_required})"
 
 
 class UserProfile(models.Model):
@@ -38,6 +56,11 @@ class UpcomingEvent(models.Model):
 
 
 class RepairingForm(models.Model):
+    user = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True, blank=True, help_text="User who filled the form")
+    # PCB Details (for PCB object)
+    pcb_serial_number = models.CharField(max_length=255, blank=True, null=True, help_text="PCB Serial Number")
+    pcb_specification = models.CharField(max_length=255, blank=True, null=True, help_text="PCB Specification")
+    pcb_rating = models.CharField(max_length=255, blank=True, null=True, help_text="PCB Rating")
     customer_abbrev = models.CharField(max_length=255)
     case_number = models.CharField(
         max_length=255,
@@ -76,7 +99,7 @@ class RepairingForm(models.Model):
     image_before = models.CharField(max_length=500, blank=True)
     image_after = models.CharField(max_length=500, blank=True)
 
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, help_text="Form filled date/time")
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
@@ -84,7 +107,15 @@ class RepairingForm(models.Model):
 
 
 class InwardForm(models.Model):
-    email = models.EmailField()
+    user = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True, blank=True, help_text="User who filled the form")
+    inward_object = models.CharField(max_length=50, blank=True, null=True, help_text="Type of object for inward (Inverter, Battery, PCB)")
+    # Accessories (optional, only for Inverter)
+    ACCESSORY_CHOICES = [
+        ('data_logger', 'Data Logger'),
+        ('stand', 'Stand'),
+    ]
+    accessories = models.JSONField(blank=True, null=True, default=list, help_text="Accessories selected (Data Logger, Stand)")
+    email = models.EmailField(blank=True, null=True)
     received_by = models.CharField(max_length=255)
     customer_abbrev = models.CharField(max_length=255)
     customer_name = models.CharField(max_length=255)
@@ -97,11 +128,16 @@ class InwardForm(models.Model):
 
     # Inverter / Battery Details
     inverter_id = models.CharField(max_length=255)
+    battery_id = models.CharField(max_length=255, blank=True, null=True, help_text="Unique Battery Serial Number")
     inverter_specs = models.CharField(max_length=255)
     inverter_ratings = models.CharField(max_length=255, blank=True)
     battery = models.CharField(max_length=255, blank=True)
     no_of_mppt = models.CharField(max_length=10, blank=True)
     current_mppt = models.CharField(max_length=10, blank=True)
+
+    # PCB Details (for PCB object)
+    pcb_serial_number = models.CharField(max_length=255, blank=True, null=True, help_text="PCB Serial Number")
+    pcb_quantity = models.PositiveIntegerField(blank=True, null=True, help_text="No of Quantity")
 
     # Service Details
     case_handled_by = models.CharField(max_length=255, blank=True)
@@ -111,7 +147,7 @@ class InwardForm(models.Model):
 
     remarks = models.TextField(blank=True)
 
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, help_text="Form filled date/time")
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
@@ -119,6 +155,8 @@ class InwardForm(models.Model):
 
 
 class OutwardForm(models.Model):
+    user = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True, blank=True, help_text="User who filled the form")
+    outward_object = models.CharField(max_length=50, blank=True, null=True, help_text="Type of object for outward (Inverter, Battery, PCB)")
     sent_by = models.CharField(max_length=255)
     approved_by = models.CharField(max_length=255)
     company_abbrev = models.CharField(max_length=255)
@@ -130,11 +168,21 @@ class OutwardForm(models.Model):
     sent_to_state = models.CharField(max_length=255)
     pincode = models.CharField(max_length=10)
 
+
+
+    # Accessories (optional, only for Inverter)
+    accessories = models.JSONField(blank=True, null=True, default=list, help_text="Accessories selected (Data Logger, Stand)")
+
+    # Control Card Changed fields
+    control_card_changed = models.CharField(max_length=10, blank=True, help_text="Was control card changed? (Yes/No)")
+    new_serial_number = models.CharField(max_length=100, blank=True, help_text="New serial number if control card changed")
+
     # Inverter details
     inverter_id_outward = models.CharField(max_length=255)
     inverter_spec = models.CharField(max_length=255)
     inverter_rating = models.CharField(max_length=255, blank=True)
     battery = models.CharField(max_length=255, blank=True)
+    battery_id = models.CharField(max_length=255, blank=True, null=True, help_text="Unique Battery Serial Number")
 
     # Replacement status
     inverter_replaced = models.CharField(max_length=10)
@@ -143,9 +191,10 @@ class OutwardForm(models.Model):
 
     # Delivery
     delivered_through = models.CharField(max_length=255)
+    courier_name = models.CharField(max_length=100, blank=True, null=True, help_text="Courier name for delivery")
     awb_number = models.CharField(max_length=255)
 
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, help_text="Form filled date/time")
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
@@ -153,6 +202,7 @@ class OutwardForm(models.Model):
 
 
 class ServiceReportForm(models.Model):
+    user = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True, blank=True, help_text="User who filled the form")
     # Contact Information
     contact_no = models.CharField(max_length=20, blank=True)
     phone_number = models.CharField(max_length=20)
@@ -360,7 +410,7 @@ class StockItem(models.Model):
     quantity = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     remark = models.TextField(blank=True, null=True)
     year = models.IntegerField(default=2025, db_index=True, help_text="Year of stock entry")
-    
+    shipment_date = models.DateField(null=True, blank=True, help_text="Date of shipment received")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -368,17 +418,19 @@ class StockItem(models.Model):
         db_table = 'stock_items'
         verbose_name = 'Stock Item'
         verbose_name_plural = 'Stock Items'
-        ordering = ['-year', 'component_type', 'pcba_sn_new']
+        ordering = ['-shipment_date', '-year', 'component_type', 'pcba_sn_new']
         indexes = [
             models.Index(fields=['year', 'component_type']),
             models.Index(fields=['pcba_sn_new']),
+            models.Index(fields=['shipment_date']),
         ]
     
     def __str__(self):
-        return f"{self.pcba_sn_new} - {self.component_type or 'N/A'} ({self.year})"
+        return f"{self.pcba_sn_new} - {self.component_type or 'N/A'} ({self.year}) - {self.shipment_date}"
 
 
 class StockRequisition(models.Model):
+    user = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True, blank=True, help_text="User who filled the form")
     STATUS_CHOICES = [
         ('pending', 'Pending'),
         ('approved', 'Approved'),
@@ -410,6 +462,7 @@ class StockRequisition(models.Model):
 
 
 class DispatchedStock(models.Model):
+    user = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True, blank=True, help_text="User who filled the form")
     requisition = models.ForeignKey(StockRequisition, on_delete=models.CASCADE, related_name='dispatches')
     serial_number = models.CharField(max_length=100, db_index=True)
     component_type = models.CharField(max_length=100)

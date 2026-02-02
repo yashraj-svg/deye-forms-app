@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+{% load static %}
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -82,6 +83,32 @@
             min-height: 100px;
         }
         
+        /* Number input styling */
+        input[type="number"].form-control {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #0f172a;
+            background: #f8fafc;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        
+        input[type="number"].form-control:hover {
+            border-color: #cbd5e1;
+            background: #ffffff;
+        }
+        
+        input[type="number"].form-control:focus {
+            outline: none;
+            border-color: #059669;
+            box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
+            background: #ffffff;
+        }
+        
         /* Error Messages */
         .errorlist {
             list-style: none;
@@ -154,6 +181,11 @@
 <body>
     <div class="container">
         <div class="header">
+            <div class="logo-section" style="margin-bottom: 10px;">
+                <a href="/" style="text-decoration: none;">
+                    <img src="{% static 'admin/Images/logo-deye-300x225.webp' %}" alt="DEYE" style="height:36px;">
+                </a>
+            </div>
             <h1>📤 Stock Requisition</h1>
             <p class="subtitle">Submit a new stock requisition request</p>
         </div>
@@ -213,7 +245,11 @@
                         </div>
                         <div class="form-group">
                             <label for="{{ form.quantity_required.id_for_label }}">No. of Quantity Required</label>
-                            {{ form.quantity_required }}
+                            {% if form.quantity_required %}
+                                {{ form.quantity_required }}
+                            {% else %}
+                                <input type="number" name="quantity_required" class="form-control" min="1" placeholder="Enter quantity required" />
+                            {% endif %}
                         </div>
                         {% if form.DELETE %}
                         <div class="form-group" style="display:none;">{{ form.DELETE }}</div>

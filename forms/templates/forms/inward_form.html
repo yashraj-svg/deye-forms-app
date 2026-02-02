@@ -3,18 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <title>Inward Tracking Form</title>
-
+{% load static %}
 <style>
 /* Header */
 .header {
   position: sticky;
   top: 0;
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-  padding: 18px 60px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px 40px;
   z-index: 1000;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
 }
 
 .logo-section {
@@ -23,67 +21,89 @@
   gap: 12px;
 }
 
+
 .logo-section img {
-  height: 36px;
+  height: 40px;
+  filter: brightness(0) invert(1);
 }
 
 body {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background: #f2f4f7;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
   margin: 0;
-  padding: 0;
+  padding: 20px 0;
 }
 .form-container {
-  max-width: 780px;
-  margin: 32px auto;
+  max-width: 1100px;
+  margin: 30px auto;
   background: #fff;
-  padding: 32px;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
 }
 h1 {
   text-align: center;
-  margin-bottom: 6px;
-  font-size: 26px;
+  color: #667eea;
+  margin-bottom: 10px;
+  font-size: 30px;
+  font-weight: 700;
 }
 .note {
   text-align: center;
-  color: #d93025;
+  color: #e74c3c;
   font-size: 13px;
   margin-bottom: 20px;
 }
 label {
   display: block;
-  margin-top: 18px;
+  margin: 18px 0 8px;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
+  color: #333;
 }
 input, select {
   width: 100%;
-  margin-top: 6px;
-  padding: 10px;
+  padding: 12px 14px;
   font-size: 14px;
-  border: 1px solid #ccd0d5;
-  border-radius: 4px;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
   box-sizing: border-box;
+  background: #fafafa;
+  transition: all 0.3s ease;
 }
 input:focus, select:focus {
   outline: none;
-  border-color: #1a73e8;
+  border-color: #667eea;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23667eea' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 20px;
+  padding-right: 36px;
 }
 button {
   width: 100%;
   margin-top: 28px;
-  padding: 12px;
-  background: #1a73e8;
+  padding: 14px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: #fff;
   font-size: 16px;
+  font-weight: 700;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  transition: all 0.3s ease;
 }
 button:hover {
-  background: #1558b0;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
 }
 
 /* Conditional field visibility */
@@ -128,7 +148,7 @@ input::-webkit-validation-bubble-message {
 <div class="header">
   <div class="logo-section">
     <a href="/" style="text-decoration: none;">
-      <img src="https://www.deyeinverter.com/template/en/images/logo.png" alt="DEYE">
+      <img src="{% static 'admin/Images/logo-deye-300x225.webp' %}" alt="DEYE">
     </a>
   </div>
 </div>
@@ -155,62 +175,65 @@ input::-webkit-validation-bubble-message {
 <label>Customer Abbreviation <span class="req">*</span></label>
 <select name="customer_abbrev" required>
   <option value="">Select</option>
-  <option>Alternative Energy</option>
-  <option>Aps</option>
-  <option>Arkay Solar</option>
-  <option>Avirat Energy</option>
-  <option>Brither World Engineering Works</option>
-  <option>Ceyone Solar</option>
-  <option>Chetanbhai Trimandir</option>
-  <option>Deye</option>
-  <option>Eco Active Energy & Solution</option>
-  <option>Envest Energy Solutions Llp</option>
-  <option>Evaanta Solar</option>
-  <option>Evvo</option>
-  <option>Ferus Solar Energy Solution</option>
-  <option>Feston</option>
-  <option>Fine Vibes Renewable Pvt Ltd (Cg)</option>
-  <option>Glowx</option>
-  <option>Green Energy</option>
-  <option>Green Era</option>
-  <option>Green Watt Energy</option>
-  <option>Greenedge</option>
-  <option>Gujarat Energy</option>
-  <option>Invergy</option>
-  <option>Jaffins Enterprise</option>
-  <option>Jay Aditya Solar</option>
-  <option>Ksolare</option>
-  <option>Madhav Enterprise</option>
-  <option>Madhya Pradesh Solar9</option>
-  <option>Mindra</option>
-  <option>Mp Engineering</option>
-  <option>Navi Energy</option>
-  <option>Next Tech Solar Energy</option>
-  <option>Nil Electronics</option>
-  <option>Nk Construction</option>
-  <option>Powerone</option>
-  <option>Pushan Renewable Energy Pvt Ltd</option>
-  <option>Radiant Sun Energy</option>
-  <option>Railway Station Dhanera</option>
-  <option>Roshni Solar</option>
-  <option>Rudra Solar</option>
-  <option>Saan Electrical</option>
-  <option>Shantimani Enterprises</option>
-  <option>Smart Solar Bidgely Solution Pvt Ltd</option>
-  <option>Solaryaan</option>
-  <option>Suntech Energy</option>
-  <option>Swami Solar</option>
-  <option>Symbroz Solar  Pvt Ltd</option>
-  <option>Tecnogoods Energy</option>
-  <option>Trambaka Solar  Pvt Ltd</option>
-  <option>Urja Strot</option>
-  <option>Utl</option>
-  <option>Utl Solar</option>
-  <option>Vsole</option>
-  <option>Waaree</option>
-  <option>Water Sun Solar</option>
-  <option>Watthut</option>
-  <option>Yamas Solar</option>
+   <option>Alternative Energy</option>
+        <option>Aps</option>
+        <option>Arkay Solar</option>
+        <option>Avirat Energy</option>
+        <option>Brither World Engineering Works</option>
+        <option>Banglore</option>
+        <option>Ceyone Solar</option>
+        <option>Chetanbhai Trimandir</option>
+        <option>Deye</option>
+        <option>Eco Active Energy & Solution</option>
+        <option>Envest Energy Solutions Llp</option>
+        <option>Evaanta Solar</option>
+        <option>Evvo</option>
+        <option>Ferus Solar Energy Solution</option>
+        <option>Feston</option>
+        <option>Fine Vibes Renewable Pvt Ltd (Cg)</option>
+        <option>Glowx</option>
+        <option>Green Energy</option>
+        <option>Green Era</option>
+        <option>Green Watt Energy</option>
+        <option>Greenedge</option>
+        <option>Gujarat Energy</option>
+        <option>Invergy</option>
+        <option>Jaffins Enterprise</option>
+        <option>Jay Aditya Solar</option>
+        <option>Kerala Office</option>
+        <option>Ksolare</option>
+        <option>Madhav Enterprise</option>
+        <option>Madhya Pradesh Solar9</option>
+        <option>Mindra</option>
+        <option>Mp Engineering</option>
+        <option>Navi Energy</option>
+        <option>Next Tech Solar Energy</option>
+        <option>Nil Electronics</option>
+        <option>Nk Construction</option>
+        <option>Powerone</option>
+        <option>Pushan Renewable Energy Pvt Ltd</option>
+        <option>Radiant Sun Energy</option>
+        <option>Railway Station Dhanera</option>
+        <option>Roshni Solar</option>
+        <option>Rudra Solar</option>
+        <option>Saan Electrical</option>
+        <option>Shantimani Enterprises</option>
+        <option>Smart Solar Bidgely Solution Pvt Ltd</option>
+        <option>Solaryaan</option>
+        <option>Suntech Energy</option>
+        <option>Swami Solar</option>
+        <option>Symbroz Solar  Pvt Ltd</option>
+        <option>Tecnogoods Energy</option>
+        <option>Trambaka Solar  Pvt Ltd</option>
+        <option>Urja Strot</option>
+        <option>Utl</option>
+        <option>Utl Solar</option>
+        <option>Vsole</option>
+        <option>Waaree</option>
+        <option>Water Sun Solar</option>
+        <option>Watthut</option>
+        <option>Yamas Solar</option>
+        <option>Other</option>
 </select>
 
 <label>Customer Name <span class="req">*</span></label>
@@ -342,79 +365,51 @@ input::-webkit-validation-bubble-message {
 </select>
 </div>
 
+
+
 <div class="battery-only">
-<label>Battery ID <span class="req">*</span></label>
-<input type="text" name="inverter_id" required>
+  <label>Battery ID <span class="req">*</span></label>
+  <input type="text" name="battery_id" required>
 
-<label>Battery</label>
-<select name="battery">
-  <option value="">Select</option>
-  <option>RW - L 2.5 Neutral</option>
-  <option>RW - M 5.3 Neutral</option>
-  <option>RW - M 5.3 Pro Neutral (M6)</option>
-  <option>RW - M 6.1 Neutral</option>
-  <option>RW - M 6.1 B Neutral No Remark</option>
-  <option>SE - G 5.1 - Pro B Neutral No Remark</option>
-  <option>AI - W 5.1 Neutral</option>
-  <option>AI - W 5.1 - B Neutral No Remark</option>
-  <option>BOS - GM 5.1 Neutral</option>
-  <option>GB - LM 4.0 Neutral</option>
-  <option>GB - LB Neutral</option>
-  <option>SE - G 5.3</option>
-  <option>SE - G 5.3 Pro</option>
-  <option>SE - F 5</option>
-  <option>Other</option>
-</select>
-
-<label>Case Handled By</label>
-<select name="case_handled_by">
-  <option value="">Select</option>
-  <option>Mr. Rakesh Kumar</option>
-  <option>Mr. Pranav Rajeshbhai Dalwadi</option>
-  <option>Mr. Prajapati Vishal Atmarambhai</option>
-  <option>Mr. Bhuvan D</option>
-  <option>Mr. Jayesh khodabhai Solanki</option>
-  <option>Mr. Mahamadhusen Daud Mahagonde</option>
-  <option>Mr. Ranjan kumar Yadav</option>
-  <option>Mr. Mohit Kumawat</option>
-  <option>Mr. Tirupathi Vasu</option>
-  <option>Mr. Elson Eldo</option>
-  <option>Mr. Arun Hanumantrao Kardile</option>
-  <option>Mr. Sagar Prakash Katkar</option>
-  <option>Mr. Uttam Naskar</option>
-  <option>Mr. Tanaji Sampath Jadhav</option>
-  <option>Mr. Shrikant Chandu Rathod</option>
-  <option>Mr. Rushikesh Mohan Kolape</option>
-  <option>Mr. Sagar LaxmanBhai Wagh</option>
-  <option>Mr. Sanjay Kumar C N</option>
-  <option>Mr. Harihara Vishnu Prabu B</option>
-  <option>Mr. Sandeep Kumar</option>
-  <option>Mr. Harpreet Singh</option>
-  <option>Mr. Kankan Mandal</option>
-  <option>Mr. Mukesh Kumar</option>
-  <option>Mr. Rahul Saini</option>
-  <option>Mr. Anandhu Anil</option>
-</select>
-
-<label>Reason Of Inward</label>
-<select name="reason" required>
-  <option value="">Select</option>
-  <option>Repairing Purpose</option>
-  <option>Replacement Purpose</option>
-</select>
-
-<label>Transportation Mode <span class="req">*</span></label>
-<select name="transportation_mode" required>
-  <option value="">Select</option>
-  <option>Bigship</option>
-  <option>Blue Dart</option>
-  <option>Anjani</option>
-  <option>Other</option>
-</select>
+  <label>Battery Model</label>
+  <select name="battery">
+    <option value="">Select</option>
+    <option>RW - L 2.5 Neutral</option>
+    <option>RW - M 5.3 Neutral</option>
+    <option>RW - M 5.3 Pro Neutral (M6)</option>
+    <option>RW - M 6.1 Neutral</option>
+    <option>RW - M 6.1 B Neutral No Remark</option>
+    <option>SE - G 5.1 - Pro B Neutral No Remark</option>
+    <option>AI - W 5.1 Neutral</option>
+    <option>AI - W 5.1 - B Neutral No Remark</option>
+    <option>BOS - GM 5.1 Neutral</option>
+    <option>GB - LM 4.0 Neutral</option>
+    <option>GB - LB Neutral</option>
+    <option>SE - G 5.3</option>
+    <option>SE - G 5.3 Pro</option>
+    <option>SE - F 5</option>
+    <option>Other</option>
+  </select>
+</div>
 
 </div>
 
 <div class="inverter-only">
+
+<div class="accessories-section" style="margin-top:18px; margin-bottom:18px;">
+  <label style="font-weight:600; font-size:15px; margin-bottom:8px; display:block;">Accessories Received With Inverter <span style="font-weight:400; color:#888; font-size:13px;">(Optional)</span></label>
+  <div style="display:flex; gap:32px; align-items:center;">
+    <div style="display:flex; align-items:center; gap:6px;">
+      <input type="checkbox" id="accessory_data_logger" name="accessories" value="data_logger" style="margin:0;">
+      <label for="accessory_data_logger" style="font-weight:400; font-size:14px; margin:0;">Data Logger</label>
+    </div>
+    <div style="display:flex; align-items:center; gap:6px;">
+      <input type="checkbox" id="accessory_stand" name="accessories" value="stand" style="margin:0;">
+      <label for="accessory_stand" style="font-weight:400; font-size:14px; margin:0;">Stand</label>
+    </div>
+  </div>
+</div>
+
 <label>No of MPPT</label>
 <select name="no_of_mppt">
   <option value="">Select</option>
@@ -473,8 +468,8 @@ input::-webkit-validation-bubble-message {
 <label>Reason Of Inward</label>
 <select name="reason" required>
   <option value="">Select</option>
-  <option>Repairing Purpose</option>
-  <option>Replacement Purpose</option>
+  <option>For Stand By</option>
+  <option>For Return After Repairing</option>
 </select>
 
 <label>Transportation Mode <span class="req">*</span></label>
@@ -483,6 +478,7 @@ input::-webkit-validation-bubble-message {
   <option>Bigship</option>
   <option>Blue Dart</option>
   <option>Anjani</option>
+  <option>Delhivery</option>
   <option>Other</option>
 </select>
 
@@ -524,8 +520,8 @@ input::-webkit-validation-bubble-message {
 <label>Reason Of Inward</label>
 <select name="reason" required>
   <option value="">Select</option>
-  <option>Repairing Purpose</option>
-  <option>Replacement Purpose</option>
+  <option>For Stand By</option>
+  <option>For Return After Repairing</option>
 </select>
 
 <label>Transportation Mode <span class="req">*</span></label>
@@ -534,6 +530,7 @@ input::-webkit-validation-bubble-message {
   <option>Bigship</option>
   <option>Blue Dart</option>
   <option>Anjani</option>
+  <option>Delhivery</option>
   <option>Other</option>
 </select>
 
@@ -649,6 +646,11 @@ function toggleInwardFields() {
   function setRequired(nodes, shouldRequire) {
     nodes.forEach((el) => {
       if (!el) return;
+      // Never set required for accessories checkboxes
+      if (el.type === 'checkbox' && el.name === 'accessories') {
+        el.removeAttribute('required');
+        return;
+      }
       if (shouldRequire) {
         el.setAttribute('required', 'required');
       } else {
@@ -710,7 +712,11 @@ function toggleInwardFields() {
   setDisabled(pcbInputs, inwardObject !== 'PCB');
 }
 
-document.querySelector('#inwardObject').addEventListener('change', toggleInwardFields);
+
+// Accessories checkboxes are fully optional; no validation or warning required.
+document.querySelector('#inwardObject').addEventListener('change', function() {
+  toggleInwardFields();
+});
 
 // Pincode autofill functionality (original behavior) + show city/state line
 document.querySelector('input[name="pincode"]').addEventListener('input', function(e) {
