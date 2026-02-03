@@ -1105,7 +1105,12 @@ Reject: {reject_url}
             to=['hr@deyeindia.com', 'yashraj@deyeindia.com']
         )
         msg.attach_alternative(email_html, "text/html")
-        msg.send(fail_silently=True)
+        try:
+            msg.send(fail_silently=False)
+        except Exception as e:
+            print(f"❌ Email send error: {str(e)}")
+            import traceback
+            traceback.print_exc()
 
         return redirect(f"{request.path}?success=1")
     else:
