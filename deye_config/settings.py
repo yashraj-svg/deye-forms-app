@@ -20,7 +20,20 @@ os.environ.setdefault("PGPORT", "5432")
 # SECURITY SETTINGS
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-g456hat(8g8$_n9w$g@-s76evnh0$*=t&@m10+o5z0l7jk@rjf')
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = [
+    'web-production-8ae99.up.railway.app',
+    '.railway.app',
+    '.up.railway.app',
+    'localhost',
+    '127.0.0.1',
+]
+
+# CSRF PROTECTION FOR RAILWAY
+CSRF_TRUSTED_ORIGINS = [
+    'https://web-production-8ae99.up.railway.app',
+    'https://*.up.railway.app',
+    'https://*.railway.app',
+]
 
 
 # APPLICATIONS
