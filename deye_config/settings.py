@@ -177,6 +177,7 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'yashraj@deyeindia.com'
 EMAIL_HOST_PASSWORD = 'zqvz ufco xqsg opak'  # Replace with 16-char app password from Google
 DEFAULT_FROM_EMAIL = 'noreply@deyeindia.com'
+EMAIL_TIMEOUT = int(os.environ.get('EMAIL_TIMEOUT', '10'))
 
 # Site URL for emails
 SITE_URL = os.environ.get('SITE_URL', 'http://127.0.0.1:8000')
