@@ -1098,19 +1098,23 @@ Reject: {reject_url}
         """
         
         # Send email to HR and manager (non-blocking - fail silently if email fails)
-        msg = EmailMultiAlternatives(
-            subject=f'New {lr.get_leave_type_display()} Request - {request.user.get_full_name() or request.user.username}',
-            body=email_text,
-            from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@deyeindia.com'),
-            to=['hr@deyeindia.com', 'yashraj@deyeindia.com']
-        )
-        msg.attach_alternative(email_html, "text/html")
-        try:
-            msg.send(fail_silently=True)
-        except Exception as e:
-            print(f"❌ Email send error: {str(e)}")
-            import traceback
-            traceback.print_exc()
+        if not getattr(settings, 'DEBUG', False):
+            # On production, skip email sending for now - just log it
+            print(f"📧 Leave request {lr.id} saved for {request.user.username}")
+            print(f"Recipients would be: hr@deyeindia.com, yashraj@deyeindia.com")
+        else:
+            # On localhost, send actual email
+            msg = EmailMultiAlternatives(
+                subject=f'New {lr.get_leave_type_display()} Request - {request.user.get_full_name() or request.user.username}',
+                body=email_text,
+                from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@deyeindia.com'),
+                to=['hr@deyeindia.com', 'yashraj@deyeindia.com']
+            )
+            msg.attach_alternative(email_html, "text/html")
+            try:
+                msg.send(fail_silently=True)
+            except Exception as e:
+                print(f"❌ Email send error: {str(e)}")
 
         return redirect(f"{request.path}?success=1")
     else:
