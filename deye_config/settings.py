@@ -177,14 +177,14 @@ SESSION_SAVE_EVERY_REQUEST = True
 # Email Configuration
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.smtp2go.com')
-EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '2525'))
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
 EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True').lower() == 'true'
 EMAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL', 'False').lower() == 'true'
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'yashraj@deyeindia.com')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')  # Set in Railway environment
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER)
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
-EMAIL_TIMEOUT = int(os.environ.get('EMAIL_TIMEOUT', '10'))
+EMAIL_TIMEOUT = int(os.environ.get('EMAIL_TIMEOUT', '20'))
 
 # Site URL for emails
 SITE_URL = os.environ.get('SITE_URL', 'http://127.0.0.1:8000')

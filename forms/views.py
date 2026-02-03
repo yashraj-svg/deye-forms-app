@@ -1097,7 +1097,7 @@ Approve: {approve_url}
 Reject: {reject_url}
         """
         
-        # Send email to HR and manager
+        # Send email to HR and manager (non-blocking - fail silently if email fails)
         msg = EmailMultiAlternatives(
             subject=f'New {lr.get_leave_type_display()} Request - {request.user.get_full_name() or request.user.username}',
             body=email_text,
@@ -1106,7 +1106,7 @@ Reject: {reject_url}
         )
         msg.attach_alternative(email_html, "text/html")
         try:
-            msg.send(fail_silently=False)
+            msg.send(fail_silently=True)
         except Exception as e:
             print(f"❌ Email send error: {str(e)}")
             import traceback
