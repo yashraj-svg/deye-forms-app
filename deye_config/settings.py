@@ -176,8 +176,8 @@ SESSION_SAVE_EVERY_REQUEST = True
 
 # Email Configuration
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
-EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.smtp2go.com')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '2525'))
 EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True').lower() == 'true'
 EMAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL', 'False').lower() == 'true'
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'yashraj@deyeindia.com')
