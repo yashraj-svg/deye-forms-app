@@ -174,8 +174,8 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'yashraj@deyeindia.com'
-EMAIL_HOST_PASSWORD = 'zqvz ufco xqsg opak'  # Replace with 16-char app password from Google
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'yashraj@deyeindia.com')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')  # Set in Railway environment
 DEFAULT_FROM_EMAIL = 'noreply@deyeindia.com'
 EMAIL_TIMEOUT = int(os.environ.get('EMAIL_TIMEOUT', '10'))
 
