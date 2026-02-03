@@ -951,11 +951,13 @@ def leave_home(request):
 @login_required
 def apply_leave(request):
     def _remaining_paid_leave(user, year):
+        # Only count APPROVED leaves towards used balance
         used = LeaveRequest.objects.filter(
             user=user,
             leave_type='leave',
             start_date__year=year,
-        ).exclude(status='rejected').aggregate(total=Sum('total_days'))['total'] or 0.0
+            status='approved'  # Only approved leaves deduct from balance
+        ).aggregate(total=Sum('total_days'))['total'] or 0.0
         return max(21.0 - used, 0.0)
 
     if request.method == 'POST':
@@ -1134,11 +1136,13 @@ def leave_status(request):
 @login_required
 def leave_history(request):
     def _remaining_paid_leave(user, year):
+        # Only count APPROVED leaves towards used balance
         used = LeaveRequest.objects.filter(
             user=user,
             leave_type='leave',
             start_date__year=year,
-        ).exclude(status='rejected').aggregate(total=Sum('total_days'))['total'] or 0.0
+            status='approved'  # Only approved leaves deduct from balance
+        ).aggregate(total=Sum('total_days'))['total'] or 0.0
         return max(21.0 - used, 0.0)
 
     leaves = LeaveRequest.objects.filter(
