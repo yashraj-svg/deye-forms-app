@@ -163,7 +163,7 @@ SITE_URL = os.environ.get('SITE_URL', 'http://127.0.0.1:8000')
 
 # 🔒 PRODUCTION SECURITY SETTINGS
 if not DEBUG:
-    SECURE_SSL_REDIRECT = True
+    # Railway handles SSL/HTTPS termination, so no redirect needed
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_BROWSER_XSS_FILTER = True
