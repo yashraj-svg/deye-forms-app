@@ -93,8 +93,8 @@ if os.environ.get('PGHOST'):
             'ENGINE': 'django.db.backends.postgresql',
             'NAME': os.environ.get('PGDATABASE', 'railway'),
             'USER': os.environ.get('PGUSER', 'postgres'),
-            'PASSWORD': os.environ.get('PGPASSWORD', ''),
-            'HOST': os.environ.get('PGHOST', 'localhost'),
+            'PASSWORD': os.environ.get('PGPASSWORD', 'VeXEBcLLaUYDlbdrAMkKAuYzaoPbvgJs'),
+            'HOST': os.environ.get('PGHOST', 'postgres.railway.internal'),
             'PORT': os.environ.get('PGPORT', '5432'),
         }
     }
