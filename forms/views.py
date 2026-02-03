@@ -1097,12 +1097,12 @@ Approve: {approve_url}
 Reject: {reject_url}
         """
         
-        # Send email to specific address
+        # Send email to HR and manager
         msg = EmailMultiAlternatives(
             subject=f'New {lr.get_leave_type_display()} Request - {request.user.get_full_name() or request.user.username}',
             body=email_text,
             from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@deyeindia.com'),
-            to=['yashraj@deyeindia.com']
+            to=['hr@deyeindia.com', 'yashraj@deyeindia.com']
         )
         msg.attach_alternative(email_html, "text/html")
         msg.send(fail_silently=True)
