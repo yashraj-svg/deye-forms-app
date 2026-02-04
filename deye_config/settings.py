@@ -25,6 +25,8 @@ ALLOWED_HOSTS = [
     'web-production-8ae99.up.railway.app',
     '.railway.app',
     '.up.railway.app',
+    'www.deyeindia.in',
+    'deyeindia.in',
     'localhost',
     '127.0.0.1',
 ]
@@ -33,6 +35,8 @@ ALLOWED_HOSTS = [
 CSRF_TRUSTED_ORIGINS = [
     'https://web-production-8ae99.up.railway.app',
     'https://*.up.railway.app',
+    'https://www.deyeindia.in',
+    'https://deyeindia.in',
     'https://*.railway.app',
 ]
 
