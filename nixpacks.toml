@@ -1,0 +1,12 @@
+[phases.setup]
+# Use a stable Python 3.11 build from Nixpkgs
+nixPkgs = ["python311", "gcc", "pkg-config", "postgresql", "libffi", "openssl", "zlib"]
+
+[phases.install]
+cmds = ["python -m venv /app/.venv", ". /app/.venv/bin/activate", "pip install -r requirements.txt"]
+
+[phases.build]
+cmds = [". /app/.venv/bin/activate", "python manage.py collectstatic --noinput"]
+
+[start]
+cmd = "python manage.py migrate && gunicorn deye_config.wsgi:application --bind 0.0.0.0:$PORT"
