@@ -1199,18 +1199,23 @@ def update_leave_status(request, leave_id):
         leave.status_changed_by = request.user
     leave.save()
 
+    # Send status update email (fail silently to avoid blocking the update)
     if leave.user.email:
-        send_mail(
-            subject='Leave status updated',
-            message=(
-                f"Hello {leave.user.get_username()},\n\n"
-                f"Your leave request from {leave.start_date} to {leave.end_date} is now {leave.status.title()}.\n"
-                f"Total days: {leave.total_days}."
-            ),
-            from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', None),
-            recipient_list=[leave.user.email],
-            fail_silently=True,
-        )
+        try:
+            send_mail(
+                subject='Leave status updated',
+                message=(
+                    f"Hello {leave.user.get_username()},\n\n"
+                    f"Your leave request from {leave.start_date} to {leave.end_date} is now {leave.status.title()}.\n"
+                    f"Total days: {leave.total_days}."
+                ),
+                from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', None),
+                recipient_list=[leave.user.email],
+                fail_silently=True,
+            )
+        except Exception as e:
+            print(f"Email error (non-critical): {e}")
+    
     return redirect('forms:leave_admin')
 
 
