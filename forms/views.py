@@ -1099,20 +1099,20 @@ Approve: {approve_url}
 Reject: {reject_url}
         """
         
-        # Send email to HR and manager via SendGrid
-        msg = EmailMultiAlternatives(
-            subject=f'New {lr.get_leave_type_display()} Request - {request.user.get_full_name() or request.user.username}',
-            body=email_text,
-            from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@deyeindia.com'),
-            to=['hr@deyeindia.com', 'yashraj@deyeindia.com']
-        )
-        msg.attach_alternative(email_html, "text/html")
+        # Send email to HR and manager via SendGrid (non-blocking)
         try:
-            msg.send(fail_silently=False)
+            msg = EmailMultiAlternatives(
+                subject=f'New {lr.get_leave_type_display()} Request - {request.user.get_full_name() or request.user.username}',
+                body=email_text,
+                from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'yashraj@deyeindia.com'),
+                to=['hr@deyeindia.com', 'yashraj@deyeindia.com']
+            )
+            msg.attach_alternative(email_html, "text/html")
+            msg.send(fail_silently=True)
+            print(f"✅ Leave request email sent for {lr.user.username}")
         except Exception as e:
-            print(f"❌ Email send error: {str(e)}")
-            import traceback
-            traceback.print_exc()
+            # Log error but don't crash - leave request is already saved
+            print(f"⚠️ Email send failed (non-critical): {str(e)}")
 
         return redirect(f"{request.path}?success=1")
     else:
