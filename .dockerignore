@@ -1,0 +1,5 @@
+.tool-versions
+runtime.txt
+*.pyc
+__pycache__
+.venv
