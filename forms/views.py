@@ -1231,20 +1231,26 @@ Approve: {approve_url}
 Reject: {reject_url}
         """
         
-        # Send email to HR and manager via SendGrid (non-blocking)
+        # Send email to HR and manager via SendGrid Web API (non-blocking)
         try:
-            msg = EmailMultiAlternatives(
-                subject=f'New {lr.get_leave_type_display()} Request - {request.user.get_full_name() or request.user.username}',
-                body=email_text,
-                from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'yashraj@deyeindia.com'),
-                to=['hr@deyeindia.com', 'yashraj@deyeindia.com']
-            )
-            msg.attach_alternative(email_html, "text/html")
-            msg.send(fail_silently=True)
-            print(f"✅ Leave request email sent for {lr.user.username}")
+            from forms.emails import send_sendgrid_email
+            import threading
+            
+            def _send_leave_email():
+                send_sendgrid_email(
+                    ['hr@deyeindia.com', 'yashraj@deyeindia.com'],
+                    f'New {lr.get_leave_type_display()} Request - {request.user.get_full_name() or request.user.username}',
+                    email_html,
+                    email_text
+                )
+                print(f"[EMAIL] ✅ Leave request email sent for {lr.user.username}")
+            
+            email_thread = threading.Thread(target=_send_leave_email, daemon=False)
+            email_thread.start()
+            print(f"[EMAIL] 🧵 Leave request email thread started")
         except Exception as e:
             # Log error but don't crash - leave request is already saved
-            print(f"⚠️ Email send failed (non-critical): {str(e)}")
+            print(f"[EMAIL] ⚠️ Email send failed (non-critical): {str(e)}")
 
         return redirect(f"{request.path}?success=1")
     else:
@@ -1331,22 +1337,29 @@ def update_leave_status(request, leave_id):
         leave.status_changed_by = request.user
     leave.save()
 
-    # Send status update email (fail silently to avoid blocking the update)
+    # Send status update email via SendGrid Web API
     if leave.user.email:
         try:
-            send_mail(
-                subject='Leave status updated',
-                message=(
+            from forms.emails import send_sendgrid_email
+            import threading
+            
+            def _send_status_email():
+                message = (
                     f"Hello {leave.user.get_username()},\n\n"
                     f"Your leave request from {leave.start_date} to {leave.end_date} is now {leave.status.title()}.\n"
                     f"Total days: {leave.total_days}."
-                ),
-                from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', None),
-                recipient_list=[leave.user.email],
-                fail_silently=True,
-            )
+                )
+                send_sendgrid_email(
+                    [leave.user.email],
+                    'Leave status updated',
+                    f"<p>{message.replace(chr(10), '<br>')}</p>",
+                    message
+                )
+            
+            email_thread = threading.Thread(target=_send_status_email, daemon=False)
+            email_thread.start()
         except Exception as e:
-            print(f"Email error (non-critical): {e}")
+            print(f"[EMAIL] Email error (non-critical): {e}")
     
     return redirect('forms:leave_admin')
 
@@ -1470,13 +1483,15 @@ def approve_leave_email(request, leave_id):
     leave.status_changed_by = None  # Email action, no specific user
     leave.save()
     
-    # Send confirmation email to employee
+    # Send confirmation email to employee via SendGrid Web API
     try:
         employee_email = leave.user.email
         if employee_email:
-            send_mail(
-                subject=f'Leave Request Approved - {leave.start_date.strftime("%d %b %Y")}',
-                message=f"""
+            from forms.emails import send_sendgrid_email
+            import threading
+            
+            def _send_approval_email():
+                message = f"""
 Dear {leave.user.get_full_name() or leave.user.username},
 
 Your leave request has been APPROVED.
@@ -1489,11 +1504,16 @@ Details:
 
 Regards,
 Deye India HR Team
-                """,
-                from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@deyeindia.com'),
-                recipient_list=[employee_email],
-                fail_silently=True,
-            )
+                """
+                send_sendgrid_email(
+                    [employee_email],
+                    f'Leave Request Approved - {leave.start_date.strftime("%d %b %Y")}',
+                    f"<pre>{message}</pre>",
+                    message
+                )
+            
+            email_thread = threading.Thread(target=_send_approval_email, daemon=False)
+            email_thread.start()
     except:
         pass
     
@@ -1523,13 +1543,15 @@ def reject_leave_email(request, leave_id):
     leave.status_changed_by = None  # Email action, no specific user
     leave.save()
     
-    # Send confirmation email to employee
+    # Send confirmation email to employee via SendGrid Web API
     try:
         employee_email = leave.user.email
         if employee_email:
-            send_mail(
-                subject=f'Leave Request Rejected - {leave.start_date.strftime("%d %b %Y")}',
-                message=f"""
+            from forms.emails import send_sendgrid_email
+            import threading
+            
+            def _send_rejection_email():
+                message = f"""
 Dear {leave.user.get_full_name() or leave.user.username},
 
 Your leave request has been REJECTED.
@@ -1544,12 +1566,18 @@ Please contact HR for more information.
 
 Regards,
 Deye India HR Team
-                """,
-                from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@deyeindia.com'),
-                recipient_list=[employee_email],
-                fail_silently=True,
-            )
+                """
+                send_sendgrid_email(
+                    [employee_email],
+                    f'Leave Request Rejected - {leave.start_date.strftime("%d %b %Y")}',
+                    f"<pre>{message}</pre>",
+                    message
+                )
+            
+            email_thread = threading.Thread(target=_send_rejection_email, daemon=False)
+            email_thread.start()
     except:
+        pass
         pass
     
     return render(request, 'leave/email_action_result.html', {

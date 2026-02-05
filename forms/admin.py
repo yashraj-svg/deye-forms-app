@@ -536,19 +536,26 @@ class LeaveRequestAdmin(admin.ModelAdmin):
             obj.status_changed_at = timezone.now()
             obj.status_changed_by = request.user
             
-            # Notify user of status change
+            # Notify user of status change via SendGrid Web API
             if obj.user.email:
-                send_mail(
-                    subject='Leave status updated',
-                    message=(
+                from forms.emails import send_sendgrid_email
+                import threading
+                
+                def _send_status_email():
+                    message = (
                         f"Hello {obj.user.get_username()},\n\n"
                         f"Your leave request from {obj.start_date} to {obj.end_date} is now {obj.status.title()}.\n"
                         f"Total days: {obj.total_days}."
-                    ),
-                    from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', None),
-                    recipient_list=[obj.user.email],
-                    fail_silently=True,
-                )
+                    )
+                    send_sendgrid_email(
+                        [obj.user.email],
+                        'Leave status updated',
+                        f"<p>{message.replace(chr(10), '<br>')}</p>",
+                        message
+                    )
+                
+                email_thread = threading.Thread(target=_send_status_email, daemon=False)
+                email_thread.start()
         
         super().save_model(request, obj, form, change)
     
@@ -561,19 +568,26 @@ class LeaveRequestAdmin(admin.ModelAdmin):
             leave.status_changed_by = request.user
             leave.save()
             
-            # Notify employee
+            # Notify employee via SendGrid Web API
             if leave.user.email:
-                send_mail(
-                    subject='Leave Approved',
-                    message=(
+                from forms.emails import send_sendgrid_email
+                import threading
+                
+                def _send_approval_email():
+                    message = (
                         f"Hello {leave.user.get_username()},\n\n"
                         f"Your leave request from {leave.start_date} to {leave.end_date} has been approved.\n"
                         f"Total days: {leave.total_days}."
-                    ),
-                    from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', None),
-                    recipient_list=[leave.user.email],
-                    fail_silently=True,
-                )
+                    )
+                    send_sendgrid_email(
+                        [leave.user.email],
+                        'Leave Approved',
+                        f"<p>{message.replace(chr(10), '<br>')}</p>",
+                        message
+                    )
+                
+                email_thread = threading.Thread(target=_send_approval_email, daemon=False)
+                email_thread.start()
             count += 1
         
         self.message_user(request, f'{count} leave request(s) approved.')
@@ -588,18 +602,25 @@ class LeaveRequestAdmin(admin.ModelAdmin):
             leave.status_changed_by = request.user
             leave.save()
             
-            # Notify employee
+            # Notify employee via SendGrid Web API
             if leave.user.email:
-                send_mail(
-                    subject='Leave Rejected',
-                    message=(
+                from forms.emails import send_sendgrid_email
+                import threading
+                
+                def _send_rejection_email():
+                    message = (
                         f"Hello {leave.user.get_username()},\n\n"
                         f"Your leave request from {leave.start_date} to {leave.end_date} has been rejected."
-                    ),
-                    from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', None),
-                    recipient_list=[leave.user.email],
-                    fail_silently=True,
-                )
+                    )
+                    send_sendgrid_email(
+                        [leave.user.email],
+                        'Leave Rejected',
+                        f"<p>{message.replace(chr(10), '<br>')}</p>",
+                        message
+                    )
+                
+                email_thread = threading.Thread(target=_send_rejection_email, daemon=False)
+                email_thread.start()
             count += 1
         
         self.message_user(request, f'{count} leave request(s) rejected.')
