@@ -447,11 +447,11 @@ def send_stock(request):
                 # Create requisition only for forms with valid serial number
                 cd = form.cleaned_data
                 requisition = StockRequisition.objects.create(
-                    serial_number=cd['serial_number'],
-                    component_type=cd['component_type'],
+                    serial_number=cd.get('serial_number'),
+                    component_type=cd.get('component_type', ''),
                     description=cd.get('description', ''),
                     manager_name=header_cd['manager_name'],
-                    quantity_required=cd['quantity_required'],
+                    quantity_required=cd.get('quantity_required') or 0,
                     required_to=header_cd['required_to'],
                     status='pending',
                 )

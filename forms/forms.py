@@ -638,12 +638,12 @@ class StockRequisitionItemForm(forms.Form):
         'rows': 3,
         'placeholder': 'Enter component description'
     }))
-    quantity_received = forms.DecimalField(
+    quantity_required = forms.DecimalField(
         required=False,
         widget=forms.NumberInput(attrs={
-            'class': 'form-control qty-received',
+            'class': 'form-control qty-required',
             'min': '0',
-            'placeholder': 'Enter received qty'
+            'placeholder': 'Enter required qty'
         })
     )
     def __init__(self, *args, **kwargs):
@@ -658,7 +658,7 @@ class StockRequisitionItemForm(forms.Form):
         except Exception:
             self.fields['component_type'].choices = [('Other', 'Other')]
 
-        # Auto-fill quantity_remaining if serial_number is present
+        # Auto-fill quantity_required initial value from StockItem if available
         data = self.data or self.initial
         serial = data.get('serial_number') if data else None
         if serial:
@@ -666,6 +666,6 @@ class StockRequisitionItemForm(forms.Form):
                 from .models import StockItem
                 item = StockItem.objects.filter(pcba_sn_new=serial).order_by('-year').first()
                 if item:
-                    self.fields['quantity_remaining'].initial = item.quantity
+                    self.fields['quantity_required'].initial = item.quantity
             except Exception:
                 pass
