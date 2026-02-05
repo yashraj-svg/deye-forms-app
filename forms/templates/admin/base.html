@@ -8,15 +8,20 @@
             Forms
         </div>
         <div class="nav-subitems active" id="forms-subitems">
-            <a href="/admin/forms/inwardform/">Inward Forms</a>
-            <a href="/admin/forms/outwardform/">Outward Forms</a>
-            <a href="/admin/forms/repairingform/">Repairing Forms</a>
-            <a href="/admin/forms/servicereportform/">Service Report Forms</a>
-            <a href="/admin/forms/stockrequisition/">Stock Requisitions</a>
-            <a href="/admin/forms/dispatchedstock/">Dispatched Stock</a>
-            <a href="/admin/forms/leaverequest/">Leave Requests</a>
-            <a href="/admin/forms/leavereport/">Leave Reports</a>
-            <a href="/admin/forms/upcomingevent/">Upcoming Events</a>
+            {% if request.path|slice:":12" == "/leave-admin/" %}
+                <a href="/leave-admin/forms/leaverequest/">Leave Requests</a>
+                <a href="/leave-admin/forms/leavereport/">Leave Reports</a>
+            {% else %}
+                <a href="/admin/forms/inwardform/">Inward Forms</a>
+                <a href="/admin/forms/outwardform/">Outward Forms</a>
+                <a href="/admin/forms/repairingform/">Repairing Forms</a>
+                <a href="/admin/forms/servicereportform/">Service Report Forms</a>
+                <a href="/admin/forms/stockrequisition/">Stock Requisitions</a>
+                <a href="/admin/forms/dispatchedstock/">Dispatched Stock</a>
+                <a href="/admin/forms/leaverequest/">Leave Requests</a>
+                <a href="/admin/forms/leavereport/">Leave Reports</a>
+                <a href="/admin/forms/upcomingevent/">Upcoming Events</a>
+            {% endif %}
         </div>
     </div>
 </div>

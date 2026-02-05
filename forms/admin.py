@@ -720,15 +720,22 @@ class LeaveReport(models.Model):
 @admin.register(LeaveReport)
 class LeaveReportAdmin(admin.ModelAdmin):
     change_list_template = 'admin/leave_report_changelist.html'
-    
+
+    def has_module_permission(self, request):
+        """Only MuktaParanjape or superusers can access Leave Reports."""
+        return request.user.is_superuser or request.user.username == 'MuktaParanjape'
+
+    def has_view_permission(self, request, obj=None):
+        return request.user.is_superuser or request.user.username == 'MuktaParanjape'
+
+    def has_change_permission(self, request, obj=None):
+        return request.user.is_superuser or request.user.username == 'MuktaParanjape'
+
     def has_add_permission(self, request):
         return False
-    
+
     def has_delete_permission(self, request, obj=None):
         return False
-    
-    def has_change_permission(self, request, obj=None):
-        return True
     
     def get_queryset(self, request):
         """Return empty queryset since this is a virtual model"""
