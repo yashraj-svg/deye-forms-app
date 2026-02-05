@@ -42,9 +42,11 @@ def send_bulk_requisition_email(requisitions, engineer_name, required_to):
     
     # Run email sending in a thread to avoid blocking the request
     import threading
+    import time
     
     def _send_email():
         try:
+            time.sleep(0.1)  # Give thread a moment to start
             site_url = getattr(settings, 'SITE_URL', 'http://127.0.0.1:8000')
             
             # Prepare items with stock information
@@ -96,13 +98,16 @@ Please login to the admin panel to review and approve these requisitions.
             from_email = settings.DEFAULT_FROM_EMAIL
             recipient_list = ['yashraj@deyeindia.com']
             
+            print(f"[EMAIL] Starting to send email to {recipient_list}")
+            print(f"[EMAIL] From: {from_email}, Subject: {subject}")
+            
             msg = EmailMultiAlternatives(subject, plain_message, from_email, recipient_list)
             if html_message:
                 msg.attach_alternative(html_message, "text/html")
             
             # Send with timeout to prevent hanging
-            msg.send(fail_silently=True)
-            print(f"✅ Email sent successfully for {len(requisitions)} requisitions")
+            result = msg.send(fail_silently=False)
+            print(f"[EMAIL] ✅ Email sent successfully for {len(requisitions)} requisitions (result: {result})")
             
         except Exception as e:
             print(f"❌ Error in _send_email: {str(e)}")
@@ -110,7 +115,8 @@ Please login to the admin panel to review and approve these requisitions.
             traceback.print_exc()
     
     # Start email sending in background thread (non-blocking)
-    email_thread = threading.Thread(target=_send_email, daemon=True)
+    email_thread = threading.Thread(target=_send_email, daemon=False)
     email_thread.start()
+    print(f"[EMAIL] Background thread started for {len(requisitions)} requisitions")
     
     print(f"📧 Email thread started for {len(requisitions)} requisitions (non-blocking)")

@@ -146,17 +146,23 @@ def update_new_shipments(request):
                     
                     # Send email asynchronously in background thread
                     import threading
+                    import time
                     def _send_shipment_email():
                         try:
+                            time.sleep(0.1)  # Give thread a moment to start
+                            print(f"[EMAIL] Starting to send shipment email to {recipient_list}")
                             msg = EmailMultiAlternatives(subject, 'New shipment received', from_email, recipient_list)
                             msg.attach_alternative(email_html, "text/html")
-                            msg.send(fail_silently=True)
-                            print(f"✅ Shipment email sent for {len(items)} items")
+                            result = msg.send(fail_silently=False)
+                            print(f"[EMAIL] ✅ Shipment email sent for {len(items)} items (result: {result})")
                         except Exception as email_err:
-                            print(f"❌ Shipment email error: {str(email_err)}")
+                            print(f"[EMAIL] ❌ Shipment email error: {str(email_err)}")
+                            import traceback
+                            traceback.print_exc()
                     
-                    email_thread = threading.Thread(target=_send_shipment_email, daemon=True)
+                    email_thread = threading.Thread(target=_send_shipment_email, daemon=False)
                     email_thread.start()
+                    print(f"[EMAIL] Background thread started for shipment with {len(items)} items")
                     
                 except Exception as e:
                     # Log error but don't crash the app
