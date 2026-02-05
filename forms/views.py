@@ -144,13 +144,23 @@ def update_new_shipments(request):
                     from_email = os.environ.get('DEFAULT_FROM_EMAIL', 'yashraj@deyeindia.com')
                     recipient_list = ['yashraj@deyeindia.com']
                     
-                    msg = EmailMultiAlternatives(subject, 'New shipment received', from_email, recipient_list)
-                    msg.attach_alternative(email_html, "text/html")
-                    msg.send(fail_silently=True)
+                    # Send email asynchronously in background thread
+                    import threading
+                    def _send_shipment_email():
+                        try:
+                            msg = EmailMultiAlternatives(subject, 'New shipment received', from_email, recipient_list)
+                            msg.attach_alternative(email_html, "text/html")
+                            msg.send(fail_silently=True)
+                            print(f"✅ Shipment email sent for {len(items)} items")
+                        except Exception as email_err:
+                            print(f"❌ Shipment email error: {str(email_err)}")
+                    
+                    email_thread = threading.Thread(target=_send_shipment_email, daemon=True)
+                    email_thread.start()
                     
                 except Exception as e:
                     # Log error but don't crash the app
-                    print(f"Email sending error: {str(e)}")
+                    print(f"Email preparation error: {str(e)}")
                 
                 return render(request, 'forms/update_new_shipments_confirm.html', {
                     'items': items,
