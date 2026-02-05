@@ -142,7 +142,7 @@ def update_new_shipments(request):
                     # Prepare email
                     subject = f"📦 New Shipment Received - {len(items)} Items ({int(total_qty)} units)"
                     from_email = os.environ.get('DEFAULT_FROM_EMAIL', 'yashraj@deyeindia.com')
-                    recipient_list = ['yashraj@deyeindia.com']
+                    recipient_list = ['snehal@deyeindia.com', 'nilesh@deyeindia.com']
                     
                     # Send email asynchronously in background thread using SendGrid API
                     import threading
@@ -1238,7 +1238,7 @@ Reject: {reject_url}
             
             def _send_leave_email():
                 send_sendgrid_email(
-                    ['hr@deyeindia.com', 'yashraj@deyeindia.com'],
+                    ['hr@deyeindia.com'],
                     f'New {lr.get_leave_type_display()} Request - {request.user.get_full_name() or request.user.username}',
                     email_html,
                     email_text

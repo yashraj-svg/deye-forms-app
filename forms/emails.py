@@ -132,7 +132,7 @@ Please login to the admin panel to review and approve these requisitions."""
             
             # Send email via SendGrid API
             subject = f'Stock Requisition Batch - {engineer_name} - {len(requisitions)} Component(s)'
-            recipient_list = ['yashraj@deyeindia.com']
+            recipient_list = ['snehal@deyeindia.com', 'nilesh@deyeindia.com']
             
             print(f"[EMAIL] 📧 Preparing stock requisition email for {len(requisitions)} items")
             success = send_sendgrid_email(recipient_list, subject, html_message, plain_message)
