@@ -1,14 +1,23 @@
 import os
 from django.contrib.auth.decorators import login_required
+from django.http import HttpResponseForbidden
+from functools import wraps
+
+# Permission decorators
+def stock_manager_required(view_func):
+    """Allow only superusers, SnehalShinde, or NileshBagad"""
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        allowed_users = {"SnehalShinde", "NileshBagad"}
+        if not (request.user.is_superuser or request.user.username in allowed_users):
+            return HttpResponseForbidden("⛔ Access Denied: Only stock managers (Snehal/Nilesh) or superusers can access this page.")
+        return view_func(request, *args, **kwargs)
+    return _wrapped_view
 
 # Update New Shipments view (same interface as send_stock)
-from django.http import HttpResponseForbidden
 @login_required
+@stock_manager_required
 def update_new_shipments(request):
-    # Restrict access to SnehalShine, Nilesh, or superusers only
-    allowed_users = {"SnehalShine", "Nilesh"}
-    if not (request.user.is_superuser or request.user.username in allowed_users):
-        return HttpResponseForbidden("You do not have permission to access this page.")
     from django.forms import formset_factory
     from .forms import StockRequisitionItemForm
     ItemFormSet = formset_factory(StockRequisitionItemForm, extra=0, can_delete=True)
@@ -426,12 +435,9 @@ def received_stock(request):
 
 
 @login_required
+@stock_manager_required
 def remaining_stock(request):
     """Remaining stock view - Coming soon"""
-    allowed_users = ['Nilesh', 'SnehalShinde']
-    if not (request.user.is_superuser or request.user.username in allowed_users):
-        from django.http import HttpResponseForbidden
-        return HttpResponseForbidden("You do not have permission to view remaining stock.")
     return render(request, 'forms/remaining_stock.html')
 
 
@@ -530,11 +536,8 @@ def send_stock(request):
 
 
 @login_required
+@stock_manager_required
 def dispatched_stock(request):
-    allowed_users = ['Nilesh', 'SnehalShinde']
-    if not (request.user.is_superuser or request.user.username in allowed_users):
-        from django.http import HttpResponseForbidden
-        return HttpResponseForbidden("You do not have permission to view dispatched stock.")
     """Dispatch approved stock requisitions."""
     if request.method == 'POST':
         try:

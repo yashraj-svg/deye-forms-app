@@ -1,6 +1,17 @@
 from django.contrib import admin
 from django.urls import path, include
 
+# Override admin site permission to allow only superusers
+class SuperuserAdminSite(admin.AdminSite):
+    def has_permission(self, request):
+        """Only superusers can access admin panel"""
+        return request.user.is_active and request.user.is_superuser
+
+# Use custom admin site
+admin_site = SuperuserAdminSite(name='admin')
+admin_site._registry = admin.site._registry  # Copy all registered models
+admin.site = admin_site
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('django.contrib.auth.urls')),

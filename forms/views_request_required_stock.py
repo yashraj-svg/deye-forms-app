@@ -4,16 +4,25 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from forms.models import StockRequisition, DispatchedStock
 from django.db.models import Sum, Q
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseForbidden
+from functools import wraps
 import csv
 
 
+def stock_manager_required(view_func):
+    """Allow only superusers, SnehalShinde, or NileshBagad"""
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        allowed_users = {"SnehalShinde", "NileshBagad"}
+        if not (request.user.is_superuser or request.user.username in allowed_users):
+            return HttpResponseForbidden("⛔ Access Denied: Only stock managers (Snehal/Nilesh) or superusers can access this page.")
+        return view_func(request, *args, **kwargs)
+    return _wrapped_view
+
+
 @login_required
+@stock_manager_required
 def request_required_stock(request):
-    allowed_users = ['Nilesh', 'SnehalShinde']
-    if not (request.user.is_superuser or request.user.username in allowed_users):
-        from django.http import HttpResponseForbidden
-        return HttpResponseForbidden("You do not have permission to view required stock.")
     # Filters
     serial_filter = request.GET.get('serial', '').strip()
     component_filter = request.GET.get('component', '').strip()

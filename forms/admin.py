@@ -461,6 +461,36 @@ class LeaveRequestAdmin(admin.ModelAdmin):
             'all': ('admin/css/admin_custom.css',)
         }
     
+    def has_module_permission(self, request):
+        """Only MuktaParanjape or superusers can access Leave admin"""
+        if request.user.is_superuser or request.user.username == 'MuktaParanjape':
+            return True
+        return False
+    
+    def has_view_permission(self, request, obj=None):
+        """Only MuktaParanjape or superusers can view leaves"""
+        if request.user.is_superuser or request.user.username == 'MuktaParanjape':
+            return True
+        return False
+    
+    def has_change_permission(self, request, obj=None):
+        """Only MuktaParanjape or superusers can change leaves"""
+        if request.user.is_superuser or request.user.username == 'MuktaParanjape':
+            return True
+        return False
+    
+    def has_add_permission(self, request):
+        """Only MuktaParanjape or superusers can add leaves"""
+        if request.user.is_superuser or request.user.username == 'MuktaParanjape':
+            return True
+        return False
+    
+    def has_delete_permission(self, request, obj=None):
+        """Only MuktaParanjape or superusers can delete leaves"""
+        if request.user.is_superuser or request.user.username == 'MuktaParanjape':
+            return True
+        return False
+    
     def employee_name(self, obj):
         return format_html(
             '<strong>{}</strong>',
