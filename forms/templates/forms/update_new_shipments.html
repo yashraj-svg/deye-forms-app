@@ -49,6 +49,12 @@
 				<form method="post" autocomplete="off">
 					{% csrf_token %}
 					{{ item_formset.management_form }}
+					
+					<!-- Bulk Paste Info Box -->
+					<div style="background:#f0fdf4; border-left:4px solid #16a34a; padding:14px 16px; border-radius:6px; margin-bottom:20px; font-size:14px;">
+						<strong style="color:#15803d;">💡 Bulk Paste Tip:</strong> Use the <strong>"Bulk Paste"</strong> button below to paste multiple serial numbers and quantities at once - component type & description will auto-fill from database!
+					</div>
+
 					<table id="shipments-table" style="width:100%; border-collapse:collapse; margin-bottom:20px;">
 						<thead>
 							<tr style="background:#f1f5f9;">
@@ -94,6 +100,7 @@
 					</div>
 					<div style="display: flex; gap: 12px; margin-bottom: 16px;">
 						<button type="button" id="add-row-btn" class="btn btn-back" style="flex: 1;">+ Add Another Item</button>
+						<button type="button" id="bulk-paste-btn" class="btn btn-back" style="flex: 1; background:#dbeafe; color:#0c4a6e;">📋 Bulk Paste</button>
 					</div>
 					<div class="button-group">
 						<button type="submit" class="btn btn-submit">Update Shipments</button>
@@ -102,6 +109,31 @@
 					</div>
 				</form>
             
+				<!-- Bulk Paste Modal -->
+				<div id="bulk-paste-modal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center; padding:20px;">
+					<div style="background:white; border-radius:12px; padding:32px; max-width:600px; width:90%; max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(15,23,42,0.3);">
+						<h2 style="margin:0 0 8px 0; font-size:22px; color:#059669;">Bulk Paste Serial Numbers & Quantities</h2>
+						<p style="margin:0 0 20px 0; font-size:13px; color:#64748b;">Paste serial numbers in the left box (one per line) and quantities in the right box. They will be matched by order.</p>
+						<div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px;">
+							<div>
+								<label style="display:block; font-size:14px; font-weight:600; color:#475569; margin-bottom:6px;">Serial Numbers</label>
+								<textarea id="bulk-serials" class="form-control" rows="12" placeholder="20110103100263&#10;20110103100169&#10;20110106100105&#10;..." style="margin:0; font-family:monospace; font-size:12px;"></textarea>
+								<div style="font-size:12px; color:#64748b; margin-top:4px;">Count: <span id="serial-count">0</span></div>
+							</div>
+							<div>
+								<label style="display:block; font-size:14px; font-weight:600; color:#475569; margin-bottom:6px;">Quantities</label>
+								<textarea id="bulk-quantities" class="form-control" rows="12" placeholder="20&#10;20&#10;3&#10;..." style="margin:0; font-family:monospace; font-size:12px;"></textarea>
+								<div style="font-size:12px; color:#64748b; margin-top:4px;">Count: <span id="qty-count">0</span></div>
+							</div>
+						</div>
+						<div id="bulk-error" style="display:none; background:#fee2e2; border-left:4px solid #dc2626; color:#991b1b; padding:10px 12px; border-radius:4px; font-size:13px; margin-bottom:12px;"></div>
+						<div style="display:flex; gap:12px;">
+							<button type="button" id="bulk-paste-submit" class="btn btn-submit" style="flex:1;">Add All Items</button>
+							<button type="button" id="close-bulk-modal" class="btn btn-back" style="flex:1;">Cancel</button>
+						</div>
+					</div>
+				</div>
+
 				<!-- Unique Item Modal -->
 				<div id="unique-item-modal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center; padding:20px;">
 					<div style="background:white; border-radius:12px; padding:32px; max-width:400px; width:90%; max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(15,23,42,0.3);">
@@ -327,6 +359,142 @@
 			// Initialize
 			initSuggestions();
 			attachRemoveHandlers();
+
+			// Bulk Paste functionality
+			const bulkPasteBtn = document.getElementById('bulk-paste-btn');
+			const bulkModal = document.getElementById('bulk-paste-modal');
+			const closeBulkModal = document.getElementById('close-bulk-modal');
+			const bulkSerialsTa = document.getElementById('bulk-serials');
+			const bulkQtyTa = document.getElementById('bulk-quantities');
+			const bulkSubmitBtn = document.getElementById('bulk-paste-submit');
+			const bulkError = document.getElementById('bulk-error');
+			const serialCount = document.getElementById('serial-count');
+			const qtyCount = document.getElementById('qty-count');
+
+			if (bulkPasteBtn && bulkModal) {
+				bulkPasteBtn.onclick = () => {
+					bulkModal.style.display = 'flex';
+					bulkError.style.display = 'none';
+					bulkSerialsTa.focus();
+				};
+				closeBulkModal.onclick = () => bulkModal.style.display = 'none';
+				bulkModal.onclick = (e) => { if (e.target === bulkModal) bulkModal.style.display = 'none'; };
+
+				// Update counts as user types
+				bulkSerialsTa.addEventListener('input', () => {
+					const lines = bulkSerialsTa.value.trim().split('\n').filter(l => l.trim());
+					serialCount.textContent = lines.length;
+				});
+				bulkQtyTa.addEventListener('input', () => {
+					const lines = bulkQtyTa.value.trim().split('\n').filter(l => l.trim());
+					qtyCount.textContent = lines.length;
+				});
+
+				bulkSubmitBtn.onclick = async function() {
+					bulkError.style.display = 'none';
+					const serialLines = bulkSerialsTa.value.trim().split('\n').map(l => l.trim()).filter(l => l);
+					const qtyLines = bulkQtyTa.value.trim().split('\n').map(l => l.trim()).filter(l => l);
+
+					// Validate counts match
+					if (serialLines.length !== qtyLines.length) {
+						bulkError.textContent = `❌ Mismatch: ${serialLines.length} serial numbers but ${qtyLines.length} quantities. They must be equal!`;
+						bulkError.style.display = 'block';
+						return;
+					}
+					if (serialLines.length === 0) {
+						bulkError.textContent = '❌ Please enter at least one serial number and quantity.';
+						bulkError.style.display = 'block';
+						return;
+					}
+
+					// Process each serial-qty pair
+					bulkSubmitBtn.disabled = true;
+					bulkSubmitBtn.textContent = 'Processing...';
+					let addedCount = 0;
+
+					for (let i = 0; i < serialLines.length; i++) {
+						const serial = serialLines[i];
+						const qty = qtyLines[i];
+
+						// Validate quantity is a number
+						if (isNaN(qty) || qty < 0) {
+							bulkError.textContent = `❌ Row ${i + 1}: Invalid quantity "${qty}"`;
+							bulkError.style.display = 'block';
+							bulkSubmitBtn.disabled = false;
+							bulkSubmitBtn.textContent = 'Add All Items';
+							return;
+						}
+
+						try {
+							// Fetch serial details from database
+							const response = await fetch('{% url 'forms:stock_serial_details' %}?sn=' + encodeURIComponent(serial), { credentials: 'same-origin' });
+							const data = await response.json();
+
+							// Create new row
+							const formIdx = parseInt(totalFormsInput.value);
+							const newRow = document.createElement('tr');
+							newRow.className = 'form-row';
+							
+							const componentType = data.found ? (data.component_type || '') : '';
+							const description = data.found ? (data.specification || '') : '';
+
+							newRow.innerHTML = `
+								<td style="padding:8px; border:1px solid #e2e8f0;">
+									<div style="position:relative;">
+										<input type="text" name="form-${formIdx}-serial_number" value="${serial}" class="form-control serial-number-input" required>
+										<div class="sn-suggestions-list"></div>
+									</div>
+								</td>
+								<td style="padding:8px; border:1px solid #e2e8f0;">
+									<input type="text" name="form-${formIdx}-component_type" value="${componentType}" class="form-control" required>
+								</td>
+								<td style="padding:8px; border:1px solid #e2e8f0;">
+									<textarea name="form-${formIdx}-description" class="form-control" rows="2">${description}</textarea>
+								</td>
+								<td style="padding:8px; border:1px solid #e2e8f0;">
+									<input type="number" name="form-${formIdx}-quantity_received" value="${qty}" class="form-control" min="0" required>
+								</td>
+								<td style="padding:8px; border:1px solid #e2e8f0; text-align:center;">
+									<button type="button" class="btn btn-back remove-row-btn" style="padding:4px 10px; font-size:13px;">Remove</button>
+								</td>
+							`;
+							tableBody.appendChild(newRow);
+							totalFormsInput.value = formIdx + 1;
+							addedCount++;
+						} catch (err) {
+							bulkError.textContent = `❌ Error processing row ${i + 1}: ${err.message}`;
+							bulkError.style.display = 'block';
+							bulkSubmitBtn.disabled = false;
+							bulkSubmitBtn.textContent = 'Add All Items';
+							return;
+						}
+					}
+
+					// Reinitialize all event handlers
+					initSuggestions();
+					attachRemoveHandlers();
+
+					// Show success and close modal
+					bulkSerialsTa.value = '';
+					bulkQtyTa.value = '';
+					serialCount.textContent = '0';
+					qtyCount.textContent = '0';
+					bulkModal.style.display = 'none';
+					bulkSubmitBtn.disabled = false;
+					bulkSubmitBtn.textContent = 'Add All Items';
+
+					// Show success message
+					const msg = document.createElement('div');
+					msg.className = 'success-message';
+					msg.style.position = 'fixed';
+					msg.style.top = '20px';
+					msg.style.right = '20px';
+					msg.style.zIndex = '2000';
+					msg.textContent = `✅ Added ${addedCount} items from bulk paste!`;
+					document.body.appendChild(msg);
+					setTimeout(() => msg.remove(), 3000);
+				};
+			}
 		});
 		</script>
 	</body>
