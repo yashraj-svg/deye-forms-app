@@ -178,14 +178,9 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_COOKIE_AGE = 86400  # 1 day in seconds (fallback)
 SESSION_SAVE_EVERY_REQUEST = True
 
-# Email Configuration - SendGrid
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.sendgrid.net'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_USE_SSL = False
-EMAIL_HOST_USER = 'apikey'  # SendGrid uses 'apikey' as username
-EMAIL_HOST_PASSWORD = os.environ.get('SENDGRID_API_KEY', '')  # API key from Railway
+# Email Configuration - SendGrid Web API (not SMTP)
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # Fallback, will use sendgrid.helpers in code
+SENDGRID_API_KEY = os.environ.get('SENDGRID_API_KEY', '')
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'yashraj@deyeindia.com')
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
 EMAIL_TIMEOUT = int(os.environ.get('EMAIL_TIMEOUT', '20'))

@@ -144,17 +144,19 @@ def update_new_shipments(request):
                     from_email = os.environ.get('DEFAULT_FROM_EMAIL', 'yashraj@deyeindia.com')
                     recipient_list = ['yashraj@deyeindia.com']
                     
-                    # Send email asynchronously in background thread
+                    # Send email asynchronously in background thread using SendGrid API
                     import threading
                     import time
                     def _send_shipment_email():
                         try:
                             time.sleep(0.1)  # Give thread a moment to start
-                            print(f"[EMAIL] Starting to send shipment email to {recipient_list}")
-                            msg = EmailMultiAlternatives(subject, 'New shipment received', from_email, recipient_list)
-                            msg.attach_alternative(email_html, "text/html")
-                            result = msg.send(fail_silently=False)
-                            print(f"[EMAIL] ✅ Shipment email sent for {len(items)} items (result: {result})")
+                            print(f"[EMAIL] 📦 Starting to send shipment email to {recipient_list}")
+                            from forms.emails import send_sendgrid_email
+                            success = send_sendgrid_email(recipient_list, subject, email_html, 'New shipment received')
+                            if success:
+                                print(f"[EMAIL] ✅ Shipment email sent for {len(items)} items via SendGrid API")
+                            else:
+                                print(f"[EMAIL] ⚠️ Shipment email sending had issues")
                         except Exception as email_err:
                             print(f"[EMAIL] ❌ Shipment email error: {str(email_err)}")
                             import traceback
@@ -162,7 +164,7 @@ def update_new_shipments(request):
                     
                     email_thread = threading.Thread(target=_send_shipment_email, daemon=False)
                     email_thread.start()
-                    print(f"[EMAIL] Background thread started for shipment with {len(items)} items")
+                    print(f"[EMAIL] 🧵 Background thread started for shipment with {len(items)} items")
                     
                 except Exception as e:
                     # Log error but don't crash the app

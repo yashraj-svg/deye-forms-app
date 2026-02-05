@@ -3,10 +3,56 @@ from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from django.conf import settings
 from .models import StockItem
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail, Email, To, Content
+
+
+def send_sendgrid_email(to_emails, subject, html_content, plain_content=None):
+    """
+    Send email using SendGrid Web API (not SMTP).
+    
+    Args:
+        to_emails: list of email addresses or single email
+        subject: email subject
+        html_content: HTML email body
+        plain_content: plain text fallback (optional)
+    """
+    if isinstance(to_emails, str):
+        to_emails = [to_emails]
+    
+    try:
+        if not settings.SENDGRID_API_KEY:
+            print(f"[EMAIL] ⚠️ SENDGRID_API_KEY not set, skipping email to {to_emails}")
+            return False
+        
+        print(f"[EMAIL] Preparing SendGrid email to: {to_emails}")
+        
+        # Create Mail object
+        mail = Mail(
+            from_email=Email(settings.DEFAULT_FROM_EMAIL),
+            to_emails=[To(email) for email in to_emails],
+            subject=subject,
+            plain_text_content=plain_content or strip_tags(html_content),
+            html_content=html_content
+        )
+        
+        # Send via SendGrid API
+        sg = SendGridAPIClient(settings.SENDGRID_API_KEY)
+        print(f"[EMAIL] Sending email via SendGrid API...")
+        response = sg.send(mail)
+        
+        print(f"[EMAIL] ✅ SendGrid API response: {response.status_code}")
+        return response.status_code in [200, 201, 202]
+        
+    except Exception as e:
+        print(f"[EMAIL] ❌ SendGrid API error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return False
 
 
 def send_requisition_email(requisition):
-    """Send email notification for a single requisition (legacy, kept for compatibility)."""
+    """Send email notification for a single requisition using SendGrid API."""
     
     # Get current stock for the serial number
     stock_item = StockItem.objects.filter(pcba_sn_new=requisition.serial_number).order_by('-year').first()
@@ -26,19 +72,13 @@ def send_requisition_email(requisition):
     html_message = render_to_string('forms/emails/requisition_approval.html', context)
     plain_message = strip_tags(html_message)
     
-    # Send email
-    send_mail(
-        subject=f'Stock Requisition for {requisition.serial_number} - {requisition.component_type}',
-        message=plain_message,
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=['snehal@deyeindia.com', 'nilesh@deyeindia.com'],
-        html_message=html_message,
-        fail_silently=False,
-    )
+    # Send email via SendGrid API
+    subject = f'Stock Requisition for {requisition.serial_number} - {requisition.component_type}'
+    send_sendgrid_email(['snehal@deyeindia.com', 'nilesh@deyeindia.com'], subject, html_message, plain_message)
 
 
 def send_bulk_requisition_email(requisitions, engineer_name, required_to):
-    """Send consolidated email for multiple requisitions in one submission."""
+    """Send consolidated email for multiple requisitions using SendGrid API."""
     
     # Run email sending in a thread to avoid blocking the request
     import threading
@@ -80,43 +120,34 @@ def send_bulk_requisition_email(requisitions, engineer_name, required_to):
                 html_message = render_to_string('forms/emails/bulk_requisition_approval.html', context)
                 plain_message = strip_tags(html_message)
             except Exception as template_error:
-                print(f"Template rendering error: {str(template_error)}")
+                print(f"[EMAIL] Template rendering error: {str(template_error)}")
                 # Fallback to plain text email
-                plain_message = f"""
-Stock Requisition Batch - {engineer_name}
+                plain_message = f"""Stock Requisition Batch - {engineer_name}
 
 {len(requisitions)} items requested for: {required_to}
 Total Quantity Requested: {total_requested_qty}
 
-Please login to the admin panel to review and approve these requisitions.
-                """
-                html_message = None
+Please login to the admin panel to review and approve these requisitions."""
+                html_message = f"<p>{plain_message.replace(chr(10), '<br>')}</p>"
             
-            # Send email with short timeout
-            from django.core.mail import EmailMultiAlternatives
+            # Send email via SendGrid API
             subject = f'Stock Requisition Batch - {engineer_name} - {len(requisitions)} Component(s)'
-            from_email = settings.DEFAULT_FROM_EMAIL
             recipient_list = ['yashraj@deyeindia.com']
             
-            print(f"[EMAIL] Starting to send email to {recipient_list}")
-            print(f"[EMAIL] From: {from_email}, Subject: {subject}")
+            print(f"[EMAIL] 📧 Preparing stock requisition email for {len(requisitions)} items")
+            success = send_sendgrid_email(recipient_list, subject, html_message, plain_message)
             
-            msg = EmailMultiAlternatives(subject, plain_message, from_email, recipient_list)
-            if html_message:
-                msg.attach_alternative(html_message, "text/html")
-            
-            # Send with timeout to prevent hanging
-            result = msg.send(fail_silently=False)
-            print(f"[EMAIL] ✅ Email sent successfully for {len(requisitions)} requisitions (result: {result})")
+            if success:
+                print(f"[EMAIL] ✅ Email thread completed successfully for {len(requisitions)} requisitions")
+            else:
+                print(f"[EMAIL] ⚠️ Email thread completed with warnings/errors")
             
         except Exception as e:
-            print(f"❌ Error in _send_email: {str(e)}")
+            print(f"[EMAIL] ❌ Error in _send_email: {str(e)}")
             import traceback
             traceback.print_exc()
     
     # Start email sending in background thread (non-blocking)
     email_thread = threading.Thread(target=_send_email, daemon=False)
     email_thread.start()
-    print(f"[EMAIL] Background thread started for {len(requisitions)} requisitions")
-    
-    print(f"📧 Email thread started for {len(requisitions)} requisitions (non-blocking)")
+    print(f"[EMAIL] 🧵 Background thread started for {len(requisitions)} requisitions")
