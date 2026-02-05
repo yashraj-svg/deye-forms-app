@@ -90,7 +90,7 @@ Please login to the admin panel to review and approve these requisitions.
         from django.core.mail import EmailMultiAlternatives
         subject = f'Stock Requisition Batch - {engineer_name} - {len(requisitions)} Component(s)'
         from_email = settings.DEFAULT_FROM_EMAIL
-        recipient_list = ['snehal@deyeindia.com', 'nilesh@deyeindia.com', 'yashraj@deyeindia.com']
+        recipient_list = ['yashraj@deyeindia.com']
         
         msg = EmailMultiAlternatives(subject, plain_message, from_email, recipient_list)
         if html_message:

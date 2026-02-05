@@ -142,7 +142,7 @@ def update_new_shipments(request):
                     # Prepare email
                     subject = f"📦 New Shipment Received - {len(items)} Items ({int(total_qty)} units)"
                     from_email = os.environ.get('DEFAULT_FROM_EMAIL', 'yashraj@deyeindia.com')
-                    recipient_list = ['snehal@deyeindia.com', 'nilesh@deyeindia.com', 'yashraj@deyeindia.com']
+                    recipient_list = ['yashraj@deyeindia.com']
                     
                     msg = EmailMultiAlternatives(subject, 'New shipment received', from_email, recipient_list)
                     msg.attach_alternative(email_html, "text/html")
@@ -420,84 +420,95 @@ def remaining_stock(request):
 @login_required
 def send_stock(request):
     """Stock requisition form (supports multiple items in one submission)."""
-    from django.forms import formset_factory
-    from .forms import StockRequisitionHeaderForm, StockRequisitionItemForm
-    from .models import StockRequisition
-    from .emails import send_bulk_requisition_email
+    try:
+        from django.forms import formset_factory
+        from .forms import StockRequisitionHeaderForm, StockRequisitionItemForm
+        from .models import StockRequisition
+        from .emails import send_bulk_requisition_email
 
-    ItemFormSet = formset_factory(StockRequisitionItemForm, extra=1, can_delete=True)
+        ItemFormSet = formset_factory(StockRequisitionItemForm, extra=1, can_delete=True)
 
-    if request.method == 'POST':
-        header_form = StockRequisitionHeaderForm(request.POST)
-        item_formset = ItemFormSet(request.POST, prefix='form')
+        if request.method == 'POST':
+            header_form = StockRequisitionHeaderForm(request.POST)
+            item_formset = ItemFormSet(request.POST, prefix='form')
 
-        if header_form.is_valid() and item_formset.is_valid():
-            header_cd = header_form.cleaned_data
-            created_requisitions = []
-            
-            for form in item_formset:
-                # Skip the form if it has DELETE checked
-                if form.cleaned_data.get('DELETE'):
-                    continue
+            if header_form.is_valid() and item_formset.is_valid():
+                header_cd = header_form.cleaned_data
+                created_requisitions = []
                 
-                # Skip the form if it's completely empty (no serial number)
-                if not form.cleaned_data.get('serial_number'):
-                    continue
-                
-                # Create requisition only for forms with valid serial number
-                cd = form.cleaned_data
-                requisition = StockRequisition.objects.create(
-                    serial_number=cd.get('serial_number'),
-                    component_type=cd.get('component_type', ''),
-                    description=cd.get('description', ''),
-                    manager_name=header_cd['manager_name'],
-                    quantity_required=cd.get('quantity_required') or 0,
-                    required_to=header_cd['required_to'],
-                    status='pending',
-                )
-                created_requisitions.append(requisition)
-
-            created_count = len(created_requisitions)
-            
-            # Send consolidated email with all requisitions
-            if created_requisitions:
-                try:
-                    send_bulk_requisition_email(
-                        created_requisitions,
-                        header_cd['manager_name'],
-                        header_cd['required_to']
+                for form in item_formset:
+                    # Skip the form if it has DELETE checked
+                    if form.cleaned_data.get('DELETE'):
+                        continue
+                    
+                    # Skip the form if it's completely empty (no serial number)
+                    if not form.cleaned_data.get('serial_number'):
+                        continue
+                    
+                    # Create requisition only for forms with valid serial number
+                    cd = form.cleaned_data
+                    requisition = StockRequisition.objects.create(
+                        serial_number=cd.get('serial_number'),
+                        component_type=cd.get('component_type', ''),
+                        description=cd.get('description', ''),
+                        manager_name=header_cd['manager_name'],
+                        quantity_required=cd.get('quantity_required') or 0,
+                        required_to=header_cd['required_to'],
+                        status='pending',
                     )
-                except Exception as e:
-                    print(f"Error sending email: {str(e)}")
-                    import traceback
-                    traceback.print_exc()
+                    created_requisitions.append(requisition)
 
-            success_message = f'Stock requisition submitted successfully for {created_count} item(s)! Approvers have been notified.'
-            # Fresh forms after successful submit
+                created_count = len(created_requisitions)
+                
+                # Send consolidated email with all requisitions
+                if created_requisitions:
+                    try:
+                        send_bulk_requisition_email(
+                            created_requisitions,
+                            header_cd['manager_name'],
+                            header_cd['required_to']
+                        )
+                        print(f"✅ Email sent successfully for {created_count} requisitions")
+                    except Exception as e:
+                        print(f"❌ Error sending email: {str(e)}")
+                        import traceback
+                        traceback.print_exc()
+
+                success_message = f'Stock requisition submitted successfully for {created_count} item(s)! Approvers have been notified.'
+                # Fresh forms after successful submit
+                header_form = StockRequisitionHeaderForm()
+                item_formset = ItemFormSet(prefix='form')
+                return render(request, 'forms/send_stock.html', {
+                    'header_form': header_form,
+                    'item_formset': item_formset,
+                    'empty_form': item_formset.empty_form,
+                    'success_message': success_message,
+                })
+            else:
+                # Form validation failed - return with errors
+                print(f"Form validation failed:")
+                print(f"Header form errors: {header_form.errors}")
+                print(f"Formset errors: {item_formset.errors}")
+                return render(request, 'forms/send_stock.html', {
+                    'header_form': header_form,
+                    'item_formset': item_formset,
+                    'empty_form': item_formset.empty_form,
+                })
+        else:
             header_form = StockRequisitionHeaderForm()
             item_formset = ItemFormSet(prefix='form')
-            return render(request, 'forms/send_stock.html', {
-                'header_form': header_form,
-                'item_formset': item_formset,
-                'empty_form': item_formset.empty_form,
-                'success_message': success_message,
-            })
-        else:
-            # Form validation failed - return with errors
-            return render(request, 'forms/send_stock.html', {
-                'header_form': header_form,
-                'item_formset': item_formset,
-                'empty_form': item_formset.empty_form,
-            })
-    else:
-        header_form = StockRequisitionHeaderForm()
-        item_formset = ItemFormSet(prefix='form')
 
-    return render(request, 'forms/send_stock.html', {
-        'header_form': header_form,
-        'item_formset': item_formset,
-        'empty_form': item_formset.empty_form,
-    })
+        return render(request, 'forms/send_stock.html', {
+            'header_form': header_form,
+            'item_formset': item_formset,
+            'empty_form': item_formset.empty_form,
+        })
+    except Exception as e:
+        print(f"❌ CRITICAL ERROR in send_stock view: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        from django.http import HttpResponse
+        return HttpResponse(f"Error: {str(e)}<br><br>Please contact support.", status=500)
 
 
 @login_required
