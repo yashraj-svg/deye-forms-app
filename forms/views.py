@@ -468,7 +468,9 @@ def send_stock(request):
                         header_cd['required_to']
                     )
                 except Exception as e:
-                    print(f"Error sending email: {e}")
+                    print(f"Error sending email: {str(e)}")
+                    import traceback
+                    traceback.print_exc()
 
             success_message = f'Stock requisition submitted successfully for {created_count} item(s)! Approvers have been notified.'
             # Fresh forms after successful submit
@@ -479,6 +481,13 @@ def send_stock(request):
                 'item_formset': item_formset,
                 'empty_form': item_formset.empty_form,
                 'success_message': success_message,
+            })
+        else:
+            # Form validation failed - return with errors
+            return render(request, 'forms/send_stock.html', {
+                'header_form': header_form,
+                'item_formset': item_formset,
+                'empty_form': item_formset.empty_form,
             })
     else:
         header_form = StockRequisitionHeaderForm()
