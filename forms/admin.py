@@ -454,7 +454,18 @@ class LeaveRequestAdmin(admin.ModelAdmin):
         }),
     )
     
-    actions = ['approve_leave', 'reject_leave', 'export_as_csv']
+    actions = ['approve_leave', 'reject_leave', 'delete_selected', 'export_as_csv']
+
+    def get_actions(self, request):
+        """Get available actions based on user permissions"""
+        actions = super().get_actions(request)
+        
+        # Only superusers can delete
+        if not request.user.is_superuser:
+            if 'delete_selected' in actions:
+                del actions['delete_selected']
+        
+        return actions
 
     class Media:
         css = {
@@ -486,10 +497,8 @@ class LeaveRequestAdmin(admin.ModelAdmin):
         return False
     
     def has_delete_permission(self, request, obj=None):
-        """Only MuktaParanjape or superusers can delete leaves"""
-        if request.user.is_superuser or request.user.username == 'MuktaParanjape':
-            return True
-        return False
+        """Only superusers can delete leaves"""
+        return request.user.is_superuser
     
     def employee_name(self, obj):
         return format_html(
