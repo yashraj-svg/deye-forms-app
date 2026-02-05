@@ -21,5 +21,8 @@ COPY . .
 # Collect static files
 RUN python manage.py collectstatic --noinput
 
+# Load fixtures (stock data)
+RUN python manage.py load_stock_fixture || true
+
 # Run migrations and start server
 CMD python manage.py migrate && gunicorn deye_config.wsgi:application --bind 0.0.0.0:$PORT
