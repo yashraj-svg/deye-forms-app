@@ -56,6 +56,39 @@ body {
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
 }
 
+.top-button-bar {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+}
+
+.top-button-bar button,
+.top-button-bar a {
+  padding: 10px 24px;
+  border: 2px solid #667eea;
+  background: rgba(102, 126, 234, 0.1);
+  color: #667eea;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.top-button-bar button:hover,
+.top-button-bar a:hover {
+  background: #667eea;
+  color: white;
+  transform: translateY(-2px);
+}
+
 h1 {
   text-align: center;
   color: #667eea;
@@ -308,6 +341,38 @@ button {
   background: #d0d0d0;
 }
 
+.back-buttons {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+.back-button, .home-button {
+  flex: 1;
+  min-width: 150px;
+  padding: 12px;
+  border: 2px solid #667eea;
+  background: rgba(102, 126, 234, 0.1);
+  color: #667eea;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.back-button:hover, .home-button:hover {
+  background: #667eea;
+  color: white;
+  transform: translateY(-2px);
+}
+
 /* Hide browser validation popups */
 input:invalid {
   box-shadow: none;
@@ -355,6 +420,11 @@ if (urlParams.get('success') === '1') {
 
 <form class="container" method="post" onsubmit="return saveSignatures()">
 {% csrf_token %}
+
+<div class="top-button-bar">
+  <button type="button" onclick="history.back()">← Go Back</button>
+  <a href="/">🏠 Back to Home</a>
+</div>
 
 <h1>DEYE Inverter Service Report</h1>
 

@@ -136,6 +136,38 @@
         border-color: #c4c9d1;
     }
 
+    .back-buttons {
+        display: flex;
+        gap: 12px;
+        margin-top: 20px;
+        flex-wrap: wrap;
+    }
+
+    .back-buttons button, .back-buttons a {
+        flex: 1;
+        min-width: 140px;
+        padding: 12px;
+        border: 2px solid #667eea;
+        background: rgba(102, 126, 234, 0.1);
+        color: #667eea;
+        font-size: 14px;
+        font-weight: 600;
+        border-radius: 8px;
+        cursor: pointer;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .back-buttons button:hover, .back-buttons a:hover {
+        background: #667eea;
+        color: white;
+        transform: translateY(-2px);
+    }
+
     /* Success message */
     .success-box {
         padding: 12px 14px;
@@ -248,6 +280,11 @@
 
         <form method="post">
             {% csrf_token %}
+
+            <div style="text-align: center; margin-bottom: 20px;">
+                <button type="button" onclick="history.back()" style="padding: 10px 24px; border: 2px solid #667eea; background: rgba(102, 126, 234, 0.1); color: #667eea; font-size: 14px; font-weight: 600; border-radius: 8px; cursor: pointer; transition: all 0.3s ease; display: inline-flex; align-items: center; justify-content: center; gap: 8px; margin-right: 12px;">← Go Back</button>
+                <a href="{% url 'forms:simple_home' %}" style="padding: 10px 24px; border: 2px solid #667eea; background: rgba(102, 126, 234, 0.1); color: #667eea; font-size: 14px; font-weight: 600; border-radius: 8px; cursor: pointer; text-decoration: none; transition: all 0.3s ease; display: inline-flex; align-items: center; justify-content: center; gap: 8px;">🏠 Back to Home</a>
+            </div>
 
             <label for="leave_type">Type</label>
             <select id="leave_type" name="leave_type" required>

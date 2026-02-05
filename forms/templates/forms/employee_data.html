@@ -585,15 +585,53 @@
         .clickable-cell:hover::after {
             opacity: 0.6;
         }
+
+        .footer-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 40px;
+            padding: 20px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .footer-buttons a, .footer-buttons button {
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            border: 2px solid #667eea;
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 150px;
+            justify-content: center;
+        }
+
+        .footer-buttons a:hover, .footer-buttons button:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <a href="{% url 'forms:simple_home' %}" class="back-btn">← Back to Home</a>
-        
         <div class="header">
             <h1>📊 My Data Dashboard</h1>
             <p>Welcome, {{ user.get_full_name|default:user.username }}! View all your submitted forms and requests.</p>
+        </div>
+
+        <div style="text-align: center; margin-bottom: 20px;">
+            <button onclick="history.back()" style="padding: 10px 24px; border: 2px solid #667eea; background: rgba(102, 126, 234, 0.1); color: #667eea; font-size: 15px; font-weight: 600; border-radius: 8px; cursor: pointer; transition: all 0.3s ease; display: inline-flex; align-items: center; justify-content: center; gap: 8px; margin-right: 12px;">← Go Back</button>
+            <a href="{% url 'forms:simple_home' %}" style="padding: 10px 24px; border: 2px solid #667eea; background: rgba(102, 126, 234, 0.1); color: #667eea; font-size: 15px; font-weight: 600; border-radius: 8px; cursor: pointer; text-decoration: none; transition: all 0.3s ease; display: inline-flex; align-items: center; justify-content: center; gap: 8px;">🏠 Back to Home</a>
         </div>
 
         <!-- Tabs for different form types -->

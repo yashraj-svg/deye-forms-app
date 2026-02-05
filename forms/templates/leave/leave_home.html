@@ -137,6 +137,36 @@
             color: var(--primary-dark);
         }
 
+        .back-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .back-buttons button, .back-buttons a {
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            text-decoration: none;
+            border: 2px solid var(--primary);
+            background: rgba(102, 126, 234, 0.1);
+            color: var(--primary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .back-buttons button:hover, .back-buttons a:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-2px);
+        }
+
         @media (max-width: 768px) {
             .header {
                 padding: 14px 20px;
@@ -164,6 +194,11 @@
 </div>
 
 <div class="container">
+    <div style="text-align: center; margin-bottom: 20px;">
+        <button onclick="history.back()" style="padding: 10px 24px; border: 2px solid #667eea; background: rgba(102, 126, 234, 0.1); color: #667eea; font-size: 15px; font-weight: 600; border-radius: 8px; cursor: pointer; transition: all 0.3s ease; display: inline-flex; align-items: center; justify-content: center; gap: 8px; margin-right: 12px;">← Go Back</button>
+        <a href="/" style="padding: 10px 24px; border: 2px solid #667eea; background: rgba(102, 126, 234, 0.1); color: #667eea; font-size: 15px; font-weight: 600; border-radius: 8px; cursor: pointer; text-decoration: none; transition: all 0.3s ease; display: inline-flex; align-items: center; justify-content: center; gap: 8px;">🏠 Back to Home</a>
+    </div>
+
     <h2>Leave Management</h2>
     <p class="subtitle">Manage your leave requests and view history</p>
 
@@ -177,7 +212,10 @@
         </a>
     </div>
 
-    <a href="/" class="back-link">← Back to Home</a>
+    <div class="back-buttons">
+        <button onclick="history.back()">← Go Back</button>
+        <a href="/">🏠 Back to Home</a>
+    </div>
 </div>
 
 </body>

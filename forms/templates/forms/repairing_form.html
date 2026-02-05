@@ -41,6 +41,39 @@
     padding: 40px;
     margin-bottom: 20px;
   }
+
+  .top-button-bar {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+  }
+
+  .top-button-bar button,
+  .top-button-bar a {
+    padding: 10px 24px;
+    border: 2px solid #667eea;
+    background: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+    font-size: 15px;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .top-button-bar button:hover,
+  .top-button-bar a:hover {
+    background: #667eea;
+    color: white;
+    transform: translateY(-2px);
+  }
   .gf-title {
     font-size: 30px;
     font-weight: 700;
@@ -165,6 +198,38 @@
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
   }
+
+  .back-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+  }
+
+  .back-button, .home-button {
+    flex: 1;
+    min-width: 150px;
+    padding: 12px;
+    border: 2px solid #667eea;
+    background: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+    font-size: 14px;
+    font-weight: 700;
+    border-radius: 8px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .back-button:hover, .home-button:hover {
+    background: #667eea;
+    color: white;
+    transform: translateY(-2px);
+  }
   @media (max-width: 600px) {
     .gf-card {
       padding: 24px 16px 18px;
@@ -201,6 +266,11 @@
 
   <form id="repairing-form" method="POST" class="gf-card">
     {% csrf_token %}
+
+    <div class="top-button-bar">
+      <button type="button" onclick="history.back()">← Go Back</button>
+      <a href="/">🏠 Back to Home</a>
+    </div>
 
     <!-- Basic Details -->
     <div class="gf-section-title">Basic Details</div>

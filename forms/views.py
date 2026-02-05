@@ -315,6 +315,69 @@ def simple_home(request):
 
 
 @login_required
+def change_password(request):
+    """Allow users to change their password with current password confirmation"""
+    from django import forms
+    from django.contrib.auth import update_session_auth_hash
+    
+    class PasswordChangeForm(forms.Form):
+        current_password = forms.CharField(
+            widget=forms.PasswordInput(attrs={'class': 'form-input', 'placeholder': 'Current Password'}),
+            label='Current Password'
+        )
+        new_password = forms.CharField(
+            widget=forms.PasswordInput(attrs={'class': 'form-input', 'placeholder': 'New Password'}),
+            label='New Password',
+            min_length=8
+        )
+        confirm_password = forms.CharField(
+            widget=forms.PasswordInput(attrs={'class': 'form-input', 'placeholder': 'Confirm New Password'}),
+            label='Confirm New Password',
+            min_length=8
+        )
+        
+        def clean(self):
+            cleaned_data = super().clean()
+            current_password = cleaned_data.get('current_password')
+            new_password = cleaned_data.get('new_password')
+            confirm_password = cleaned_data.get('confirm_password')
+            
+            if new_password != confirm_password:
+                raise forms.ValidationError("New passwords do not match.")
+            
+            if new_password == current_password:
+                raise forms.ValidationError("New password must be different from current password.")
+            
+            return cleaned_data
+    
+    if request.method == 'POST':
+        form = PasswordChangeForm(request.POST)
+        if form.is_valid():
+            current_password = form.cleaned_data.get('current_password')
+            new_password = form.cleaned_data.get('new_password')
+            
+            # Verify current password
+            if not request.user.check_password(current_password):
+                form.add_error('current_password', 'Current password is incorrect.')
+                return render(request, 'forms/change_password.html', {'form': form, 'user': request.user})
+            
+            # Update password
+            request.user.set_password(new_password)
+            request.user.save()
+            
+            # Keep user logged in after password change
+            update_session_auth_hash(request, request.user)
+            
+            from django.contrib import messages
+            messages.success(request, '✅ Password changed successfully!')
+            return redirect('forms:simple_home')
+    else:
+        form = PasswordChangeForm()
+    
+    return render(request, 'forms/change_password.html', {'form': form, 'user': request.user})
+
+
+@login_required
 def stock_home(request):
     """Stock management home with 3 options"""
     return render(request, 'forms/stock_home.html')

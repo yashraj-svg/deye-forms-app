@@ -8,6 +8,7 @@ app_name = 'forms'
 urlpatterns = [
     path('hierarchy/', views.hierarchy_static_view, name='hierarchy'),
     path('', views.simple_home, name='simple_home'),
+    path('password-change/', views.change_password, name='change_password'),
     path('calculator/', views.freight_calculator, name='calculator'),
     path('stock/', views.stock_home, name='stock'),
     path('stock/received/', views.received_stock, name='received_stock'),

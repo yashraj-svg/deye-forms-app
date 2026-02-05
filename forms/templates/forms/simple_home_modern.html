@@ -67,6 +67,37 @@
             font-size: 14px;
         }
 
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .change-password-btn {
+            padding: 10px 18px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .change-password-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
+        }
+
+        .change-password-btn:active {
+            transform: translateY(0);
+        }
+
         /* ========== HERO SECTION ========== */
         .hero-section {
             position: relative;
@@ -401,9 +432,12 @@
     <div class="logo-section">
         <img src="{% static 'admin/Images/logo-deye-300x225.webp' %}" alt="DEYE">
     </div>
-    <div class="user-greeting">
-        <div class="user-avatar">{{ request.user.username|slice:":1"|upper }}</div>
-        <span>Hello, {{ request.user.username }}!</span>
+    <div class="header-actions">
+        <a href="{% url 'forms:change_password' %}" class="change-password-btn">🔐 Change Password</a>
+        <div class="user-greeting">
+            <div class="user-avatar">{{ request.user.username|slice:":1"|upper }}</div>
+            <span>Hello, {{ request.user.username }}!</span>
+        </div>
     </div>
 </div>
 
