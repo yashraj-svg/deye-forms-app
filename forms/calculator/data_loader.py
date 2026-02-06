@@ -261,7 +261,31 @@ def _assign_partner_regions(rec: PincodeRecord) -> None:
             rec.bluedart_region = _BLUEDART_REGION_BY_STATE.get(state_key)
 
 
-def _load_safexpress_non_oda(base_dir: str) -> set[str]:
+def _load_safexpress_non_oda_from_txt(base_dir: str) -> set[str]:
+    """Return set of pincodes listed as non-ODA in the bundled text file."""
+    path = os.path.join(
+        base_dir,
+        "forms",
+        "calculator",
+        "data",
+        "safexpress_non_oda_pincodes.txt",
+    )
+    if not os.path.exists(path):
+        return set()
+
+    pins: set[str] = set()
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            for line in f:
+                pin = line.strip()
+                if re.fullmatch(r"\d{6}", pin):
+                    pins.add(pin)
+    except Exception:
+        return set()
+    return pins
+
+
+def _load_safexpress_non_oda_from_excel(base_dir: str) -> set[str]:
     """Return set of pincodes listed as non-ODA in the Safexpress schedule Excel."""
     path = os.path.join(
         base_dir,
@@ -289,6 +313,14 @@ def _load_safexpress_non_oda(base_dir: str) -> set[str]:
                     pins.add(pin)
     except Exception:
         return set()
+    return pins
+
+
+def _load_safexpress_non_oda(base_dir: str) -> set[str]:
+    """Return set of pincodes listed as non-ODA for Safexpress (txt + excel)."""
+    pins = set()
+    pins.update(_load_safexpress_non_oda_from_txt(base_dir))
+    pins.update(_load_safexpress_non_oda_from_excel(base_dir))
     return pins
 
 
@@ -321,6 +353,12 @@ def load_pincode_master(base_dir: str) -> PincodeDB:
                 # Assign partner regions if not already set in database
                 _assign_partner_regions(rec)
                 db.add(rec)
+
+            # Apply Safexpress non-ODA whitelist to DB-loaded records
+            safexpress_non_oda = _load_safexpress_non_oda(base_dir)
+            if safexpress_non_oda:
+                for rec in db.records():
+                    rec.safexpress_is_oda = False if rec.pincode in safexpress_non_oda else True
             return db
     except Exception:
         pass  # Fall back to file loading
@@ -361,11 +399,14 @@ def load_pincode_master(base_dir: str) -> PincodeDB:
             pass
 
     safexpress_non_oda = _load_safexpress_non_oda(base_dir)
-    for pin in safexpress_non_oda:
-        rec = db.get(pin) or PincodeRecord(pincode=pin)
-        rec.safexpress_is_oda = False
-        _assign_partner_regions(rec)
-        db.add(rec)
+    if safexpress_non_oda:
+        for rec in db.records():
+            rec.safexpress_is_oda = False if rec.pincode in safexpress_non_oda else True
+        for pin in safexpress_non_oda:
+            rec = db.get(pin) or PincodeRecord(pincode=pin)
+            rec.safexpress_is_oda = False
+            _assign_partner_regions(rec)
+            db.add(rec)
 
     return db
 
