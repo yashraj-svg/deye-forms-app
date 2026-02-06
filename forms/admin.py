@@ -62,6 +62,7 @@ class UpcomingEventAdmin(admin.ModelAdmin):
     list_filter = ('is_active', 'event_date')
     search_fields = ('title', 'location', 'description')
     ordering = ('event_date',)
+    actions = ['delete_selected']
 
 
 @admin.register(RepairingForm)
@@ -70,6 +71,7 @@ class RepairingFormAdmin(admin.ModelAdmin):
     search_fields = ('customer_abbrev', 'case_number', 'inverter_id', 'pcba_serial', 'repaired_by', 'tested_by')
     list_filter = ()  # Using header filters instead of sidebar filters
     readonly_fields = ('created_at', 'updated_at', 'image_preview_before_large', 'image_preview_after_large')
+    actions = ['delete_selected']
     
     fieldsets = (
         ('Basic Information', {
@@ -148,6 +150,7 @@ class InwardFormAdmin(admin.ModelAdmin):
     search_fields = ('email', 'customer_name', 'inverter_id', 'awb_lr_number', 'customer_abbrev', 'reason')
     list_filter = ()  # Using header filters instead of sidebar filters
     readonly_fields = ('created_at', 'updated_at')
+    actions = ['delete_selected']
 
     class Media:
         css = {
@@ -161,6 +164,7 @@ class OutwardFormAdmin(admin.ModelAdmin):
     search_fields = ('sent_to_company', 'inverter_id_outward', 'awb_number', 'company_abbrev', 'sent_by', 'approved_by')
     list_filter = ()  # Using header filters instead of sidebar filters
     readonly_fields = ('created_at', 'updated_at')
+    actions = ['delete_selected']
 
     class Media:
         css = {
@@ -191,6 +195,7 @@ class ServiceReportFormAdmin(admin.ModelAdmin):
     list_filter = ()
     
     readonly_fields = ('created_at', 'updated_at', 'engineer_sig_large', 'customer_sig_large')
+    actions = ['delete_selected']
     
     fieldsets = (
         ('Date & Contact', {
@@ -828,6 +833,7 @@ class StockItemAdmin(admin.ModelAdmin):
     search_fields = ('pcba_sn_new', 'pcba_sn_old', 'component_type', 'specification', 'remark')
     readonly_fields = ('created_at', 'updated_at')
     list_per_page = 50
+    actions = ['delete_selected']
     
     fieldsets = (
         ('Identification', {
@@ -911,7 +917,7 @@ class StockRequisitionAdmin(admin.ModelAdmin):
     remaining_after_approved.short_description = 'Remaining (If Approved Qty Sent)'
     remaining_after_approved.allow_tags = True
     
-    actions = ['approve_requisitions', 'reject_requisitions']
+    actions = ['approve_requisitions', 'reject_requisitions', 'delete_selected']
     
     def approve_requisitions(self, request, queryset):
         """Admin action to approve selected requisitions."""
@@ -949,6 +955,7 @@ class DispatchedStockAdmin(admin.ModelAdmin):
     search_fields = ['serial_number', 'component_type', 'engineer_name', 'tracking_number', 'dispatch_location']
     readonly_fields = ['dispatched_by', 'created_at', 'updated_at']
     date_hierarchy = 'dispatch_date'
+    actions = ['delete_selected']
     
     fieldsets = (
         ('Requisition Details', {
