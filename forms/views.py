@@ -256,6 +256,7 @@ from django.contrib.auth.decorators import login_required
 def hierarchy_static_view(request):
     return render(request, 'Include/hierarchy.html')
 from django.shortcuts import render, redirect, get_object_or_404
+from django.template.loader import render_to_string
 from collections import defaultdict
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
@@ -996,6 +997,33 @@ def service_report_pdf(request, report_id):
     }
     
     return render(request, 'forms/service_report_pdf.html', context)
+
+
+@login_required
+def repairing_form_pdf(request, form_id):
+    """Generate PDF view for a repairing form"""
+    form = get_object_or_404(RepairingForm, id=form_id)
+    filled_by = form.user.get_full_name() or form.user.username if form.user else "N/A"
+    context = {'form': form, 'filled_by': filled_by}
+    return render(request, 'forms/repairing_form_pdf.html', context)
+
+
+@login_required
+def inward_form_pdf(request, form_id):
+    """Generate PDF view for an inward form"""
+    form = get_object_or_404(InwardForm, id=form_id)
+    filled_by = form.user.get_full_name() or form.user.username if form.user else "N/A"
+    context = {'form': form, 'filled_by': filled_by}
+    return render(request, 'forms/inward_form_pdf.html', context)
+
+
+@login_required
+def outward_form_pdf(request, form_id):
+    """Generate PDF view for an outward form"""
+    form = get_object_or_404(OutwardForm, id=form_id)
+    filled_by = form.user.get_full_name() or form.user.username if form.user else "N/A"
+    context = {'form': form, 'filled_by': filled_by}
+    return render(request, 'forms/outward_form_pdf.html', context)
 
 
 @login_required
@@ -1758,7 +1786,7 @@ def employee_data_view(request):
     stock_disp_search = request.GET.get('stock_disp_search', '')
     
     # Repairing Forms (show only forms filled by the logged-in user)
-    repairing_forms = RepairingForm.objects.filter(user=user)
+    repairing_forms = RepairingForm.objects.filter(user=user).exclude(id__isnull=True)
     if repairing_date_from:
         from_date = datetime.strptime(repairing_date_from, '%Y-%m-%d')
         repairing_forms = repairing_forms.filter(created_at__gte=from_date)
@@ -1775,7 +1803,7 @@ def employee_data_view(request):
     repairing_forms = repairing_forms.order_by('-created_at')
     
     # Inward Forms (show only forms filled by the logged-in user)
-    inward_forms = InwardForm.objects.filter(user=user)
+    inward_forms = InwardForm.objects.filter(user=user).exclude(id__isnull=True)
     if inward_date_from:
         from_date = datetime.strptime(inward_date_from, '%Y-%m-%d')
         inward_forms = inward_forms.filter(created_at__gte=from_date)
@@ -1792,7 +1820,7 @@ def employee_data_view(request):
     inward_forms = inward_forms.order_by('-created_at')
     
     # Outward Forms (show only forms filled by the logged-in user)
-    outward_forms = OutwardForm.objects.filter(user=user)
+    outward_forms = OutwardForm.objects.filter(user=user).exclude(id__isnull=True)
     if outward_date_from:
         from_date = datetime.strptime(outward_date_from, '%Y-%m-%d')
         outward_forms = outward_forms.filter(created_at__gte=from_date)
@@ -1813,7 +1841,7 @@ def employee_data_view(request):
         Q(user=user) |
         Q(email=user_email) |
         Q(engineer_first_name__icontains=user.first_name, engineer_last_name__icontains=user.last_name)
-    )
+    ).exclude(id__isnull=True)
     if service_date_from:
         from_date = datetime.strptime(service_date_from, '%Y-%m-%d')
         service_forms = service_forms.filter(created_at__gte=from_date)
@@ -3249,3 +3277,9 @@ def export_team_data(request, form_type, format):
         return HttpResponse("Invalid format. Use 'csv' or 'xlsx'.", status=400)
 # Import login_required decorator
 from django.contrib.auth.decorators import login_required
+
+
+
+
+
+

@@ -730,7 +730,10 @@
                                 <td>{{ form.tested_by }}</td>
                                 <td>{% if form.user %}{{ form.user.get_full_name|default:form.user.username }}{% else %}-{% endif %}</td>
                                 <td>
+                                    {% if form.id %}
                                     <a href="{% url 'forms:edit_employee_form' 'repairing' form.id %}" class="edit-btn">✏️ Edit</a>
+                                    <a href="{% url 'forms:repairing_form_pdf' form.id %}" class="edit-btn" style="background: #10b981; padding: 6px 12px;" target="_blank" title="Download PDF">📄 PDF</a>
+                                    {% endif %}
                                 </td>
                             </tr>
                             {% endif %}
@@ -840,7 +843,10 @@
                                 <td>{{ form.awb_lr_number }}</td>
                                 <td>{% if form.user %}{{ form.user.get_full_name|default:form.user.username }}{% else %}-{% endif %}</td>
                                 <td>
+                                    {% if form.id %}
                                     <a href="{% url 'forms:edit_employee_form' 'inward' form.id %}" class="edit-btn">✏️ Edit</a>
+                                    <a href="{% url 'forms:inward_form_pdf' form.id %}" class="edit-btn" style="background: #10b981; padding: 6px 12px;" target="_blank" title="Download PDF">📄 PDF</a>
+                                    {% endif %}
                                 </td>
                             </tr>
                             {% endif %}
@@ -927,7 +933,10 @@
                                 <td>{{ form.awb_number }}</td>
                                 <td>{{ form.created_at|date:"d M Y" }}</td>
                                 <td>
+                                    {% if form.id %}
                                     <a href="{% url 'forms:edit_employee_form' 'outward' form.id %}" class="edit-btn">✏️ Edit</a>
+                                    <a href="{% url 'forms:outward_form_pdf' form.id %}" class="edit-btn" style="background: #10b981; padding: 6px 12px;" target="_blank" title="Download PDF">📄 PDF</a>
+                                    {% endif %}
                                 </td>
                             </tr>
                             {% endif %}

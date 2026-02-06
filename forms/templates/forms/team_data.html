@@ -726,6 +726,7 @@
                                 <th>Repaired By</th>
                                 <th>Tested By</th>
                                 <th>Filled By</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -749,6 +750,9 @@
                                 <td>{{ form.repaired_by }}</td>
                                 <td>{{ form.tested_by }}</td>
                                 <td>{% if form.user %}{{ form.user.get_full_name|default:form.user.username }}{% else %}-{% endif %}</td>
+                                <td style="display: flex; gap: 8px;">
+                                    <a href="{% url 'forms:repairing_form_pdf' form.id %}" class="edit-btn" style="background: #10b981; padding: 6px 12px;" target="_blank" title="Download PDF">📄 PDF</a>
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -828,6 +832,7 @@
                                 <th>Transportation Mode</th>
                                 <th>AWB Number</th>
                                 <th>Filled By</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -855,6 +860,9 @@
                                 <td>{{ form.transportation_mode }}</td>
                                 <td>{{ form.awb_lr_number }}</td>
                                 <td>{% if form.user %}{{ form.user.get_full_name|default:form.user.username }}{% else %}-{% endif %}</td>
+                                <td style="display: flex; gap: 8px;">
+                                    <a href="{% url 'forms:inward_form_pdf' form.id %}" class="edit-btn" style="background: #10b981; padding: 6px 12px;" target="_blank" title="Download PDF">📄 PDF</a>
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -961,8 +969,10 @@
                                 <td>{{ form.delivered_through }}</td>
                                 <td>{{ form.awb_number }}</td>
                                 <td>{{ form.remarks }}</td>
-                                <td></td>
                                 <td>{% if form.user %}{{ form.user.get_full_name|default:form.user.username }}{% else %}-{% endif %}</td>
+                                <td style="display: flex; gap: 8px;">
+                                    <a href="{% url 'forms:outward_form_pdf' form.id %}" class="edit-btn" style="background: #10b981; padding: 6px 12px;" target="_blank" title="Download PDF">📄 PDF</a>
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>

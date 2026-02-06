@@ -37,6 +37,9 @@ urlpatterns = [
     path('forms/service/', views.service_form_page, name='service_form'),
     path('forms/service-report/<int:report_id>/pdf/', views.service_report_pdf, name='service_report_pdf'),
     path('forms/data/', views.forms_data_overview, name='forms_data_overview'),
+        path('forms/repairing/<int:form_id>/pdf/', views.repairing_form_pdf, name='repairing_form_pdf'),
+        path('forms/inward/<int:form_id>/pdf/', views.inward_form_pdf, name='inward_form_pdf'),
+        path('forms/outward/<int:form_id>/pdf/', views.outward_form_pdf, name='outward_form_pdf'),
     
     # Employee Data Dashboard
     path('my-data/', views.employee_data_view, name='my_data'),

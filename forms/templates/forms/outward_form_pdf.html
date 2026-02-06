@@ -1,0 +1,296 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>DEYE Outward Form</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            font-size: 9pt;
+            color: #333;
+            line-height: 1.4;
+            background: #f5f5f5;
+        }
+        
+        .page {
+            page-break-after: always;
+            padding: 20px;
+            background: white;
+            margin-bottom: 10px;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #0066cc;
+        }
+        
+        .logo {
+            font-size: 24pt;
+            font-weight: bold;
+            color: #0066cc;
+        }
+        
+        .report-title {
+            text-align: center;
+            font-size: 14pt;
+            font-weight: bold;
+            color: #0066cc;
+            flex: 1;
+        }
+        
+        .report-date {
+            text-align: right;
+            font-size: 8pt;
+            color: #666;
+        }
+        
+        .section {
+            margin-bottom: 12px;
+        }
+        
+        .section-title {
+            font-size: 10pt;
+            font-weight: bold;
+            color: #0066cc;
+            background: #e6f2ff;
+            padding: 4px 6px;
+            margin-bottom: 6px;
+        }
+        
+        .field-row {
+            display: flex;
+            margin-bottom: 3px;
+            padding: 3px 0;
+            border-bottom: 1px dotted #ddd;
+        }
+        
+        .field-label {
+            font-weight: bold;
+            color: #0066cc;
+            width: 35%;
+            padding-right: 10px;
+        }
+        
+        .field-value {
+            width: 65%;
+            color: #333;
+            word-wrap: break-word;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 8pt;
+            font-weight: bold;
+        }
+        
+        .badge-success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .badge-info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .badge-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+
+<div class="page">
+    <div class="header">
+        <div class="logo">Deye</div>
+        <div class="report-title">OUTWARD FORM REPORT</div>
+        <div class="report-date">{{ form.created_at|date:"l, F j, Y" }}</div>
+    </div>
+    
+    <!-- Basic Information -->
+    <div class="section">
+        <div class="section-title">BASIC INFORMATION</div>
+        <div class="field-row">
+            <span class="field-label">Outward Object</span>
+            <span class="field-value"><span class="badge badge-success">{{ form.outward_object }}</span></span>
+        </div>
+        <div class="field-row">
+            <span class="field-label">Company Abbrev</span>
+            <span class="field-value"><strong>{{ form.company_abbrev }}</strong></span>
+        </div>
+        <div class="field-row">
+            <span class="field-label">Sent By</span>
+            <span class="field-value">{{ form.sent_by }}</span>
+        </div>
+        <div class="field-row">
+            <span class="field-label">Approved By</span>
+            <span class="field-value">{{ form.approved_by }}</span>
+        </div>
+        <div class="field-row">
+            <span class="field-label">Form Filled Date</span>
+            <span class="field-value">{{ form.created_at|date:"d/m/Y H:i" }}</span>
+        </div>
+    </div>
+    
+    <!-- Destination Details -->
+    <div class="section">
+        <div class="section-title">SENT TO LOCATION</div>
+        <div class="field-row">
+            <span class="field-label">Sent To Company</span>
+            <span class="field-value">{{ form.sent_to_company }}</span>
+        </div>
+        <div class="field-row">
+            <span class="field-label">Address</span>
+            <span class="field-value">{{ form.sent_to_address }}</span>
+        </div>
+        <div class="field-row">
+            <span class="field-label">District</span>
+            <span class="field-value">{{ form.sent_to_district }}</span>
+        </div>
+        <div class="field-row">
+            <span class="field-label">State</span>
+            <span class="field-value">{{ form.sent_to_state }}</span>
+        </div>
+        <div class="field-row">
+            <span class="field-label">Pincode</span>
+            <span class="field-value">{{ form.pincode }}</span>
+        </div>
+    </div>
+    
+    <!-- Object Details -->
+    <div class="section">
+        <div class="section-title">OBJECT DETAILS</div>
+        {% if form.outward_object == "PCB" %}
+        <div class="field-row">
+            <span class="field-label">PCB Serial Number</span>
+            <span class="field-value"><strong>N/A (PCB)</strong></span>
+        </div>
+        {% elif form.outward_object == "Battery" %}
+        <div class="field-row">
+            <span class="field-label">Battery ID</span>
+            <span class="field-value"><strong>{{ form.battery_id|default:"—" }}</strong></span>
+        </div>
+        <div class="field-row">
+            <span class="field-label">Battery</span>
+            <span class="field-value">{{ form.battery }}</span>
+        </div>
+        {% else %}
+        <div class="field-row">
+            <span class="field-label">Inverter ID (Outward)</span>
+            <span class="field-value"><strong>{{ form.inverter_id_outward }}</strong></span>
+        </div>
+        <div class="field-row">
+            <span class="field-label">Inverter Spec</span>
+            <span class="field-value">{{ form.inverter_spec }}</span>
+        </div>
+        <div class="field-row">
+            <span class="field-label">Inverter Rating</span>
+            <span class="field-value">{{ form.inverter_rating }}</span>
+        </div>
+        {% if form.battery %}
+        <div class="field-row">
+            <span class="field-label">Battery</span>
+            <span class="field-value">{{ form.battery }}</span>
+        </div>
+        {% endif %}
+        <!-- Accessories for Inverter -->
+        {% if form.accessories %}
+        <div class="field-row">
+            <span class="field-label">Accessories</span>
+            <span class="field-value">{{ form.accessories|join:", " }}</span>
+        </div>
+        {% endif %}
+        {% endif %}
+    </div>
+    
+    <!-- Control Card & Replacement -->
+    <div class="section">
+        <div class="section-title">REPLACEMENT DETAILS</div>
+        <div class="field-row">
+            <span class="field-label">Control Card Changed</span>
+            <span class="field-value"><span class="badge badge-info">{{ form.control_card_changed|default:"—" }}</span></span>
+        </div>
+        {% if form.new_serial_number %}
+        <div class="field-row">
+            <span class="field-label">New Serial Number</span>
+            <span class="field-value">{{ form.new_serial_number }}</span>
+        </div>
+        {% endif %}
+        <div class="field-row">
+            <span class="field-label">Inverter Replaced</span>
+            <span class="field-value"><span class="badge badge-warning">{{ form.inverter_replaced }}</span></span>
+        </div>
+        {% if form.replacement_type %}
+        <div class="field-row">
+            <span class="field-label">Replacement Type</span>
+            <span class="field-value">{{ form.replacement_type }}</span>
+        </div>
+        {% endif %}
+        {% if form.inverter_id_inward %}
+        <div class="field-row">
+            <span class="field-label">Inverter ID (Inward)</span>
+            <span class="field-value">{{ form.inverter_id_inward }}</span>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Delivery Details -->
+    <div class="section">
+        <div class="section-title">DELIVERY DETAILS</div>
+        <div class="field-row">
+            <span class="field-label">Delivered Through</span>
+            <span class="field-value">{{ form.delivered_through }}</span>
+        </div>
+        {% if form.courier_name %}
+        <div class="field-row">
+            <span class="field-label">Courier Name</span>
+            <span class="field-value">{{ form.courier_name }}</span>
+        </div>
+        {% endif %}
+        <div class="field-row">
+            <span class="field-label">AWB Number</span>
+            <span class="field-value"><strong>{{ form.awb_number }}</strong></span>
+        </div>
+    </div>
+    
+    <!-- Summary Section -->
+    <div style="margin-top: 30px; padding: 15px; background: #f5f5f5; border: 1px solid #ddd;">
+        <div class="section-title">FORM SUMMARY</div>
+        <div class="field-row">
+            <span class="field-label">Form ID:</span>
+            <span class="field-value">#{{ form.id }}</span>
+        </div>
+        <div class="field-row">
+            <span class="field-label">Object Type:</span>
+            <span class="field-value"><span class="badge badge-success">{{ form.outward_object }}</span></span>
+        </div>
+        <div class="field-row">
+            <span class="field-label">Sent To:</span>
+            <span class="field-value">{{ form.sent_to_company }}</span>
+        </div>
+        <div class="field-row">
+            <span class="field-label">Sent Date:</span>
+            <span class="field-value">{{ form.created_at|date:"d/m/Y H:i" }}</span>
+        </div>
+        <div class="field-row">
+            <span class="field-label">Replacement Status:</span>
+            <span class="field-value"><span class="badge badge-warning">{{ form.inverter_replaced }}</span></span>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
