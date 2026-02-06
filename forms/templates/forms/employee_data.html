@@ -1073,7 +1073,8 @@
                                 <td class="clickable-cell" style="max-width: 120px; overflow: hidden; text-overflow: ellipsis;" title="{{ form.cause_of_failure }}" onclick="showFullContent('Cause of Failure', '{{ form.cause_of_failure }}')">{{ form.cause_of_failure|truncatewords:3 }}</td>
                                 <td>{{ form.ac_cable_size|default:"—" }}</td>
                                 <td>{% if form.user %}{{ form.user.get_full_name|default:form.user.username }}{% else %}-{% endif %}</td>
-                                <td>
+                                <td style="display: flex; gap: 8px;">
+                                    <a href="{% url 'forms:service_report_pdf' form.id %}" class="edit-btn" style="background: #10b981; padding: 6px 12px;" target="_blank" title="Download PDF">📄 PDF</a>
                                     <a href="{% url 'forms:edit_employee_form' 'service' form.id %}" class="edit-btn">✏️ Edit</a>
                                 </td>
                             </tr>

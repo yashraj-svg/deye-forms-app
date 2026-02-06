@@ -972,6 +972,33 @@ def service_form_page(request):
 
 
 @login_required
+def service_report_pdf(request, report_id):
+    """Generate PDF view for a service report"""
+    report = get_object_or_404(ServiceReportForm, id=report_id)
+    
+    # Build formatted names and address
+    engineer_name = f"{report.engineer_first_name} {report.engineer_last_name}"
+    customer_name = f"{report.customer_first_name} {report.customer_last_name}"
+    full_address = f"{report.address_street}, {report.address_city}, {report.address_state}, {report.address_zip}"
+    
+    # Determine filled_by display name
+    if report.user:
+        filled_by = report.user.get_full_name() or report.user.username
+    else:
+        filled_by = engineer_name
+    
+    context = {
+        'report': report,
+        'engineer_name': engineer_name,
+        'customer_name': customer_name,
+        'full_address': full_address,
+        'filled_by': filled_by,
+    }
+    
+    return render(request, 'forms/service_report_pdf.html', context)
+
+
+@login_required
 def hierarchy_details(request):
     # Minimal hierarchy logic only
     from collections import defaultdict
