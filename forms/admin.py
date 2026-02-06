@@ -58,20 +58,36 @@ class CustomUserAdmin(BaseUserAdmin):
 
 @admin.register(UpcomingEvent)
 class UpcomingEventAdmin(admin.ModelAdmin):
+    change_list_template = 'admin/forms/change_list.html'
     list_display = ('title', 'event_date', 'location', 'is_active')
     list_filter = ('is_active', 'event_date')
     search_fields = ('title', 'location', 'description')
     ordering = ('event_date',)
     actions = ['delete_selected']
+    
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if not request.user.is_superuser:
+            if 'delete_selected' in actions:
+                del actions['delete_selected']
+        return actions
 
 
 @admin.register(RepairingForm)
 class RepairingFormAdmin(admin.ModelAdmin):
+    change_list_template = 'admin/forms/change_list.html'
     list_display = ('case_number', 'repairing_object', 'inverter_id', 'inverter_spec', 'fault_preview', 'repaired_by', 'tested_by', 'repaired_on_date', 'image_preview_before', 'image_preview_after', 'created_at')
     search_fields = ('customer_abbrev', 'case_number', 'inverter_id', 'pcba_serial', 'repaired_by', 'tested_by')
     list_filter = ()  # Using header filters instead of sidebar filters
     readonly_fields = ('created_at', 'updated_at', 'image_preview_before_large', 'image_preview_after_large')
     actions = ['delete_selected']
+    
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if not request.user.is_superuser:
+            if 'delete_selected' in actions:
+                del actions['delete_selected']
+        return actions
     
     fieldsets = (
         ('Basic Information', {
@@ -146,11 +162,19 @@ class RepairingFormAdmin(admin.ModelAdmin):
 
 @admin.register(InwardForm)
 class InwardFormAdmin(admin.ModelAdmin):
+    change_list_template = 'admin/forms/change_list.html'
     list_display = ('email', 'received_by', 'customer_abbrev', 'customer_name', 'received_from_location', 'received_from_district', 'received_from_state', 'pincode', 'inverter_id', 'inverter_specs', 'inverter_ratings', 'battery', 'reason', 'transportation_mode', 'awb_lr_number', 'remarks', 'created_at')
     search_fields = ('email', 'customer_name', 'inverter_id', 'awb_lr_number', 'customer_abbrev', 'reason')
     list_filter = ()  # Using header filters instead of sidebar filters
     readonly_fields = ('created_at', 'updated_at')
     actions = ['delete_selected']
+    
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if not request.user.is_superuser:
+            if 'delete_selected' in actions:
+                del actions['delete_selected']
+        return actions
 
     class Media:
         css = {
@@ -160,11 +184,19 @@ class InwardFormAdmin(admin.ModelAdmin):
 
 @admin.register(OutwardForm)
 class OutwardFormAdmin(admin.ModelAdmin):
+    change_list_template = 'admin/forms/change_list.html'
     list_display = ('sent_by', 'approved_by', 'company_abbrev', 'sent_to_company', 'sent_to_address', 'sent_to_district', 'sent_to_state', 'pincode', 'inverter_id_outward', 'inverter_spec', 'inverter_rating', 'battery', 'inverter_replaced', 'replacement_type', 'inverter_id_inward', 'delivered_through', 'awb_number', 'created_at')
     search_fields = ('sent_to_company', 'inverter_id_outward', 'awb_number', 'company_abbrev', 'sent_by', 'approved_by')
     list_filter = ()  # Using header filters instead of sidebar filters
     readonly_fields = ('created_at', 'updated_at')
     actions = ['delete_selected']
+    
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if not request.user.is_superuser:
+            if 'delete_selected' in actions:
+                del actions['delete_selected']
+        return actions
 
     class Media:
         css = {
@@ -174,6 +206,7 @@ class OutwardFormAdmin(admin.ModelAdmin):
 
 @admin.register(ServiceReportForm)
 class ServiceReportFormAdmin(admin.ModelAdmin):
+    change_list_template = 'admin/forms/change_list.html'
     # Comprehensive list_display showing ALL key fields like Excel
     list_display = (
         'engineer_display', 'customer_display', 'date_of_service', 'phone_number',
@@ -196,6 +229,13 @@ class ServiceReportFormAdmin(admin.ModelAdmin):
     
     readonly_fields = ('created_at', 'updated_at', 'engineer_sig_large', 'customer_sig_large')
     actions = ['delete_selected']
+    
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if not request.user.is_superuser:
+            if 'delete_selected' in actions:
+                del actions['delete_selected']
+        return actions
     
     fieldsets = (
         ('Date & Contact', {
@@ -433,6 +473,7 @@ class ServiceReportFormAdmin(admin.ModelAdmin):
 
 @admin.register(LeaveRequest)
 class LeaveRequestAdmin(admin.ModelAdmin):
+    change_list_template = 'admin/forms/change_list.html'
     list_display = (
         'employee_name',
         'leave_type_display',
@@ -828,12 +869,20 @@ class LeaveReportAdmin(admin.ModelAdmin):
 
 @admin.register(StockItem)
 class StockItemAdmin(admin.ModelAdmin):
+    change_list_template = 'admin/forms/change_list.html'
     list_display = ('pcba_sn_new', 'component_type', 'specification', 'quantity', 'year', 'shipment_date', 'created_at')
     list_filter = ('year', 'component_type', 'shipment_date', 'created_at')
     search_fields = ('pcba_sn_new', 'pcba_sn_old', 'component_type', 'specification', 'remark')
     readonly_fields = ('created_at', 'updated_at')
     list_per_page = 50
     actions = ['delete_selected']
+    
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if not request.user.is_superuser:
+            if 'delete_selected' in actions:
+                del actions['delete_selected']
+        return actions
     
     fieldsets = (
         ('Identification', {
@@ -855,6 +904,7 @@ class StockItemAdmin(admin.ModelAdmin):
 
 @admin.register(StockRequisition)
 class StockRequisitionAdmin(admin.ModelAdmin):
+    change_list_template = 'admin/forms/change_list.html'
     list_display = ('serial_number', 'component_type', 'manager_name', 'quantity_required', 'approved_quantity', 'required_to', 'status', 'created_at')
     search_fields = ('serial_number', 'manager_name', 'description', 'required_to')
     list_filter = ('status', 'component_type', 'created_at')
@@ -862,6 +912,13 @@ class StockRequisitionAdmin(admin.ModelAdmin):
 
     class Media:
         js = ('admin/js/stock_requisition_admin.js',)
+    
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if not request.user.is_superuser:
+            if 'delete_selected' in actions:
+                del actions['delete_selected']
+        return actions
     
     fieldsets = (
         ('Requisition Details', {
@@ -939,6 +996,7 @@ class StockRequisitionAdmin(admin.ModelAdmin):
 
 @admin.register(DispatchedStock)
 class DispatchedStockAdmin(admin.ModelAdmin):
+    change_list_template = 'admin/forms/change_list.html'
     list_display = [
         'serial_number',
         'component_type',
@@ -956,6 +1014,13 @@ class DispatchedStockAdmin(admin.ModelAdmin):
     readonly_fields = ['dispatched_by', 'created_at', 'updated_at']
     date_hierarchy = 'dispatch_date'
     actions = ['delete_selected']
+    
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if not request.user.is_superuser:
+            if 'delete_selected' in actions:
+                del actions['delete_selected']
+        return actions
     
     fieldsets = (
         ('Requisition Details', {

@@ -1,0 +1,113 @@
+{% extends "admin/change_list.html" %}
+{% load i18n static %}
+
+{% block content %}
+<style>
+    .delete-button-container {
+        display: inline-block;
+        margin-left: 10px;
+        vertical-align: middle;
+    }
+    
+    .delete-selected-button {
+        background-color: #dc3545;
+        color: white;
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 500;
+        transition: background-color 0.2s;
+    }
+    
+    .delete-selected-button:hover {
+        background-color: #c82333;
+    }
+    
+    .delete-selected-button:disabled {
+        background-color: #6c757d;
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Find the action bar
+        const actionBar = document.querySelector('.actions');
+        if (actionBar && {{ request.user.is_superuser|yesno:"true,false" }}) {
+            // Create delete button container
+            const deleteButtonContainer = document.createElement('div');
+            deleteButtonContainer.className = 'delete-button-container';
+            
+            // Create delete button
+            const deleteButton = document.createElement('button');
+            deleteButton.type = 'button';
+            deleteButton.className = 'delete-selected-button';
+            deleteButton.textContent = '🗑️ Delete Selected';
+            deleteButton.disabled = true;
+            
+            // Add click handler
+            deleteButton.addEventListener('click', function() {
+                const checkboxes = document.querySelectorAll('input[name="_selected_action"]:checked');
+                if (checkboxes.length === 0) {
+                    alert('Please select at least one item to delete.');
+                    return;
+                }
+                
+                const count = checkboxes.length;
+                const confirmMsg = `Are you sure you want to delete ${count} selected item(s)? This action cannot be undone.`;
+                
+                if (confirm(confirmMsg)) {
+                    // Set the action to delete_selected
+                    const actionSelect = document.querySelector('select[name="action"]');
+                    if (actionSelect) {
+                        // Find or create the delete option
+                        let deleteOption = Array.from(actionSelect.options).find(opt => opt.value === 'delete_selected');
+                        if (!deleteOption) {
+                            deleteOption = document.createElement('option');
+                            deleteOption.value = 'delete_selected';
+                            deleteOption.text = 'Delete selected';
+                            actionSelect.add(deleteOption);
+                        }
+                        actionSelect.value = 'delete_selected';
+                    }
+                    
+                    // Submit the form
+                    const form = document.querySelector('#changelist-form');
+                    if (form) {
+                        form.submit();
+                    }
+                }
+            });
+            
+            deleteButtonContainer.appendChild(deleteButton);
+            
+            // Insert after the action dropdown
+            const actionSelect = actionBar.querySelector('select[name="action"]');
+            if (actionSelect && actionSelect.parentNode) {
+                actionSelect.parentNode.insertAdjacentElement('afterend', deleteButtonContainer);
+            }
+            
+            // Enable/disable delete button based on checkbox selection
+            function updateDeleteButton() {
+                const checkboxes = document.querySelectorAll('input[name="_selected_action"]:checked');
+                deleteButton.disabled = checkboxes.length === 0;
+            }
+            
+            // Listen for checkbox changes
+            document.addEventListener('change', function(e) {
+                if (e.target.name === '_selected_action' || e.target.id === 'action-toggle') {
+                    updateDeleteButton();
+                }
+            });
+            
+            // Initial state
+            updateDeleteButton();
+        }
+    });
+</script>
+
+{{ block.super }}
+{% endblock %}
