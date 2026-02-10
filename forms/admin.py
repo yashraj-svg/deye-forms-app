@@ -874,8 +874,7 @@ class StockItemAdmin(admin.ModelAdmin):
     list_filter = ('year', 'component_type', 'shipment_date', 'created_at')
     search_fields = ('pcba_sn_new', 'pcba_sn_old', 'component_type', 'specification', 'remark')
     readonly_fields = ('created_at', 'updated_at')
-    list_per_page = 50
-    actions = ['delete_selected']
+    list_per_page = 25  # Reduced from 50 to avoid form field limit
     
     def get_actions(self, request):
         actions = super().get_actions(request)

@@ -40,6 +40,10 @@ CSRF_TRUSTED_ORIGINS = [
     'https://*.railway.app',
 ]
 
+# DATA UPLOAD SETTINGS - Increase for large admin lists with many items
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000  # Default is 1000, increase for StockItem admin with 1976 items
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5MB
+
 
 # APPLICATIONS
 INSTALLED_APPS = [
