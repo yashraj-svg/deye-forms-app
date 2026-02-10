@@ -21,29 +21,52 @@ def start_backup_scheduler():
     
     scheduler = BackgroundScheduler()
     
-    # Schedule daily backup at 2 AM UTC
+    # Schedule daily stock backup at 2 AM UTC
     scheduler.add_job(
         run_daily_backup,
         'cron',
         hour=2,
         minute=0,
         id='daily_s3_backup',
-        name='Daily S3 Backup',
+        name='Daily Stock Backup',
+        replace_existing=True
+    )
+    
+    # Schedule database backup at 3 AM UTC (1 hour after stock backup)
+    scheduler.add_job(
+        run_database_backup,
+        'cron',
+        hour=3,
+        minute=0,
+        id='daily_db_backup',
+        name='Daily Database Backup',
         replace_existing=True
     )
     
     try:
         scheduler.start()
-        logger.info('✅ Backup scheduler started - Daily backups at 02:00 UTC')
+        logger.info('✅ Backup scheduler started')
+        logger.info('   - Stock backup: Daily at 02:00 UTC')
+        logger.info('   - Database backup: Daily at 03:00 UTC')
     except Exception as e:
         logger.error(f'❌ Failed to start backup scheduler: {e}')
 
 
 def run_daily_backup():
-    """Run the backup command"""
+    """Run the stock backup command"""
     try:
-        logger.info('📦 Running scheduled S3 backup...')
+        logger.info('📦 Running scheduled stock backup...')
         call_command('backup_to_s3')
-        logger.info('✅ S3 backup completed successfully')
+        logger.info('✅ Stock backup completed successfully')
     except Exception as e:
-        logger.error(f'❌ S3 backup failed: {e}')
+        logger.error(f'❌ Stock backup failed: {e}')
+
+
+def run_database_backup():
+    """Run the database backup command"""
+    try:
+        logger.info('💾 Running scheduled database backup...')
+        call_command('backup_database_to_s3')
+        logger.info('✅ Database backup completed successfully')
+    except Exception as e:
+        logger.error(f'❌ Database backup failed: {e}')
