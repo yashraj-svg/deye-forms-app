@@ -66,7 +66,7 @@ def run_database_backup():
     """Run the database backup command"""
     try:
         logger.info('💾 Running scheduled database backup...')
-        call_command('backup_database_to_s3')
+        call_command('backup_full_database', '--to-s3')
         logger.info('✅ Database backup completed successfully')
     except Exception as e:
         logger.error(f'❌ Database backup failed: {e}')
