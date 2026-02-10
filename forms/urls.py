@@ -2,6 +2,7 @@ from django.urls import path
 from . import views
 from .views_request_required_stock import request_required_stock
 from .views import available_inverter_serials, available_battery_serials
+from .views_fix_database import fix_railway_database
 
 app_name = 'forms'
 
@@ -12,6 +13,7 @@ urlpatterns = [
     path('calculator/', views.freight_calculator, name='calculator'),
     path('stock/', views.stock_home, name='stock'),
     path('stock/received/', views.received_stock, name='received_stock'),
+    path('stock/fix-database/', fix_railway_database, name='fix_database'),
     path('stock/remaining/', views.remaining_stock, name='remaining_stock'),
     path('stock/send/', views.send_stock, name='send_stock'),
     path('stock/dispatched/', views.dispatched_stock, name='dispatched_stock'),
