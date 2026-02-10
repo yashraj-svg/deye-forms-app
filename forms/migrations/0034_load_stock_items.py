@@ -4,13 +4,19 @@ from django.db import migrations
 
 
 def load_stock_fixture(apps, schema_editor):
-    """Load stock items fixture if table is empty"""
+    """Load stock items fixture ONLY if table is completely empty"""
     StockItem = apps.get_model('forms', 'StockItem')
     
-    # Only load if table is empty
-    if StockItem.objects.count() == 0:
+    # Only load if table is empty AND we're not on Railway with old data
+    count = StockItem.objects.count()
+    if count == 0:
         from django.core.management import call_command
+        print(f'📥 Loading stock fixture (table is empty)...')
         call_command('loaddata', 'stock_items', verbosity=1)
+        print(f'✅ Stock data loaded: {StockItem.objects.count()} items')
+    else:
+        print(f'⚠️  Stock table already has {count} items - skipping auto-load')
+        print(f'   To reload: python manage.py clean_reload_stock --confirm')
 
 
 def reverse_stock_fixture(apps, schema_editor):
