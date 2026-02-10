@@ -869,21 +869,13 @@ class LeaveReportAdmin(admin.ModelAdmin):
 
 @admin.register(StockItem)
 class StockItemAdmin(admin.ModelAdmin):
-    # NO custom template - use default Django admin template
-    # change_list_template = 'admin/forms/change_list.html'
+    change_list_template = 'admin/forms/change_list.html'
     list_display = ('pcba_sn_new', 'component_type', 'specification', 'quantity', 'year', 'shipment_date', 'created_at')
     list_filter = ('year', 'component_type', 'shipment_date', 'created_at')
     search_fields = ('pcba_sn_new', 'pcba_sn_old', 'component_type', 'specification', 'remark')
     readonly_fields = ('created_at', 'updated_at')
     list_per_page = 50
     actions = ['delete_selected']
-    
-    # Make visible to all staff, not just superusers
-    def has_module_permission(self, request):
-        return request.user.is_staff or request.user.is_superuser
-    
-    def has_view_permission(self, request, obj=None):
-        return request.user.is_staff or request.user.is_superuser
     
     def get_actions(self, request):
         actions = super().get_actions(request)
