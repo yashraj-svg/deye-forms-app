@@ -22,4 +22,4 @@ COPY . .
 RUN python manage.py collectstatic --noinput
 
 # Run migrations and start server
-CMD python manage.py migrate && python manage.py load_stock_fixture && gunicorn deye_config.wsgi:application --bind 0.0.0.0:$PORT --timeout 120 --workers 4
+CMD python manage.py migrate && gunicorn deye_config.wsgi:application --bind 0.0.0.0:$PORT --timeout 120 --workers 4
