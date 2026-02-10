@@ -436,9 +436,18 @@ def received_stock(request):
     ).order_by('-count')[:10]
 
     # Merge duplicates by PCBA SN across all years in the filtered set
+    # For items with serial numbers, merge across years
+    # For items without serial numbers, keep them separate
     merged = {}
     for item in stock_items.order_by('pcba_sn_new'):
-        key = item.pcba_sn_new
+        # For non-serialized items (blank serial), use a unique key based on component+spec+year
+        if not item.pcba_sn_new:
+            # Create unique key for non-serialized items
+            key = f"no_sn_{item.component_type or 'unknown'}_{item.specification or 'unknown'}_{item.year}"
+        else:
+            # For serialized items, merge across all years
+            key = item.pcba_sn_new
+        
         if key not in merged:
             merged[key] = {
                 'pcba_sn_new': item.pcba_sn_new,

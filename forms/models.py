@@ -404,7 +404,7 @@ class PincodeData(models.Model):
 class StockItem(models.Model):
     """Stock inventory for components and parts"""
     pcba_sn_old = models.CharField(max_length=100, blank=True, null=True, verbose_name="PCBA SN (old)")
-    pcba_sn_new = models.CharField(max_length=100, db_index=True, verbose_name="PCBA SN (new)")
+    pcba_sn_new = models.CharField(max_length=100, db_index=True, verbose_name="PCBA SN (new)", blank=True, null=True)
     component_type = models.CharField(max_length=255, blank=True, null=True)
     specification = models.TextField(blank=True, null=True)
     quantity = models.DecimalField(max_digits=10, decimal_places=2, default=0)
