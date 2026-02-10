@@ -65,26 +65,48 @@ def fix_railway_database(request):
                 'data': f'{current_count} items, {current_qty:.0f} PCS'
             })
             
-            # Step 2: Delete all stock items using TRUNCATE
-            with connection.cursor() as cursor:
-                cursor.execute('TRUNCATE TABLE forms_stockitem RESTART IDENTITY CASCADE;')
-            
-            remaining = StockItem.objects.count()
-            if remaining == 0:
-                results['steps'].append({
-                    'step': 2,
-                    'action': 'Delete All Data',
-                    'status': 'success',
-                    'data': 'All stock items deleted'
-                })
-            else:
-                results['steps'].append({
-                    'step': 2,
-                    'action': 'Delete All Data',
-                    'status': 'error',
-                    'data': f'{remaining} items still remain'
-                })
-                return JsonResponse(results)
+            # Step 2: Delete all stock items
+            try:
+                # Try TRUNCATE first (PostgreSQL)
+                with connection.cursor() as cursor:
+                    try:
+                        cursor.execute('TRUNCATE TABLE forms_stockitem RESTART IDENTITY CASCADE;')
+                    except:
+                        # Fallback to DELETE for SQLite or if TRUNCATE fails
+                        cursor.execute('DELETE FROM forms_stockitem;')
+                
+                remaining = StockItem.objects.count()
+                if remaining == 0:
+                    results['steps'].append({
+                        'step': 2,
+                        'action': 'Delete All Data',
+                        'status': 'success',
+                        'data': 'All stock items deleted'
+                    })
+                else:
+                    results['steps'].append({
+                        'step': 2,
+                        'action': 'Delete All Data',
+                        'status': 'error',
+                        'data': f'{remaining} items still remain'
+                    })
+                    return JsonResponse(results)
+            except Exception as delete_error:
+                # If table doesn't exist yet, that's ok - fixture will create it
+                if 'does not exist' in str(delete_error).lower() or 'no such table' in str(delete_error).lower():
+                    results['steps'].append({
+                        'step': 2,
+                        'action': 'Delete All Data',
+                        'status': 'success',
+                        'data': 'Table empty or will be recreated'
+                    })
+                else:
+                    results['steps'].append({
+                        'step': 2,
+                        'action': 'Delete All Data',
+                        'status': 'warning',
+                        'data': f'Proceeding with fixture load: {str(delete_error)[:80]}'
+                    })
             
             # Step 3: Load fixture
             try:
