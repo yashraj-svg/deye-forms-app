@@ -3,37 +3,28 @@ Direct PostgreSQL fix for Railway - No Django needed!
 This connects directly to your Railway PostgreSQL database and fixes it.
 
 Run from your local computer:
-1. Get Railway database URL: cmd /c railway variables | findstr DATABASE_URL
-2. Run: python fix_railway_direct.py
+    cmd /c railway run python fix_railway_direct.py
+
+Railway will automatically provide the DATABASE_URL.
 """
 
 import psycopg
 import json
-import subprocess
+import os
 
 print("\n" + "="*70)
 print("🚂 RAILWAY DATABASE DIRECT FIX")
 print("="*70)
 
-# Step 1: Get DATABASE_URL from Railway
+# Step 1: Get DATABASE_URL from environment
 print("\n1️⃣ Getting Railway database URL...")
-result = subprocess.run('cmd /c railway variables', shell=True, capture_output=True, text=True)
-database_url = None
-
-for line in result.stdout.split('\n'):
-    if 'DATABASE_URL' in line:
-        parts = line.split('=', 1)
-        if len(parts) > 1:
-            database_url = parts[1].strip()
-            break
+database_url = os.environ.get('DATABASE_URL')
 
 if not database_url:
-    print("❌ Could not find DATABASE_URL from Railway!")
-    print("\nManual steps:")
-    print("1. Run: cmd /c railway variables")
-    print("2. Copy the DATABASE_URL value")
-    print("3. Set it: $env:DB_URL='paste_here'")
-    print("4. Re-run this script")
+    print("❌ DATABASE_URL not found in environment!")
+    print("\n⚠️  You must run this script using Railway CLI:")
+    print("   cmd /c railway run python fix_railway_direct.py")
+    print("\nThis ensures Railway automatically provides the DATABASE_URL.")
     exit(1)
 
 print(f"✅ Found database: {database_url[:30]}...")
