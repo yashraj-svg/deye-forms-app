@@ -31,5 +31,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(load_stock_fixture, reverse_stock_fixture),
+        # DISABLED - Use /stock/fix-database/ web endpoint to load stock data
+        # migrations.RunPython(load_stock_fixture, reverse_stock_fixture),
     ]
