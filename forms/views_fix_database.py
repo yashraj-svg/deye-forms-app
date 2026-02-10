@@ -38,6 +38,23 @@ def fix_railway_database(request):
         }
         
         try:
+            # Step 0: Run migrations (create tables if missing)
+            try:
+                call_command('migrate', verbosity=0)
+                results['steps'].append({
+                    'step': 0,
+                    'action': 'Database Migrations',
+                    'status': 'success',
+                    'data': 'All migrations applied successfully'
+                })
+            except Exception as e:
+                results['steps'].append({
+                    'step': 0,
+                    'action': 'Database Migrations',
+                    'status': 'warning',
+                    'data': f'Migration check complete: {str(e)[:100]}'
+                })
+            
             # Step 1: Get current state
             current_count = StockItem.objects.count()
             current_qty = StockItem.objects.aggregate(Sum('quantity'))['quantity__sum'] or 0
