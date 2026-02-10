@@ -477,10 +477,11 @@ def received_stock(request):
     merged_list = list(merged.values())
 
     # Sort merged list by latest year desc, then component_type, then PCBA
+    # Handle None values for serial numbers (blank serial items)
     merged_list.sort(key=lambda x: (
         -(max(x['years']) if x['years'] else 0),
         x['component_type'] or '',
-        x['pcba_sn_new']
+        x['pcba_sn_new'] or ''  # Convert None to empty string for sorting
     ))
 
     # Override stats to reflect merged items
