@@ -261,16 +261,16 @@ class GlobalCourierCargo(BaseCarrier):
     ZONE_RATES = {
         "AMB": {"AMB": 12.0, "JAI": 13.0, "DEL": 12.0, "AMD": 14.0, "PNQ": 14.0, "BOM": 14.0, "NAG": 13.0, "IDR": 13.0, "BLR": 14.0, "HYD": 14.0, "MAA": 14.0, "CJB": 14.0, "BBI": 17.0, "LOK": 14.0, "PAT": 18.0, "NJP": 35.0, "CCU": 17.0, "GAU": 17.0},
         "JAI": {"AMB": 13.0, "JAI": 10.0, "DEL": 12.0, "AMD": 12.0, "PNQ": 14.0, "BOM": 13.0, "NAG": 13.0, "IDR": 14.0, "BLR": 13.0, "HYD": 13.0, "MAA": 14.0, "CJB": 14.0, "BBI": 15.0, "LOK": 14.0, "PAT": 18.0, "NJP": 36.0, "CCU": 16.0, "GAU": 18.0},
-        "DEL": {"AMB": 12.0, "JAI": 12.0, "DEL": 10.0, "AMD": 14.0, "PNQ": 15.0, "BOM": 15.0, "NAG": 13.0, "IDR": 14.0, "BLR": 14.0, "HYD": 14.0, "MAA": 14.0, "CJB": 14.0, "BBI": 16.0, "LOK": 12.0, "PAT": 16.0, "NJP": 34.0, "CCU": 16.0, "GAU": 17.0},
+        "DEL": {"AMB": 12.0, "JAI": 12.0, "DEL": 10.0, "AMD": 14.0, "PNQ": 15.0, "BOM": 13.0, "NAG": 13.0, "IDR": 14.0, "BLR": 14.0, "HYD": 14.0, "MAA": 14.0, "CJB": 14.0, "BBI": 16.0, "LOK": 13.0, "PAT": 16.0, "NJP": 34.0, "CCU": 16.0, "GAU": 17.0},
         "AMD": {"AMB": 13.0, "JAI": 13.0, "DEL": 13.0, "AMD": 10.0, "PNQ": 13.0, "BOM": 12.0, "NAG": 12.0, "IDR": 13.0, "BLR": 14.0, "HYD": 14.0, "MAA": 14.0, "CJB": 13.0, "BBI": 16.0, "LOK": 13.0, "PAT": 18.0, "NJP": 34.0, "CCU": 16.0, "GAU": 16.0},
         "PNQ": {"AMB": 13.0, "JAI": 13.0, "DEL": 13.0, "AMD": 13.0, "PNQ": 10.0, "BOM": 10.0, "NAG": 12.0, "IDR": 13.0, "BLR": 13.0, "HYD": 13.0, "MAA": 14.0, "CJB": 15.0, "BBI": 16.0, "LOK": 14.0, "PAT": 18.0, "NJP": 35.0, "CCU": 17.0, "GAU": 17.0},
         "BOM": {"AMB": 13.0, "JAI": 14.0, "DEL": 13.0, "AMD": 12.0, "PNQ": 10.0, "BOM": 10.0, "NAG": 10.0, "IDR": 13.0, "BLR": 13.0, "HYD": 13.0, "MAA": 14.0, "CJB": 14.0, "BBI": 16.0, "LOK": 13.0, "PAT": 18.0, "NJP": 35.0, "CCU": 17.0, "GAU": 17.0},
         "NAG": {"AMB": 12.0, "JAI": 12.0, "DEL": 13.0, "AMD": 12.0, "PNQ": 10.0, "BOM": 10.0, "NAG": 10.0, "IDR": 12.0, "BLR": 14.0, "HYD": 14.0, "MAA": 14.0, "CJB": 14.0, "BBI": 15.0, "LOK": 14.0, "PAT": 16.0, "NJP": 32.0, "CCU": 16.0, "GAU": 16.0},
         "IDR": {"AMB": 12.0, "JAI": 13.0, "DEL": 13.0, "AMD": 13.0, "PNQ": 14.0, "BOM": 13.0, "NAG": 12.0, "IDR": 10.0, "BLR": 13.0, "HYD": 13.0, "MAA": 13.0, "CJB": 14.0, "BBI": 15.0, "LOK": 14.0, "PAT": 16.0, "NJP": 35.0, "CCU": 17.0, "GAU": 16.0},
-        "BLR": {"AMB": 14.0, "JAI": 14.0, "DEL": 15.0, "AMD": 13.0, "PNQ": 13.0, "BOM": 13.0, "NAG": 13.0, "IDR": 14.0, "BLR": 10.0, "HYD": 13.0, "MAA": 13.0, "CJB": 13.0, "BBI": 14.0, "LOK": 15.0, "PAT": 18.0, "NJP": 32.0, "CCU": 17.0, "GAU": 17.0},
-        "HYD": {"AMB": 14.0, "JAI": 14.0, "DEL": 13.0, "AMD": 13.0, "PNQ": 13.0, "BOM": 12.0, "NAG": 12.0, "IDR": 12.0, "BLR": 14.0, "HYD": 10.0, "MAA": 12.0, "CJB": 12.0, "BBI": 16.0, "LOK": 15.0, "PAT": 16.0, "NJP": 32.0, "CCU": 16.0, "GAU": 16.0},
-        "MAA": {"AMB": 14.0, "JAI": 14.0, "DEL": 13.0, "AMD": 13.0, "PNQ": 12.0, "BOM": 12.0, "NAG": 12.0, "IDR": 13.0, "BLR": 12.0, "HYD": 13.0, "MAA": 10.0, "CJB": 12.0, "BBI": 14.0, "LOK": 15.0, "PAT": 16.0, "NJP": 32.0, "CCU": 15.0, "GAU": 16.0},
-        "CJB": {"AMB": 15.0, "JAI": 15.0, "DEL": 16.0, "AMD": 16.0, "PNQ": 17.0, "BOM": 17.0, "NAG": 16.0, "IDR": 15.0, "BLR": 14.0, "HYD": 14.0, "MAA": 14.0, "CJB": 10.0, "BBI": 16.0, "LOK": 13.0, "PAT": 16.0, "NJP": 32.0, "CCU": 16.0, "GAU": 17.0},
+        "BLR": {"AMB": 14.0, "JAI": 14.0, "DEL": 15.0, "AMD": 13.0, "PNQ": 13.0, "BOM": 13.0, "NAG": 13.0, "IDR": 14.0, "BLR": 13.0, "HYD": 13.0, "MAA": 14.0, "CJB": 16.0, "BBI": 14.0, "LOK": 15.0, "PAT": 18.0, "NJP": 32.0, "CCU": 17.0, "GAU": 17.0},
+        "HYD": {"AMB": 14.0, "JAI": 14.0, "DEL": 13.0, "AMD": 13.0, "PNQ": 13.0, "BOM": 12.0, "NAG": 12.0, "IDR": 12.0, "BLR": 13.0, "HYD": 10.0, "MAA": 12.0, "CJB": 12.0, "BBI": 16.0, "LOK": 15.0, "PAT": 16.0, "NJP": 32.0, "CCU": 16.0, "GAU": 16.0},
+        "MAA": {"AMB": 14.0, "JAI": 14.0, "DEL": 13.0, "AMD": 13.0, "PNQ": 12.0, "BOM": 12.0, "NAG": 12.0, "IDR": 13.0, "BLR": 13.0, "HYD": 13.0, "MAA": 13.0, "CJB": 12.0, "BBI": 14.0, "LOK": 15.0, "PAT": 16.0, "NJP": 32.0, "CCU": 15.0, "GAU": 16.0},
+        "CJB": {"AMB": 15.0, "JAI": 15.0, "DEL": 16.0, "AMD": 16.0, "PNQ": 17.0, "BOM": 17.0, "NAG": 16.0, "IDR": 15.0, "BLR": 13.0, "HYD": 14.0, "MAA": 14.0, "CJB": 10.0, "BBI": 16.0, "LOK": 13.0, "PAT": 16.0, "NJP": 32.0, "CCU": 16.0, "GAU": 17.0},
         "BBI": {"AMB": 13.0, "JAI": 13.0, "DEL": 13.0, "AMD": 14.0, "PNQ": 15.0, "BOM": 15.0, "NAG": 15.0, "IDR": 14.0, "BLR": 15.0, "HYD": 15.0, "MAA": 15.0, "CJB": 15.0, "BBI": 10.0, "LOK": 13.0, "PAT": 15.0, "NJP": 35.0, "CCU": 15.0, "GAU": 15.0},
         "LOK": {"AMB": 12.0, "JAI": 13.0, "DEL": 12.0, "AMD": 14.0, "PNQ": 15.0, "BOM": 15.0, "NAG": 14.0, "IDR": 13.0, "BLR": 14.0, "HYD": 14.0, "MAA": 14.0, "CJB": 14.0, "BBI": 13.0, "LOK": 13.0, "PAT": 16.0, "NJP": 36.0, "CCU": 16.0, "GAU": 17.0},
         "PAT": {"AMB": 17.0, "JAI": 17.0, "DEL": 15.0, "AMD": 15.0, "PNQ": 16.0, "BOM": 15.0, "NAG": 14.0, "IDR": 14.0, "BLR": 15.0, "HYD": 15.0, "MAA": 15.0, "CJB": 15.0, "BBI": 15.0, "LOK": 13.0, "PAT": 15.0, "NJP": 36.0, "CCU": 13.0, "GAU": 14.0},
@@ -298,7 +298,7 @@ class GlobalCourierCargo(BaseCarrier):
 
     def calc_surcharges(self, base_freight: float, inp: QuoteInput, from_pin: PincodeRecord, to_pin: PincodeRecord, pins: Optional[PincodeDB] = None) -> Dict[str, float]:
         s: Dict[str, float] = {}
-        # ODA flat 600 when ODA is True; 0 when False; blank handled upstream as non-deliverable
+        # ODA flat 600 when ODA is True; 0 when False
         if to_pin.is_oda:
             s["oda"] = 600.0
         # Insurance (FOV charge)
@@ -311,11 +311,6 @@ class GlobalCourierCargo(BaseCarrier):
         # Reverse pickup flat example
         if inp.reverse_pickup:
             s["reverse_pickup"] = 150.0
-        # Handling if any single item >150kg or longest side > 6 feet (~183 cm)
-        max_item_weight = max((item.weight_kg for item in inp.items), default=0)
-        max_longest_side = max((max(item.length_cm, item.breadth_cm, item.height_cm) for item in inp.items), default=0)
-        if max_item_weight > 150 or max_longest_side > 183:
-            s["handling"] = max(5.0 * self.chargeable_weight(inp), 1000.0)
         # Demurrage after 3 days
         if inp.days_in_transit_storage > 3:
             days = inp.days_in_transit_storage - 3
@@ -341,20 +336,20 @@ class GlobalCourierCargo(BaseCarrier):
             )
 
         cw = self.chargeable_weight(inp)
+        
+        # Standard zone rate calculation for both ODA and SFC
         rate = self.base_rate_per_kg(from_zone or "", to_zone or "", cw)
-        base_freight = _round_money(rate * cw)
+        minimum_base = 450.0
+        base_freight = _round_money(max(rate * cw, minimum_base))
+        
+        # Surcharges: ODA ₹600 (when ODA=True), Insurance, Fuel 10%, Reverse Pickup ₹150, Demurrage
         sur = self.calc_surcharges(base_freight, inp, from_pin, to_pin)
+        
         # GST calculation: 18% on (base + surcharges)
         subtotal_for_gst = _round_money(base_freight + sum(sur.values()))
         gst = _round_money(self.apply_gst(subtotal_for_gst))
-        # Calculate total
         total_before_gst = subtotal_for_gst
         total_after_gst = _round_money(total_before_gst + gst)
-
-        # Apply minimum LR of Rs.450 (if calculated total < 450, charge 450)
-        MINIMUM_LR = 450.0
-        if total_after_gst < MINIMUM_LR:
-            total_after_gst = MINIMUM_LR
 
         # Calculate volumetric weight for display (sum of all items)
         vol_wt = sum(_volumetric(4000.0, item.length_cm, item.breadth_cm, item.height_cm) for item in inp.items)
@@ -381,6 +376,7 @@ class GlobalCourierCargo(BaseCarrier):
                 "rate_per_kg": rate,
                 "volumetric_divisor": 4000,
                 "minimum_weight": 20.0,
+                "minimum_base_charge": 450.0,
             }
         )
 

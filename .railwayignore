@@ -18,3 +18,5 @@ build/
 .pytest_cache/
 htmlcov/
 .coverage
+*.xlsx
+check_current_stock.py

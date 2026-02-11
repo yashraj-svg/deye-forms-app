@@ -325,12 +325,51 @@ def _load_safexpress_non_oda(base_dir: str) -> set[str]:
 
 
 @lru_cache(maxsize=1)
+def _load_global_cargo_oda_list(base_dir: str) -> Dict[str, bool]:
+    """
+    Load official Global Courier Cargo B2B pincode list to get accurate ODA status.
+    Returns dict: {pincode: is_oda} where is_oda=True means ODA area.
+    """
+    oda_map: Dict[str, bool] = {}
+    
+    # Look for the official B2B pincode file
+    patterns = (
+        os.path.join(base_dir, "B2B_Pincode_List_globalcouriercargodc b2br updated.csv"),
+        os.path.join(base_dir, "B2B_Pincode_List_GlobalCourierCargoDC b2br updated.csv"),
+        os.path.join(base_dir, "*B2B*globalcourier*.csv"),
+    )
+    
+    b2b_file = discover_file(patterns)
+    if not b2b_file:
+        return oda_map
+    
+    try:
+        with open(b2b_file, newline="", encoding="utf-8-sig") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                pin = str(row.get("Pin", "")).strip()
+                if not pin:
+                    continue
+                oda_str = str(row.get("ODA", "")).strip().upper()
+                # ODA=TRUE means it's an Out of Delivery Area, ODA=FALSE means regularly deliverable
+                is_oda = oda_str == "TRUE"
+                oda_map[pin] = is_oda
+    except Exception:
+        pass
+    
+    return oda_map
+
+
 def load_pincode_master(base_dir: str) -> PincodeDB:
     """
     Load pincode data from Django database (cached).
     Falls back to CSV if database is empty.
+    Applies official Global Courier Cargo B2B list for accurate ODA status.
     """
     db = PincodeDB()
+    
+    # Load official Global Courier Cargo ODA list early
+    global_cargo_oda_map = _load_global_cargo_oda_list(base_dir)
     
     # Try loading from Django database first
     try:
@@ -350,6 +389,9 @@ def load_pincode_master(base_dir: str) -> PincodeDB:
                     global_cargo_region=record.global_cargo_region,
                     bluedart_region=record.bluedart_region,
                 )
+                # Override is_oda with official Global Courier Cargo list if available
+                if str(rec.pincode) in global_cargo_oda_map:
+                    rec.is_oda = global_cargo_oda_map[str(rec.pincode)]
                 # Assign partner regions if not already set in database
                 _assign_partner_regions(rec)
                 db.add(rec)
@@ -405,6 +447,14 @@ def load_pincode_master(base_dir: str) -> PincodeDB:
         for pin in safexpress_non_oda:
             rec = db.get(pin) or PincodeRecord(pincode=pin)
             rec.safexpress_is_oda = False
+            _assign_partner_regions(rec)
+            db.add(rec)
+
+    # Apply official Global Courier Cargo ODA list to all records (overrides other sources)
+    if global_cargo_oda_map:
+        for pin, is_oda in global_cargo_oda_map.items():
+            rec = db.get(pin) or PincodeRecord(pincode=pin)
+            rec.is_oda = is_oda
             _assign_partner_regions(rec)
             db.add(rec)
 
