@@ -1,5 +1,5 @@
 """
-Django management command to backup StockItem data to S3
+Django management command to backup ALL important data to S3 (excluding PincodeData)
 Usage: python manage.py backup_to_s3
 """
 
@@ -10,11 +10,16 @@ from datetime import datetime
 from django.core import serializers
 from django.core.management.base import BaseCommand
 from django.db.models import Sum
-from forms.models import StockItem
+from django.contrib.auth.models import User
+from forms.models import (
+    StockItem, RepairingForm, InwardForm, OutwardForm,
+    ServiceReportForm, LeaveRequest, StockRequisition,
+    DispatchedStock, RequiredStock, UserProfile, UpcomingEvent
+)
 
 
 class Command(BaseCommand):
-    help = 'Backup StockItem data to S3 as JSON'
+    help = 'Backup all important data to S3 as JSON (excludes PincodeData)'
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -50,33 +55,69 @@ class Command(BaseCommand):
             
             # Generate backup filename with timestamp
             timestamp = datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
-            backup_filename = f'stock_backup_{timestamp}.json'
+            backup_filename = f'complete_backup_{timestamp}.json'
             
-            self.stdout.write(self.style.WARNING(f'\n📦 Creating backup: {backup_filename}'))
+            self.stdout.write(self.style.WARNING(f'\n📦 Creating complete data backup: {backup_filename}'))
+            self.stdout.write('   Excluding: PincodeData (as requested)\n')
             
-            # Get all stock items
-            stock_items = StockItem.objects.all().order_by('year', 'pcba_sn_new')
-            count = stock_items.count()
-            total_qty = StockItem.objects.aggregate(Sum('quantity'))['quantity__sum'] or 0
+            # Define all models to backup (excluding PincodeData)
+            models_to_backup = [
+                ('StockItem', StockItem),
+                ('RepairingForm', RepairingForm),
+                ('InwardForm', InwardForm),
+                ('OutwardForm', OutwardForm),
+                ('ServiceReportForm', ServiceReportForm),
+                ('LeaveRequest', LeaveRequest),
+                ('StockRequisition', StockRequisition),
+                ('DispatchedStock', DispatchedStock),
+                ('RequiredStock', RequiredStock),
+                ('UserProfile', UserProfile),
+                ('UpcomingEvent', UpcomingEvent),
+                ('User', User),
+            ]
             
-            self.stdout.write(f'   Found {count} items, {total_qty:.0f} PCS')
+            # Collect all data
+            all_data = {}
+            total_records = 0
             
-            # Serialize to JSON
-            data = serializers.serialize('json', stock_items, indent=2)
+            for model_name, model_class in models_to_backup:
+                queryset = model_class.objects.all().order_by('pk')
+                count = queryset.count()
+                total_records += count
+                
+                if count > 0:
+                    serialized = serializers.serialize('json', queryset, indent=2)
+                    all_data[model_name] = {
+                        'count': count,
+                        'data': json.loads(serialized)
+                    }
+                    self.stdout.write(f'   ✓ {model_name}: {count} records')
+                else:
+                    self.stdout.write(f'   - {model_name}: 0 records (skipped)')
             
-            # Add metadata
+            # Add special stats for StockItem
+            if StockItem.objects.exists():
+                total_qty = StockItem.objects.aggregate(Sum('quantity'))['quantity__sum'] or 0
+                all_data['StockItem']['total_quantity'] = float(total_qty)
+                self.stdout.write(f'     └─ Total PCS: {total_qty:.0f}')
+            
+            # Create final backup structure
             backup_data = {
                 'metadata': {
                     'timestamp': timestamp,
-                    'item_count': count,
-                    'total_quantity': float(total_qty),
                     'created_at': datetime.now().isoformat(),
+                    'total_records': total_records,
+                    'excluded_models': ['PincodeData'],
+                    'backup_type': 'complete',
                 },
-                'data': json.loads(data)
+                'models': all_data
             }
             
             # Convert to JSON string
             backup_json = json.dumps(backup_data, indent=2, ensure_ascii=False)
+            backup_size_mb = len(backup_json.encode('utf-8')) / (1024 * 1024)
+            
+            self.stdout.write(f'\n   Total: {total_records} records ({backup_size_mb:.2f} MB)')
             
             # Upload to S3
             self.stdout.write(f'   Uploading to S3...')
