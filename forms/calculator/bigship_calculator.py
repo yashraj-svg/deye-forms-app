@@ -22,12 +22,26 @@ class BigshipPincodeDB:
         self._pincode_details: Dict[str, dict] = {}
         self._load_from_excel(excel_path)
     
-    def _load_from_excel(self, excel_path: str):
+    def _load_from_excel(self, excel_path):
         """Load serviceable pincodes from Excel file"""
         try:
-            wb = openpyxl.load_workbook(excel_path)
+            # Convert to Path object and resolve
+            if isinstance(excel_path, str):
+                excel_path = Path(excel_path)
+            excel_path = excel_path.resolve()
+            
+            print(f"[Bigship] Loading pincodes from: {excel_path}")
+            print(f"[Bigship] File exists: {excel_path.exists()}")
+            
+            if not excel_path.exists():
+                print(f"[Bigship] ERROR: File not found at {excel_path}")
+                print(f"[Bigship] Current working directory: {Path.cwd()}")
+                return
+            
+            wb = openpyxl.load_workbook(str(excel_path))
             ws = wb.active
             
+            loaded_count = 0
             for row_idx in range(2, ws.max_row + 1):
                 pincode = str(ws.cell(row_idx, 1).value or "").strip()
                 city = str(ws.cell(row_idx, 2).value or "").strip()
@@ -44,8 +58,14 @@ class BigshipPincodeDB:
                     
                     if is_oda or str(is_oda).lower() in ["true", "yes", "y", "1"]:
                         self._oda_pincodes.add(pincode)
+                    loaded_count += 1
+            
+            print(f"[Bigship] Successfully loaded {loaded_count} serviceable pincodes")
+            print(f"[Bigship] ODA pincodes: {len(self._oda_pincodes)}")
         except Exception as e:
-            print(f"Warning: Could not load Bigship pincodes: {e}")
+            print(f"[Bigship] ERROR loading pincodes: {e}")
+            import traceback
+            traceback.print_exc()
     
     def is_serviceable(self, pincode: str) -> bool:
         """Check if pincode is serviceable by Bigship"""
@@ -113,9 +133,19 @@ class Bigship(BaseCarrier):
     
     def __init__(self, settings: Settings, base_dir: Optional[str] = None):
         super().__init__(settings, base_dir)
-        self.bigship_pins = BigshipPincodeDB(
-            Path(base_dir or str(Path(__file__).resolve().parents[2])) / "Bigship Serviceable Pincode.xlsx"
-        )
+        
+        # Determine base directory
+        if base_dir:
+            base_path = Path(base_dir)
+        else:
+            # Go up 2 levels from this file (forms/calculator/bigship_calculator.py -> project root)
+            base_path = Path(__file__).resolve().parents[2]
+        
+        excel_file = base_path / "Bigship Serviceable Pincode.xlsx"
+        print(f"[Bigship] Initializing with base_dir: {base_path}")
+        print(f"[Bigship] Looking for Excel file at: {excel_file}")
+        
+        self.bigship_pins = BigshipPincodeDB(excel_file)
     
     def resolve_regions(self, from_pin: PincodeRecord, to_pin: PincodeRecord) -> Dict[str, str]:
         """For Bigship, we don't use zones - just check serviceability"""
