@@ -325,12 +325,12 @@ def _load_safexpress_non_oda(base_dir: str) -> set[str]:
 
 
 @lru_cache(maxsize=1)
-def _load_global_cargo_oda_list(base_dir: str) -> Dict[str, bool]:
+def _load_global_cargo_oda_list(base_dir: str) -> Dict[str, Tuple[bool, Optional[str], Optional[str]]]:
     """
     Load official Global Courier Cargo B2B pincode list to get accurate ODA status.
-    Returns dict: {pincode: is_oda} where is_oda=True means ODA area.
+    Returns dict: {pincode: (is_oda, city, state)} where is_oda=True means ODA area.
     """
-    oda_map: Dict[str, bool] = {}
+    oda_map: Dict[str, Tuple[bool, Optional[str], Optional[str]]] = {}
     
     # Look for the official B2B pincode file
     patterns = (
@@ -351,9 +351,11 @@ def _load_global_cargo_oda_list(base_dir: str) -> Dict[str, bool]:
                 if not pin:
                     continue
                 oda_str = str(row.get("ODA", "")).strip().upper()
+                city = str(row.get("Facility City", "")).strip() or None
+                state = str(row.get("Facility State", "")).strip() or None
                 # ODA=TRUE means it's an Out of Delivery Area, ODA=FALSE means regularly deliverable
                 is_oda = oda_str == "TRUE"
-                oda_map[pin] = is_oda
+                oda_map[pin] = (is_oda, city, state)
     except Exception:
         pass
     
@@ -391,7 +393,12 @@ def load_pincode_master(base_dir: str) -> PincodeDB:
                 )
                 # Override is_oda with official Global Courier Cargo list if available
                 if str(rec.pincode) in global_cargo_oda_map:
-                    rec.is_oda = global_cargo_oda_map[str(rec.pincode)]
+                    is_oda, city, state = global_cargo_oda_map[str(rec.pincode)]
+                    rec.is_oda = is_oda
+                    if city:
+                        rec.city = city
+                    if state:
+                        rec.state = state
                 # Assign partner regions if not already set in database
                 _assign_partner_regions(rec)
                 db.add(rec)
@@ -452,9 +459,13 @@ def load_pincode_master(base_dir: str) -> PincodeDB:
 
     # Apply official Global Courier Cargo ODA list to all records (overrides other sources)
     if global_cargo_oda_map:
-        for pin, is_oda in global_cargo_oda_map.items():
+        for pin, (is_oda, city, state) in global_cargo_oda_map.items():
             rec = db.get(pin) or PincodeRecord(pincode=pin)
             rec.is_oda = is_oda
+            if city:
+                rec.city = city
+            if state:
+                rec.state = state
             _assign_partner_regions(rec)
             db.add(rec)
 
