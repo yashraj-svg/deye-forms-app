@@ -12,32 +12,25 @@
             background: #f8fafc;
             color: #0f172a;
             min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             padding: 24px;
         }
         .container {
-            max-width: 600px;
-            text-align: center;
+            max-width: 1400px;
+            margin: 0 auto;
         }
-        .icon {
-            font-size: 80px;
-            margin-bottom: 24px;
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
         }
         h1 {
             font-size: 32px;
             font-weight: 700;
-            margin-bottom: 12px;
             background: linear-gradient(135deg, #7c3aed, #a78bfa);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-        }
-        .subtitle {
-            color: #64748b;
-            font-size: 16px;
-            margin-bottom: 32px;
         }
         .back-btn {
             display: inline-flex;
@@ -58,14 +51,143 @@
             background: #f8fafc;
             border-color: #cbd5e1;
         }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+        .stat-card {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+        }
+        .stat-card h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #64748b;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .stat-card .value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+        .table-container {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        thead {
+            background: #f1f5f9;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        th {
+            padding: 16px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 14px;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        td {
+            padding: 16px;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 14px;
+        }
+        tbody tr:hover {
+            background: #f8fafc;
+        }
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+        .serial-number {
+            font-weight: 600;
+            color: #7c3aed;
+            font-family: 'Courier New', monospace;
+        }
+        .balance {
+            font-weight: 600;
+            color: #0f172a;
+        }
+        .balance.low {
+            background: #fef3c7;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 48px 24px;
+        }
+        .empty-state .icon {
+            font-size: 80px;
+            margin-bottom: 24px;
+        }
+        .empty-state p {
+            color: #64748b;
+            font-size: 16px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="icon">📊</div>
-        <h1>Remaining Stock</h1>
-        <p class="subtitle">This feature is coming soon! You'll be able to check current stock levels and available inventory here.</p>
-        <a href="{% url 'forms:stock' %}" class="back-btn">← Back to Stock Management</a>
-    </div>
-</body>
-</html>
+        <div class="header">
+            <h1>📊 Remaining Stock</h1>
+            <a href="{% url 'forms:stock' %}" class="back-btn">← Back to Stock Management</a>
+        </div>
+
+        {% if total_rows > 0 %}
+            <!-- Statistics Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>Total Items</h3>
+                    <div class="value">{{ total_rows }}</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Total Balance Stock</h3>
+                    <div class="value">{{ total_balance|floatformat:"0" }}</div>
+                </div>
+            </div>
+
+            <!-- Stock Table -->
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Serial Number</th>
+                            <th>Component Type</th>
+                            <th>Description</th>
+                            <th style="text-align: right;">Balance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in stock_items %}
+                            <tr>
+                                <td class="serial-number">{{ item.serial_number }}</td>
+                                <td>{{ item.component }}</td>
+                                <td>{{ item.description }}</td>
+                                <td style="text-align: right;"><span class="balance {% if item.balance < 5 %}low{% endif %}">{{ item.balance }}</span></td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <div class="icon">⚠️</div>
+                <h2>No Stock Data Available</h2>
+                <p>Unable to load stock data. Please check if the Current stock.xlsx file exists.</p>
+                <a href="{% url 'forms:stock' %}" class="back-btn">← Back to Stock Management</a>
+            </div>
+        {% endif %}

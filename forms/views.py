@@ -2,6 +2,8 @@ import os
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseForbidden
 from functools import wraps
+import openpyxl
+from pathlib import Path
 
 # Permission decorators
 def stock_manager_required(view_func):
@@ -13,6 +15,40 @@ def stock_manager_required(view_func):
             return HttpResponseForbidden("⛔ Access Denied: Only stock managers (Snehal/Nilesh) or superusers can access this page.")
         return view_func(request, *args, **kwargs)
     return _wrapped_view
+
+# Helper function to read current stock from Excel file
+def get_current_stock_data():
+    """Read current stock data from Current stock (1).xlsx file"""
+    try:
+        stock_file = Path(__file__).parent.parent / 'Current stock (1).xlsx'
+        if not stock_file.exists():
+            return None, None, None
+        
+        wb = openpyxl.load_workbook(str(stock_file), data_only=True)
+        ws = wb['Current Stock']
+        
+        stock_items = []
+        total_balance = 0
+        
+        for row in ws.iter_rows(min_row=2, values_only=True):
+            if row and row[1] is not None:  # Check column B (serial number)
+                try:
+                    item = {
+                        'serial_number': row[1],        # Column B
+                        'component': row[2] if len(row) > 2 else '',      # Column C
+                        'description': row[3] if len(row) > 3 else '',    # Column D
+                        'balance': int(row[4]) if len(row) > 4 and row[4] else 0  # Column E
+                    }
+                    stock_items.append(item)
+                    total_balance += item['balance']
+                except (ValueError, IndexError, TypeError):
+                    continue
+        
+        wb.close()
+        return stock_items, len(stock_items), total_balance
+    except Exception as e:
+        print(f"Error reading stock file: {e}")
+        return None, None, None
 
 # Update New Shipments view (same interface as send_stock)
 @login_required
@@ -511,8 +547,15 @@ def received_stock(request):
 @login_required
 @stock_manager_required
 def remaining_stock(request):
-    """Remaining stock view - Coming soon"""
-    return render(request, 'forms/remaining_stock.html')
+    """Remaining stock view - Display current inventory from Excel file"""
+    stock_items, total_rows, total_balance = get_current_stock_data()
+    
+    context = {
+        'stock_items': stock_items,
+        'total_rows': total_rows,
+        'total_balance': total_balance,
+    }
+    return render(request, 'forms/remaining_stock.html', context)
 
 
 @login_required

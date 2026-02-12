@@ -17,7 +17,7 @@ print("=" * 60)
 base_path = '/app'
 pincode_master = load_pincode_master(base_path)
 
-print(f"\n1. Total pincodes loaded: {len(pincode_master)}")
+print(f"\n1. Total pincodes loaded: {pincode_master.size()}")
 
 # Test the 5 reclassified pincodes
 test_pincodes = [686691, 574214, 630556, 642001, 688001, 411045, 110020]

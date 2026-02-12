@@ -30,6 +30,7 @@ class QuoteInput:
     insured_value: Optional[float] = None
     days_in_transit_storage: int = 0
     gst_mode: str = "12pct"
+    sds: bool = False  # Special Delivery Service (Safexpress specific, per MOU)
     # Optional: for backward compatibility, you can add these fields and ignore them
 
 
@@ -629,9 +630,21 @@ class Safexpress(BaseCarrier):
 
     UCC_CITIES = {"ahmedabad", "bengaluru", "bangalore", "chennai", "delhi", "new delhi", "hyderabad", "kolkata", "mumbai", "pune", "vasai", "vasaivirar"}
 
+    # State surcharges per MOU: ₹4/kg for Kerala/Assam/J&K, ₹12/kg for NE states
     STATE_SURCHARGE_PER_KG = {
-        # Most states have no per-kg surcharge
-        # Add states with surcharges here if needed per the MOU
+        # Safexpress MoU Annexure 1: State Surcharges
+        # ₹4/kg for Kerala, Assam, J&K - lowercase keys for case-insensitive matching
+        "kerala": 4.0,
+        "assam": 4.0,
+        "jammu and kashmir": 4.0,
+        "j&k": 4.0,
+        # ₹12/kg for NE states (Arunachal Pradesh, Mizoram, Tripura, Manipur, Meghalaya, Nagaland)
+        "arunachal pradesh": 12.0,
+        "mizoram": 12.0,
+        "tripura": 12.0,
+        "manipur": 12.0,
+        "meghalaya": 12.0,
+        "nagaland": 12.0,
     }
 
     def _region_for_state(self, state: str) -> str:
@@ -644,20 +657,11 @@ class Safexpress(BaseCarrier):
         band = self.ZONE_MATRIX.get(from_region, {}).get(to_region, "C")
         return {"from": from_region, "to": band}
 
-    def _apply_weight_slab(self, weight_kg: float) -> float:
-        """Apply Safexpress weight slab logic: round up to next slab weight.
-        Example: 52kg -> 52kg (already at slab), 124kg -> 130kg (next slab)"""
-        for slab in self.WEIGHT_SLABS:
-            if weight_kg <= slab:
-                return float(slab)
-        # If exceeds all slabs, return as is
-        return weight_kg
-
     def chargeable_weight(self, inp: QuoteInput) -> float:
-        # Safexpress MoU: 1 cubic foot = 6 kg -> divisor ~4720 in cm. Use 4720 for cm volumetric.
-        base_cw = total_chargeable_weight(inp.items, 4720.0, 20.0)
-        # Apply weight slab logic
-        return self._apply_weight_slab(base_cw)
+        # Safexpress MoU: 1 cubic foot = 6 kg -> divisor 4000 in cm³
+        # Minimum chargeable weight: 20 kg per MOU
+        # NO WEIGHT SLAB ROUNDING - use actual weight directly
+        return total_chargeable_weight(inp.items, 4000.0, 20.0)
 
     def base_rate_per_kg(self, from_zone: str, to_zone: str, cw: float, reverse_pickup: bool = False) -> float:
         band = to_zone or "C"
@@ -670,29 +674,41 @@ class Safexpress(BaseCarrier):
 
     def calc_surcharges(self, base_freight: float, inp: QuoteInput, from_pin: PincodeRecord, to_pin: PincodeRecord, pins: Optional[PincodeDB] = None) -> Dict[str, float]:
         s: Dict[str, float] = {"waybill": 150.0}
-        # Value Surcharge: Fixed ₹100 (insurance/valuation charge)
-        s["value_surcharge"] = 100.0
-        # Reverse pickup extra charge - use total chargeable weight
-        if inp.reverse_pickup:
-            cw = self.chargeable_weight(inp)
-            if cw < 100:
-                s["reverse_pickup"] = 200.0
-            else:
-                s["reverse_pickup"] = 300.0
-        # UCC cities surcharge
+        
+        # Value Surcharge: ₹100 for each ₹50,000 slab or part thereof per MOU
+        # If insured_value is provided, calculate based on slabs. Otherwise default to ₹100
+        if inp.insured_value and inp.insured_value > 0:
+            import math
+            value_slabs = math.ceil(inp.insured_value / 50000.0)
+            s["value_surcharge"] = 100.0 * value_slabs
+        else:
+            s["value_surcharge"] = 100.0
+        
+        # UCC cities surcharge: ₹100 per MOU for Delhi, Mumbai, Pune, etc.
         if (to_pin.city or "").strip().lower() in self.UCC_CITIES:
             s["ucc"] = 100.0
-        # ODA charge
+        
+        # SafExtension: Rs 1500/waybill OR Rs 3/kg, whichever is higher (per MOU)
+        # Treat as ODA charge from whitelist
         safex_is_oda = to_pin.safexpress_is_oda
         if safex_is_oda is None:
             safex_is_oda = True  # not in whitelist => treat as ODA
         if safex_is_oda:
-            s["oda"] = 1500.0
-        # State per-kg surcharge flat
+            cw = self.chargeable_weight(inp)
+            s["safe_extension"] = max(1500.0, 3.0 * cw)
+        
+        # SDS Charge (Special Delivery Service): Rs 1500/waybill OR Rs 5/kg, whichever is higher (per MOU)
+        # Only charge if SDS flag is set
+        if inp.sds:
+            cw = self.chargeable_weight(inp)
+            s["sds"] = max(1500.0, 5.0 * cw)
+        
+        # State per-kg surcharge per MOU
         state_key = (to_pin.state or "").strip().lower()
         perkg = self.STATE_SURCHARGE_PER_KG.get(state_key)
         if perkg:
-            s["state_surcharge"] = perkg * self.chargeable_weight(inp)
+            s["state_surcharge"] = _round_money(perkg * self.chargeable_weight(inp))
+        
         # NOTE: Fuel surcharge is calculated in calculate_quote() AFTER OSC is determined
         return {k: _round_money(v) for k, v in s.items()}
 
@@ -705,7 +721,7 @@ class Safexpress(BaseCarrier):
 
         cw = self.chargeable_weight(inp)
         rate = self.base_rate_per_kg(regions.get("from", ""), band, cw, reverse_pickup=inp.reverse_pickup)
-        vol_wt = sum(_volumetric(4720.0, item.length_cm, item.breadth_cm, item.height_cm) for item in inp.items)
+        vol_wt = sum(_volumetric(4000.0, item.length_cm, item.breadth_cm, item.height_cm) for item in inp.items)
         actual_wt = sum(item.weight_kg for item in inp.items)
         
         # Safexpress: Calculate base freight WITHOUT minimum first
