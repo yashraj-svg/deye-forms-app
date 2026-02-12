@@ -31,6 +31,11 @@ class QuoteInput:
     days_in_transit_storage: int = 0
     gst_mode: str = "12pct"
     sds: bool = False  # Special Delivery Service (Safexpress specific, per MOU)
+    # Bigship service type options (CFT, LTL, MPS)
+    bigship_service_type: str = "LTL"  # Default to LTL if not specified
+    bigship_cft: bool = False  # CFT - Cool Food Transport
+    bigship_ltl: bool = False  # LTL - Less Than Truckload
+    bigship_mps: bool = False  # MPS - Mega Parcel Service
     # Optional: for backward compatibility, you can add these fields and ignore them
 
 
@@ -913,6 +918,8 @@ def get_all_partner_quotes(inp: QuoteInput, base_dir: Optional[str] = None, sett
     """
     Load pincode master, run quotes across partners, return sorted by total cost.
     """
+    from .bigship_calculator import Bigship  # Import here to avoid circular dependency
+    
     if base_dir is None:
         import pathlib
         base_dir = str(pathlib.Path(__file__).resolve().parents[2])
@@ -923,9 +930,8 @@ def get_all_partner_quotes(inp: QuoteInput, base_dir: Optional[str] = None, sett
         BluedartSurface(settings, base_dir=base_dir),
         GlobalCourierCargo(settings, base_dir=base_dir),
         ShreeAnjaniCourier(settings, base_dir=base_dir),
+        Bigship(settings, base_dir=base_dir),
     ]
-
-    results = [c.calculate_quote(inp, pins) for c in carriers]
     # Mark not deliverable totals as infinity for sorting purpose
     def sort_key(r: QuoteResult):
         return (0 if r.deliverable else 1, r.total_after_gst or float("inf"))
