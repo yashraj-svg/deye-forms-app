@@ -22,7 +22,7 @@
 <body>
   <header>
     <h2>Multi-Partner Freight Calculator</h2>
-    <p class="muted">Compare quotes across Safexpress, Bluedart (Surface), Global Courier Cargo, and Shree Anjani.</p>
+    <p class="muted">Compare quotes across Safexpress, Bluedart (Surface), Global Courier Cargo, Shree Anjani, and Bigship.</p>
   </header>
 
   {% if error %}
@@ -78,6 +78,14 @@
           <div class="col-4">{{ form.insured_value.label_tag }}{{ form.insured_value }}</div>
           <div class="col-4">{{ form.days_in_transit_storage.label_tag }}{{ form.days_in_transit_storage }}</div>
         </div>
+        
+        <h5 style="margin-top: 1.5rem; margin-bottom: 0.5rem;">Bigship Service Type</h5>
+        <div style="background: #f0f9ff; border: 1px solid #0ea5e9; padding: 12px; border-radius: 6px; margin-bottom: 1rem;">
+          {{ form.bigship_service_type }}
+          <small style="display: block; margin-top: 8px; color: #0369a1;">
+            <strong>LTL:</strong> Part/Mixed Load (Standard) | <strong>CFT:</strong> Perishable/Refrigerated | <strong>MPS:</strong> Heavy Parcels
+          </small>
+        </div>
         <br>
         <button type="submit">Calculate</button>
         <a href="/" role="button" class="secondary">Back</a>
@@ -113,6 +121,7 @@
         <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
           <h5 style="margin: 0 0 12px 0; color: #1f2937;">
             {{ r.partner_name }} 
+            {% if r.rate_details.service_type %}<span class="badge" style="background: #dbeafe; color: #1e40af;">{{ r.rate_details.service_type }}</span>{% endif %}
             {% if not r.deliverable %}<span class="badge" style="background: #fee2e2; color: #991b1b;">Not Deliverable</span>{% endif %}
           </h5>
           

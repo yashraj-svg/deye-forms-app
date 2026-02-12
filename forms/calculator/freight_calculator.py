@@ -932,6 +932,22 @@ def get_all_partner_quotes(inp: QuoteInput, base_dir: Optional[str] = None, sett
         ShreeAnjaniCourier(settings, base_dir=base_dir),
         Bigship(settings, base_dir=base_dir),
     ]
+    
+    # Get quotes from all carriers
+    results = []
+    for carrier in carriers:
+        try:
+            quote = carrier.calculate_quote(inp, pins)
+            results.append(quote)
+        except Exception as e:
+            print(f"Error getting quote from {carrier.name}: {e}")
+            # Create a not-deliverable result
+            results.append(QuoteResult(
+                partner_name=carrier.name,
+                deliverable=False,
+                reason=str(e)
+            ))
+    
     # Mark not deliverable totals as infinity for sorting purpose
     def sort_key(r: QuoteResult):
         return (0 if r.deliverable else 1, r.total_after_gst or float("inf"))

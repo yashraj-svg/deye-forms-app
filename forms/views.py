@@ -1178,6 +1178,7 @@ def freight_calculator(request):
                 insured_value=data.get('insured_value') or 0.0,
                 days_in_transit_storage=data.get('days_in_transit_storage') or 0,
                 gst_mode=data.get('gst_mode', '12pct'),
+                bigship_service_type=data.get('bigship_service_type', 'LTL'),
             )
             try:
                 # Check if pincodes exist in database

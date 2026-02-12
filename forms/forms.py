@@ -393,6 +393,20 @@ class FreightCalculatorForm(forms.Form):
     days_in_transit_storage = forms.IntegerField(label='Storage Days (for demurrage)', required=False, min_value=0, initial=0)
     pieces_max_weight_kg = forms.FloatField(label='Heaviest Piece Weight (kg)', required=False, min_value=0)
     longest_side_cm = forms.FloatField(label='Longest Side (cm)', required=False, min_value=0)
+    
+    # Bigship service type selection
+    BIGSHIP_SERVICE_CHOICES = [
+        ('LTL', 'LTL (Part Load) - Standard'),
+        ('CFT', 'CFT (Cool Food) - Perishable/Refrigerated'),
+        ('MPS', 'MPS (Mega Parcel) - Heavy Parcels'),
+    ]
+    bigship_service_type = forms.ChoiceField(
+        label='Bigship Service Type',
+        choices=BIGSHIP_SERVICE_CHOICES,
+        initial='LTL',
+        required=False,
+        widget=forms.RadioSelect
+    )
 
     def clean_from_pincode(self):
         p = self.cleaned_data['from_pincode']
