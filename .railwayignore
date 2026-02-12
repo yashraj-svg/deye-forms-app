@@ -18,5 +18,7 @@ build/
 .pytest_cache/
 htmlcov/
 .coverage
+# Exclude Excel files EXCEPT Bigship pincode database
 *.xlsx
+!Bigship Serviceable Pincode.xlsx
 check_current_stock.py
