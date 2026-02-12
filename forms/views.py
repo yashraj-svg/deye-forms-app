@@ -3329,6 +3329,80 @@ def export_team_data(request, form_type, format):
 
     else:
         return HttpResponse("Invalid format. Use 'csv' or 'xlsx'.", status=400)
+
+
+# Diagnostic endpoint for Bigship calculator debugging
+def bigship_diagnostic(request):
+    """Diagnostic endpoint to test Bigship Excel file loading and calculator"""
+    from django.http import JsonResponse
+    import pathlib
+    from forms.calculator.data_loader import load_pincode_master
+    from forms.calculator.bigship_calculator import Bigship, BigshipPincodeDB
+    from forms.calculator.config import Settings
+    
+    diagnostics = {
+        "status": "ok",
+        "errors": [],
+        "warnings": [],
+        "info": {}
+    }
+    
+    try:
+        # Get base directory
+        base_dir = str(pathlib.Path(__file__).resolve().parents[2])
+        diagnostics["info"]["base_dir"] = base_dir
+        
+        # Check if Excel file exists
+        excel_file = pathlib.Path(base_dir) / "Bigship Serviceable Pincode.xlsx"
+        diagnostics["info"]["excel_file_path"] = str(excel_file)
+        diagnostics["info"]["excel_file_exists"] = excel_file.exists()
+        
+        if not excel_file.exists():
+            diagnostics["errors"].append(f"[CRITICAL] Excel file not found at {excel_file}")
+            diagnostics["status"] = "error"
+        else:
+            # Try to load the pincode database
+            try:
+                bigship_pins = BigshipPincodeDB(str(excel_file))
+                diagnostics["info"]["serviceable_pincodes_count"] = len(bigship_pins._serviceable)
+                diagnostics["info"]["oda_pincodes_count"] = len(bigship_pins._oda_pincodes)
+                
+                if len(bigship_pins._serviceable) == 0:
+                    diagnostics["errors"].append("[CRITICAL] No serviceable pincodes loaded from Excel file")
+                    diagnostics["status"] = "error"
+                else:
+                    diagnostics["info"]["sample_pincodes"] = list(bigship_pins._serviceable)[:5]
+            except Exception as e:
+                diagnostics["errors"].append(f"[CRITICAL] Failed to load Bigship pincode database: {str(e)}")
+                diagnostics["status"] = "error"
+                import traceback
+                diagnostics["errors"].append(traceback.format_exc())
+        
+        # Try to initialize Bigship calculator
+        try:
+            settings = Settings()
+            bigship = Bigship(settings, base_dir=base_dir)
+            diagnostics["info"]["bigship_initializer"] = "success"
+        except Exception as e:
+            diagnostics["errors"].append(f"[CRITICAL] Failed to initialize Bigship calculator: {str(e)}")
+            diagnostics["status"] = "error"
+            import traceback
+            diagnostics["errors"].append(traceback.format_exc())
+        
+        # List all files in project root
+        project_root = pathlib.Path(base_dir)
+        xlsx_files = sorted([f.name for f in project_root.glob("*.xlsx")])
+        diagnostics["info"]["xlsx_files_in_project_root"] = xlsx_files
+        
+    except Exception as e:
+        diagnostics["status"] = "error"
+        diagnostics["errors"].append(f"[CRITICAL] Unexpected error: {str(e)}")
+        import traceback
+        diagnostics["errors"].append(traceback.format_exc())
+    
+    return JsonResponse(diagnostics, indent=2)
+
+
 # Import login_required decorator
 from django.contrib.auth.decorators import login_required
 
