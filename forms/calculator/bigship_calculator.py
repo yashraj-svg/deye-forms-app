@@ -2,6 +2,9 @@
 """
 Bigship Calculator - Support for CFT, LTL, MPS service types
 Franchise partner rates - effective 1st Jan 2026
+
+NOTE: This calculator queries the PincodeData model for ODA status.
+All India pincodes are serviceable for Bigship. ODA charges apply only for ODA pincodes.
 """
 
 from pathlib import Path
@@ -10,84 +13,73 @@ from forms.calculator.data_loader import PincodeRecord, PincodeDB
 from forms.calculator.freight_calculator import (
     BaseCarrier, QuoteInput, QuoteResult, ShipmentItem, Settings, _round_money
 )
-import openpyxl
 
 
 class BigshipPincodeDB:
-    """Load and manage Bigship serviceable pincodes"""
+    """
+    Query Bigship ODA pincodes from Django database.
+    All India pincodes are serviceable for Bigship.
+    """
     
-    def __init__(self, excel_path: str = "Bigship Serviceable Pincode.xlsx"):
-        self._serviceable = set()
-        self._oda_pincodes = set()
-        self._pincode_details: Dict[str, dict] = {}
-        self._load_from_excel(excel_path)
+    def __init__(self):
+        print("[Bigship] Initializing with database-backed pincode lookup...")
+        self._db_available = self._check_database()
     
-    def _load_from_excel(self, excel_path):
-        """Load serviceable pincodes from Excel file"""
+    def _check_database(self) -> bool:
+        """Check if Django database is available"""
         try:
-            # Convert to Path object and resolve
-            if isinstance(excel_path, str):
-                excel_path = Path(excel_path)
-            excel_path = excel_path.resolve()
-            
-            print(f"[Bigship] Loading pincodes from: {excel_path}")
-            print(f"[Bigship] File exists: {excel_path.exists()}")
-            print(f"[Bigship] Current working directory: {Path.cwd()}")
-            
-            # List files in project root for debugging
-            project_root = excel_path.parent
-            print(f"[Bigship] Project root: {project_root}")
-            if project_root.exists():
-                excel_files = list(project_root.glob('*.xlsx'))
-                print(f"[Bigship] Excel files in project root: {[f.name for f in excel_files]}")
-                all_files = list(project_root.glob('*'))
-                print(f"[Bigship] Total files in project root: {len(all_files)}")
-            
-            if not excel_path.exists():
-                print(f"[Bigship] ERROR: File not found at {excel_path}")
-                print(f"[Bigship] This will result in ALL pincodes being marked as non-serviceable")
-                return
-            
-            wb = openpyxl.load_workbook(str(excel_path))
-            ws = wb.active
-            
-            loaded_count = 0
-            for row_idx in range(2, ws.max_row + 1):
-                pincode = str(ws.cell(row_idx, 1).value or "").strip()
-                city = str(ws.cell(row_idx, 2).value or "").strip()
-                state = str(ws.cell(row_idx, 3).value or "").strip()
-                is_oda = ws.cell(row_idx, 4).value
-                
-                if pincode:
-                    self._serviceable.add(pincode)
-                    self._pincode_details[pincode] = {
-                        "city": city,
-                        "state": state,
-                        "is_oda": is_oda
-                    }
-                    
-                    if is_oda or str(is_oda).lower() in ["true", "yes", "y", "1"]:
-                        self._oda_pincodes.add(pincode)
-                    loaded_count += 1
-            
-            print(f"[Bigship] Successfully loaded {loaded_count} serviceable pincodes")
-            print(f"[Bigship] ODA pincodes: {len(self._oda_pincodes)}")
+            from django.apps import apps
+            if not apps.ready:
+                print("[Bigship] Django not ready, database unavailable")
+                return False
+            from forms.models import PincodeData
+            # Try a simple query to verify database connection
+            count = PincodeData.objects.filter(bigship_is_oda=True).count()
+            print(f"[Bigship] Database available, found {count} ODA pincodes")
+            return True
         except Exception as e:
-            print(f"[Bigship] ERROR loading pincodes: {e}")
-            import traceback
-            traceback.print_exc()
+            print(f"[Bigship] Database unavailable: {e}")
+            return False
     
     def is_serviceable(self, pincode: str) -> bool:
-        """Check if pincode is serviceable by Bigship"""
-        return str(pincode).strip() in self._serviceable
+        """
+        Check if pincode is serviceable by Bigship.
+        ALL India pincodes are serviceable.
+        """
+        # Bigship services all India pincodes
+        return True
     
     def is_oda(self, pincode: str) -> bool:
-        """Check if pincode is ODA (Out of Delivery Area)"""
-        return str(pincode).strip() in self._oda_pincodes
+        """Check if pincode is ODA (Out of Delivery Area) from database"""
+        if not self._db_available:
+            return False  # Default to non-ODA if database is unavailable
+        
+        try:
+            from forms.models import PincodeData
+            record = PincodeData.objects.filter(
+                pincode=str(pincode).strip(),
+                bigship_is_oda=True
+            ).exists()
+            return record
+        except Exception as e:
+            print(f"[Bigship] Error querying ODA status for {pincode}: {e}")
+            return False
     
     def get_details(self, pincode: str) -> Optional[dict]:
-        """Get pincode details (city, state, etc.)"""
-        return self._pincode_details.get(str(pincode).strip())
+        """Get pincode details from database"""
+        if not self._db_available:
+            return None
+        
+        try:
+            from forms.models import PincodeData
+            rec = PincodeData.objects.get(pincode=str(pincode).strip())
+            return {
+                "city": rec.city,
+                "state": rec.state,
+                "is_oda": rec.bigship_is_oda
+            }
+        except Exception:
+            return None
 
 
 class Bigship(BaseCarrier):
@@ -138,28 +130,19 @@ class Bigship(BaseCarrier):
     FUEL_SURCHARGE_PCT = 0.12  # 12% fuel surcharge
     GST_RATE = 0.18  # 18% GST
     
-    # ODA charges
-    ODA_CHARGE = 150.0  # Flat ODA charge
+    # ODA charges - minimum 600 per user requirement
+    ODA_CHARGE = 600.0  # Flat ODA charge minimum
     
     def __init__(self, settings: Settings, base_dir: Optional[str] = None):
         super().__init__(settings, base_dir)
         
-        # Determine base directory
-        if base_dir:
-            base_path = Path(base_dir)
-        else:
-            # Go up 2 levels from this file (forms/calculator/bigship_calculator.py -> project root)
-            base_path = Path(__file__).resolve().parents[2]
-        
-        excel_file = base_path / "Bigship Serviceable Pincode.xlsx"
         print(f"[Bigship] ==================== INITIALIZATION DEBUG ====================")
-        print(f"[Bigship] Initializing with base_dir: {base_path}")
-        print(f"[Bigship] Looking for Excel file at: {excel_file}")
-        print(f"[Bigship] __file__ path: {Path(__file__).resolve()}")
-        print(f"[Bigship] Excel file exists: {excel_file.exists()}")
-        print(f"[Bigship] =============================================================")
+        print(f"[Bigship] Initializing Bigship calculator with database-backed ODA lookup")
         
-        self.bigship_pins = BigshipPincodeDB(excel_file)
+        # Initialize database-backed pincode DB (no file required)
+        self.bigship_pins = BigshipPincodeDB()
+        
+        print(f"[Bigship] =============================================================")
     
     def resolve_regions(self, from_pin: PincodeRecord, to_pin: PincodeRecord) -> Dict[str, str]:
         """For Bigship, we don't use zones - just check serviceability"""
@@ -205,13 +188,7 @@ class Bigship(BaseCarrier):
         # Get service type from input (CFT, LTL, or MPS)
         service_type = getattr(inp, 'bigship_service_type', 'LTL')
         
-        # Check serviceability
-        if not self.bigship_pins.is_serviceable(inp.to_pincode):
-            return QuoteResult(
-                partner_name=self.name,
-                deliverable=False,
-                reason=f"Bigship does not service pincode {inp.to_pincode}"
-            )
+        # All India pincodes are serviceable for Bigship (no serviceability check needed)
         
         # Calculate chargeable weight
         cw = self.chargeable_weight(inp, volumetric_divisor=5000.0, min_weight=5.0)
@@ -224,6 +201,7 @@ class Bigship(BaseCarrier):
         
         # Check for ODA (only for LTL and CFT, NOT for MPS)
         # MPS service does not include ODA locations and does not charge ODA
+        # ODA minimum charge: 600 as per user requirement
         if service_type in ['LTL', 'CFT'] and self.bigship_pins.is_oda(inp.to_pincode):
             surcharges["oda"] = self.ODA_CHARGE
         

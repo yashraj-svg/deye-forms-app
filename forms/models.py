@@ -380,6 +380,9 @@ class PincodeData(models.Model):
     # Safexpress
     safexpress_is_oda = models.BooleanField(null=True, blank=True)  # NULL=not in whitelist
     
+    # Bigship
+    bigship_is_oda = models.BooleanField(null=True, blank=True)  # TRUE=ODA, FALSE/NULL=non-ODA
+    
     # Bluedart
     bluedart_region = models.CharField(max_length=10, blank=True, null=True)
     
