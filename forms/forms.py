@@ -396,9 +396,9 @@ class FreightCalculatorForm(forms.Form):
     
     # Bigship service type selection
     BIGSHIP_SERVICE_CHOICES = [
-        ('LTL', 'LTL (Part Load) - Standard'),
-        ('CFT', 'CFT (Cool Food) - Perishable/Refrigerated'),
-        ('MPS', 'MPS (Mega Parcel) - Heavy Parcels'),
+        ('CFT', 'CFT (Courier Freight) - Light Weight Shipments'),
+        ('LTL', 'LTL (Less Than Truckload) - Heavy Shipments'),
+        ('MPS', 'MPS (Metro Parcel) - Metro Areas Only (No ODA)'),
     ]
     bigship_service_type = forms.ChoiceField(
         label='Bigship Service Type',

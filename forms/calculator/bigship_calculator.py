@@ -67,9 +67,9 @@ class Bigship(BaseCarrier):
     
     # Service types
     SERVICE_TYPES = {
-        "CFT": "CFT - Cool Food Transport (Perishable)",
-        "LTL": "LTL - Less Than Truckload (Part Load)",
-        "MPS": "MPS - Mega Parcel Service (Heavy Parcels)"
+        "CFT": "CFT - Courier Freight Transport (Light Weight)",
+        "LTL": "LTL - Less Than Truckload (Heavy Shipments)",
+        "MPS": "MPS - Metro Parcel Service (Non-ODA Only)"
     }
     
     # Franchise Partner Rates - CFT (Cool Food Transport)
@@ -178,8 +178,9 @@ class Bigship(BaseCarrier):
         # Calculate surcharges
         surcharges: Dict[str, float] = {}
         
-        # Check for ODA
-        if self.bigship_pins.is_oda(inp.to_pincode):
+        # Check for ODA (only for LTL and CFT, NOT for MPS)
+        # MPS service does not include ODA locations and does not charge ODA
+        if service_type in ['LTL', 'CFT'] and self.bigship_pins.is_oda(inp.to_pincode):
             surcharges["oda"] = self.ODA_CHARGE
         
         # Fuel surcharge
