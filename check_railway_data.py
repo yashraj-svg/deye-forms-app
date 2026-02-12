@@ -7,8 +7,7 @@ import sys
 sys.path.insert(0, '/app')
 
 from forms.calculator.data_loader import load_pincode_master
-from forms.calculator.freight_calculator import GlobalCourierCargo
-from forms.calculator.config import QuoteInput
+from forms.calculator.freight_calculator import GlobalCourierCargo, QuoteInput
 
 print("=" * 60)
 print("CHECKING RAILWAY PINCODE DATA")
