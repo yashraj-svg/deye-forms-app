@@ -32,10 +32,20 @@ class BigshipPincodeDB:
             
             print(f"[Bigship] Loading pincodes from: {excel_path}")
             print(f"[Bigship] File exists: {excel_path.exists()}")
+            print(f"[Bigship] Current working directory: {Path.cwd()}")
+            
+            # List files in project root for debugging
+            project_root = excel_path.parent
+            print(f"[Bigship] Project root: {project_root}")
+            if project_root.exists():
+                excel_files = list(project_root.glob('*.xlsx'))
+                print(f"[Bigship] Excel files in project root: {[f.name for f in excel_files]}")
+                all_files = list(project_root.glob('*'))
+                print(f"[Bigship] Total files in project root: {len(all_files)}")
             
             if not excel_path.exists():
                 print(f"[Bigship] ERROR: File not found at {excel_path}")
-                print(f"[Bigship] Current working directory: {Path.cwd()}")
+                print(f"[Bigship] This will result in ALL pincodes being marked as non-serviceable")
                 return
             
             wb = openpyxl.load_workbook(str(excel_path))
@@ -142,8 +152,12 @@ class Bigship(BaseCarrier):
             base_path = Path(__file__).resolve().parents[2]
         
         excel_file = base_path / "Bigship Serviceable Pincode.xlsx"
+        print(f"[Bigship] ==================== INITIALIZATION DEBUG ====================")
         print(f"[Bigship] Initializing with base_dir: {base_path}")
         print(f"[Bigship] Looking for Excel file at: {excel_file}")
+        print(f"[Bigship] __file__ path: {Path(__file__).resolve()}")
+        print(f"[Bigship] Excel file exists: {excel_file.exists()}")
+        print(f"[Bigship] =============================================================")
         
         self.bigship_pins = BigshipPincodeDB(excel_file)
     
