@@ -16,38 +16,31 @@ def stock_manager_required(view_func):
         return view_func(request, *args, **kwargs)
     return _wrapped_view
 
-# Helper function to read current stock from Excel file
+# Helper function to read current stock from database
 def get_current_stock_data():
-    """Read current stock data from Current stock (1).xlsx file"""
+    """Read current stock data from StockItem database"""
     try:
-        stock_file = Path(__file__).parent.parent / 'Current stock (1).xlsx'
-        if not stock_file.exists():
-            return None, None, None
+        from .models import StockItem
         
-        wb = openpyxl.load_workbook(str(stock_file), data_only=True)
-        ws = wb['Current Stock']
+        # Get all stock items ordered by component type and serial number
+        stock_items_qs = StockItem.objects.all().order_by('component_type', 'pcba_sn_new')
         
         stock_items = []
         total_balance = 0
         
-        for row in ws.iter_rows(min_row=2, values_only=True):
-            if row and row[1] is not None:  # Check column B (serial number)
-                try:
-                    item = {
-                        'serial_number': row[1],        # Column B
-                        'component': row[2] if len(row) > 2 else '',      # Column C
-                        'description': row[3] if len(row) > 3 else '',    # Column D
-                        'balance': int(row[4]) if len(row) > 4 and row[4] else 0  # Column E
-                    }
-                    stock_items.append(item)
-                    total_balance += item['balance']
-                except (ValueError, IndexError, TypeError):
-                    continue
+        for item in stock_items_qs:
+            stock_data = {
+                'serial_number': item.pcba_sn_new or 'N/A',
+                'component': item.component_type or 'Unknown',
+                'description': item.specification or '',
+                'balance': int(item.quantity) if item.quantity else 0
+            }
+            stock_items.append(stock_data)
+            total_balance += stock_data['balance']
         
-        wb.close()
         return stock_items, len(stock_items), total_balance
     except Exception as e:
-        print(f"Error reading stock file: {e}")
+        print(f"Error reading stock data from database: {e}")
         return None, None, None
 
 # Update New Shipments view (same interface as send_stock)
