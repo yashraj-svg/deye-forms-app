@@ -131,14 +131,15 @@ class Bigship(BaseCarrier):
         # South One (S1)
         "Karnataka": "S1",
         "Telangana": "S1",
+        "Andhra Pradesh": "S1",  # AP is in S1 per zone definition
+        "Tamil Nadu": "S1",       # TN is in S1 per zone definition
         # South Two (S2)
-        "Andhra Pradesh": "S2",
-        "Tamil Nadu": "S2",
+        "Kerala": "S2",
+        # West Two (W2)
+        "Goa": "W2",
         # Central
         "Madhya Pradesh": "Central",
         "Chhattisgarh": "Central",
-        "Goa": "Central",
-        "Kerala": "Central",
     }
     
     # ============ ZONE MAPPING FOR LTL (16 ZONES) ============

@@ -372,7 +372,9 @@ function populateQuickRates() {
   resultCards.forEach((card, cardIdx) => {
     const h5 = card.querySelector('h5');
     const partnerName = h5 ? h5.textContent.trim().split('\n')[0] : 'Unknown';
-    const isNotDeliverable = card.querySelector('.badge') !== null;
+    // FIX: Check ONLY for the red "Not Deliverable" badge, not just any badge
+    const notDelBadge = Array.from(card.querySelectorAll('.badge')).find(b => b.textContent.includes('Not Deliverable'));
+    const isNotDeliverable = notDelBadge !== null && notDelBadge !== undefined;
     
     const tds = Array.from(card.querySelectorAll('td'));
     console.log('[RATES DEBUG] Card', cardIdx, '- Partner:', partnerName, '- TDs found:', tds.length);
