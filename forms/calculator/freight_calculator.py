@@ -241,7 +241,55 @@ class BaseCarrier:
 class GlobalCourierCargo(BaseCarrier):
     name = "Global Courier Cargo"
     
-    # Zone definitions from new rate card
+    # State-to-Zone mapping
+    STATE_TO_GLOBAL_CARGO_ZONE = {
+        "chandigarh": "AMB",
+        "himachal pradesh": "AMB",
+        "jammu & kashmir": "AMB",
+        "jammu and kashmir": "AMB",
+        "punjab": "AMB",
+        "haryana": "AMB",
+        "uttarakhand": "AMB",
+        "uttar pradesh": "AMB",  # Some UP areas
+        "up": "AMB",
+        "rajasthan": "JAI",
+        "delhi": "DEL",
+        "ncr": "DEL",
+        "agra": "DEL",
+        "aligarh": "DEL",
+        "moradabad": "DEL",
+        "dadra & nagar haveli": "AMD",
+        "dadra and nagar haveli": "AMD",
+        "daman & diu": "AMD",
+        "daman and diu": "AMD",
+        "gujarat": "AMD",
+        "goa": "PNQ",
+        "maharashtra": "BOM",  # For Nashik/Mumbai suburbs
+        "karnataka": "BLR",
+        "andhra pradesh": "HYD",
+        "telangana": "HYD",
+        "tamil nadu": "MAA",
+        "puducherry": "MAA",
+        "kerala": "CJB",
+        "odisha": "BBI",
+        "west bengal": "CCU",
+        "jharkhand": "CCU",
+        "bihar": "PAT",
+        "siligrim": "NJP",
+        "sikkim": "NJP",
+        # Special case mappings for specific cities/zones
+        "pune": "PNQ",
+        "mumbai": "BOM",
+        "nagpur": "NAG",
+        "indore": "IDR",
+        "coimbatore": "CJB",
+        "lucknow": "LOK",
+        "patna": "PAT",
+        "hyderabad": "HYD",
+        "bangalore": "BLR",
+    }
+    
+    # Zone definitions from updated rate card (18 zones)
     ZONE_MAPPING = {
         "AMB": "Ambala",      # Chandigarh, Himachal Pradesh, J&K, Punjab, UP West, Uttarakhand
         "JAI": "Jaipur",      # Rajasthan
@@ -263,32 +311,47 @@ class GlobalCourierCargo(BaseCarrier):
         "GAU": "Guwahati",    # North East
     }
     
-    # Rate matrix: ZONE_RATES[from_zone][to_zone] = rate per kg
+    # Rate matrix: ZONE_RATES[from_zone][to_zone] = rate per kg (UPDATED 14-02-2026)
     ZONE_RATES = {
         "AMB": {"AMB": 12.0, "JAI": 13.0, "DEL": 12.0, "AMD": 14.0, "PNQ": 14.0, "BOM": 14.0, "NAG": 13.0, "IDR": 13.0, "BLR": 14.0, "HYD": 14.0, "MAA": 14.0, "CJB": 14.0, "BBI": 17.0, "LOK": 14.0, "PAT": 18.0, "NJP": 35.0, "CCU": 17.0, "GAU": 17.0},
         "JAI": {"AMB": 13.0, "JAI": 10.0, "DEL": 12.0, "AMD": 12.0, "PNQ": 14.0, "BOM": 13.0, "NAG": 13.0, "IDR": 14.0, "BLR": 13.0, "HYD": 13.0, "MAA": 14.0, "CJB": 14.0, "BBI": 15.0, "LOK": 14.0, "PAT": 18.0, "NJP": 36.0, "CCU": 16.0, "GAU": 18.0},
-        "DEL": {"AMB": 12.0, "JAI": 12.0, "DEL": 13.0, "AMD": 14.0, "PNQ": 13.0, "BOM": 13.0, "NAG": 13.0, "IDR": 14.0, "BLR": 14.0, "HYD": 14.0, "MAA": 14.0, "CJB": 14.0, "BBI": 16.0, "LOK": 13.0, "PAT": 16.0, "NJP": 34.0, "CCU": 16.0, "GAU": 17.0},
+        "DEL": {"AMB": 12.0, "JAI": 12.0, "DEL": 10.0, "AMD": 14.0, "PNQ": 15.0, "BOM": 15.0, "NAG": 13.0, "IDR": 14.0, "BLR": 14.0, "HYD": 14.0, "MAA": 14.0, "CJB": 14.0, "BBI": 16.0, "LOK": 12.0, "PAT": 16.0, "NJP": 34.0, "CCU": 16.0, "GAU": 17.0},
         "AMD": {"AMB": 13.0, "JAI": 13.0, "DEL": 13.0, "AMD": 10.0, "PNQ": 13.0, "BOM": 12.0, "NAG": 12.0, "IDR": 13.0, "BLR": 14.0, "HYD": 14.0, "MAA": 14.0, "CJB": 13.0, "BBI": 16.0, "LOK": 13.0, "PAT": 18.0, "NJP": 34.0, "CCU": 16.0, "GAU": 16.0},
-        "PNQ": {"AMB": 13.0, "JAI": 13.0, "DEL": 13.0, "AMD": 13.0, "PNQ": 10.0, "BOM": 10.0, "NAG": 12.0, "IDR": 13.0, "BLR": 13.0, "HYD": 13.0, "MAA": 14.0, "CJB": 15.0, "BBI": 16.0, "LOK": 13.0, "PAT": 18.0, "NJP": 35.0, "CCU": 17.0, "GAU": 17.0},
+        "PNQ": {"AMB": 13.0, "JAI": 13.0, "DEL": 13.0, "AMD": 13.0, "PNQ": 10.0, "BOM": 10.0, "NAG": 12.0, "IDR": 13.0, "BLR": 13.0, "HYD": 13.0, "MAA": 14.0, "CJB": 15.0, "BBI": 16.0, "LOK": 14.0, "PAT": 18.0, "NJP": 35.0, "CCU": 17.0, "GAU": 17.0},
         "BOM": {"AMB": 13.0, "JAI": 14.0, "DEL": 13.0, "AMD": 12.0, "PNQ": 10.0, "BOM": 10.0, "NAG": 10.0, "IDR": 13.0, "BLR": 13.0, "HYD": 13.0, "MAA": 14.0, "CJB": 14.0, "BBI": 16.0, "LOK": 13.0, "PAT": 18.0, "NJP": 35.0, "CCU": 17.0, "GAU": 17.0},
         "NAG": {"AMB": 12.0, "JAI": 12.0, "DEL": 13.0, "AMD": 12.0, "PNQ": 10.0, "BOM": 10.0, "NAG": 10.0, "IDR": 12.0, "BLR": 14.0, "HYD": 14.0, "MAA": 14.0, "CJB": 14.0, "BBI": 15.0, "LOK": 14.0, "PAT": 16.0, "NJP": 32.0, "CCU": 16.0, "GAU": 16.0},
-        "IDR": {"AMB": 12.0, "JAI": 13.0, "DEL": 13.0, "AMD": 13.0, "PNQ": 13.0, "BOM": 13.0, "NAG": 12.0, "IDR": 10.0, "BLR": 13.0, "HYD": 13.0, "MAA": 13.0, "CJB": 14.0, "BBI": 15.0, "LOK": 14.0, "PAT": 16.0, "NJP": 35.0, "CCU": 17.0, "GAU": 16.0},
-        "BLR": {"AMB": 14.0, "JAI": 14.0, "DEL": 15.0, "AMD": 13.0, "PNQ": 13.0, "BOM": 13.0, "NAG": 13.0, "IDR": 14.0, "BLR": 14.0, "HYD": 13.0, "MAA": 14.0, "CJB": 16.0, "BBI": 14.0, "LOK": 15.0, "PAT": 18.0, "NJP": 32.0, "CCU": 17.0, "GAU": 17.0},
-        "HYD": {"AMB": 14.0, "JAI": 14.0, "DEL": 13.0, "AMD": 13.0, "PNQ": 13.0, "BOM": 12.0, "NAG": 12.0, "IDR": 12.0, "BLR": 13.0, "HYD": 10.0, "MAA": 12.0, "CJB": 12.0, "BBI": 16.0, "LOK": 15.0, "PAT": 16.0, "NJP": 32.0, "CCU": 16.0, "GAU": 16.0},
-        "MAA": {"AMB": 14.0, "JAI": 14.0, "DEL": 13.0, "AMD": 13.0, "PNQ": 12.0, "BOM": 12.0, "NAG": 12.0, "IDR": 13.0, "BLR": 13.0, "HYD": 13.0, "MAA": 13.0, "CJB": 12.0, "BBI": 14.0, "LOK": 15.0, "PAT": 16.0, "NJP": 32.0, "CCU": 15.0, "GAU": 16.0},
-        "CJB": {"AMB": 15.0, "JAI": 15.0, "DEL": 16.0, "AMD": 16.0, "PNQ": 17.0, "BOM": 17.0, "NAG": 16.0, "IDR": 15.0, "BLR": 13.0, "HYD": 14.0, "MAA": 14.0, "CJB": 10.0, "BBI": 16.0, "LOK": 13.0, "PAT": 16.0, "NJP": 32.0, "CCU": 16.0, "GAU": 17.0},
+        "IDR": {"AMB": 12.0, "JAI": 13.0, "DEL": 13.0, "AMD": 13.0, "PNQ": 14.0, "BOM": 13.0, "NAG": 12.0, "IDR": 10.0, "BLR": 13.0, "HYD": 13.0, "MAA": 13.0, "CJB": 14.0, "BBI": 15.0, "LOK": 14.0, "PAT": 16.0, "NJP": 35.0, "CCU": 17.0, "GAU": 16.0},
+        "BLR": {"AMB": 14.0, "JAI": 14.0, "DEL": 15.0, "AMD": 13.0, "PNQ": 13.0, "BOM": 13.0, "NAG": 13.0, "IDR": 14.0, "BLR": 10.0, "HYD": 13.0, "MAA": 13.0, "CJB": 13.0, "BBI": 14.0, "LOK": 15.0, "PAT": 18.0, "NJP": 32.0, "CCU": 17.0, "GAU": 17.0},
+        "HYD": {"AMB": 14.0, "JAI": 14.0, "DEL": 13.0, "AMD": 13.0, "PNQ": 13.0, "BOM": 12.0, "NAG": 12.0, "IDR": 12.0, "BLR": 14.0, "HYD": 10.0, "MAA": 12.0, "CJB": 12.0, "BBI": 16.0, "LOK": 15.0, "PAT": 16.0, "NJP": 32.0, "CCU": 16.0, "GAU": 16.0},
+        "MAA": {"AMB": 14.0, "JAI": 14.0, "DEL": 13.0, "AMD": 13.0, "PNQ": 12.0, "BOM": 12.0, "NAG": 12.0, "IDR": 13.0, "BLR": 12.0, "HYD": 13.0, "MAA": 10.0, "CJB": 12.0, "BBI": 14.0, "LOK": 15.0, "PAT": 16.0, "NJP": 32.0, "CCU": 15.0, "GAU": 16.0},
+        "CJB": {"AMB": 15.0, "JAI": 15.0, "DEL": 16.0, "AMD": 16.0, "PNQ": 17.0, "BOM": 17.0, "NAG": 16.0, "IDR": 15.0, "BLR": 14.0, "HYD": 14.0, "MAA": 13.0, "CJB": 10.0, "BBI": 16.0, "LOK": 13.0, "PAT": 16.0, "NJP": 32.0, "CCU": 16.0, "GAU": 17.0},
         "BBI": {"AMB": 13.0, "JAI": 13.0, "DEL": 13.0, "AMD": 14.0, "PNQ": 15.0, "BOM": 15.0, "NAG": 15.0, "IDR": 14.0, "BLR": 15.0, "HYD": 15.0, "MAA": 15.0, "CJB": 15.0, "BBI": 10.0, "LOK": 13.0, "PAT": 15.0, "NJP": 35.0, "CCU": 15.0, "GAU": 15.0},
         "LOK": {"AMB": 12.0, "JAI": 13.0, "DEL": 12.0, "AMD": 14.0, "PNQ": 15.0, "BOM": 15.0, "NAG": 14.0, "IDR": 13.0, "BLR": 14.0, "HYD": 14.0, "MAA": 14.0, "CJB": 14.0, "BBI": 13.0, "LOK": 13.0, "PAT": 16.0, "NJP": 36.0, "CCU": 16.0, "GAU": 17.0},
-        "PAT": {"AMB": 17.0, "JAI": 17.0, "DEL": 13.0, "AMD": 15.0, "PNQ": 16.0, "BOM": 15.0, "NAG": 14.0, "IDR": 14.0, "BLR": 15.0, "HYD": 15.0, "MAA": 15.0, "CJB": 15.0, "BBI": 15.0, "LOK": 13.0, "PAT": 15.0, "NJP": 36.0, "CCU": 13.0, "GAU": 14.0},
+        "PAT": {"AMB": 17.0, "JAI": 17.0, "DEL": 15.0, "AMD": 15.0, "PNQ": 16.0, "BOM": 15.0, "NAG": 14.0, "IDR": 14.0, "BLR": 15.0, "HYD": 15.0, "MAA": 15.0, "CJB": 15.0, "BBI": 15.0, "LOK": 13.0, "PAT": 15.0, "NJP": 36.0, "CCU": 13.0, "GAU": 14.0},
         "NJP": {"AMB": 35.0, "JAI": 35.0, "DEL": 36.0, "AMD": 36.0, "PNQ": 36.0, "BOM": 36.0, "NAG": 30.0, "IDR": 30.0, "BLR": 35.0, "HYD": 35.0, "MAA": 35.0, "CJB": 35.0, "BBI": 35.0, "LOK": 30.0, "PAT": 35.0, "NJP": 25.0, "CCU": 30.0, "GAU": 30.0},
         "CCU": {"AMB": 18.0, "JAI": 17.0, "DEL": 16.0, "AMD": 17.0, "PNQ": 16.0, "BOM": 16.0, "NAG": 15.0, "IDR": 14.0, "BLR": 15.0, "HYD": 15.0, "MAA": 15.0, "CJB": 15.0, "BBI": 12.0, "LOK": 15.0, "PAT": 14.0, "NJP": 20.0, "CCU": 12.0, "GAU": 13.0},
         "GAU": {"AMB": 15.0, "JAI": 16.0, "DEL": 17.0, "AMD": 17.0, "PNQ": 17.0, "BOM": 16.0, "NAG": 15.0, "IDR": 16.0, "BLR": 17.0, "HYD": 17.0, "MAA": 17.0, "CJB": 17.0, "BBI": 18.0, "LOK": 18.0, "PAT": 17.0, "NJP": 17.0, "CCU": 12.0, "GAU": 16.0},
     }
 
     def resolve_regions(self, from_pin: PincodeRecord, to_pin: PincodeRecord) -> Dict[str, str]:
+        """Resolve origin and destination to Global Cargo zones.
+        
+        First check if global_cargo_region is already set in PincodeRecord.
+        If not, try to map using state or city lookup.
+        """
+        from_zone = from_pin.global_cargo_region or ""
+        to_zone = to_pin.global_cargo_region or ""
+        
+        # If global_cargo_region not set, try to map by state
+        if not from_zone and from_pin.state:
+            from_zone = self.STATE_TO_GLOBAL_CARGO_ZONE.get(from_pin.state.lower().strip(), "")
+        
+        if not to_zone and to_pin.state:
+            to_zone = self.STATE_TO_GLOBAL_CARGO_ZONE.get(to_pin.state.lower().strip(), "")
+        
         return {
-            "from": from_pin.global_cargo_region or "",
-            "to": to_pin.global_cargo_region or "",
+            "from": from_zone,
+            "to": to_zone,
         }
 
     def chargeable_weight(self, inp: QuoteInput) -> float:
