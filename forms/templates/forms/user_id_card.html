@@ -1,0 +1,355 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee ID Card - {{ user.username }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 30px;
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+
+        .back-link:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateX(-5px);
+        }
+
+        .id-card-container {
+            perspective: 1000px;
+        }
+
+        .id-card {
+            width: 850px;
+            height: 540px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s;
+        }
+
+        .id-card:hover {
+            transform: translateY(-10px);
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 30px;
+            text-align: center;
+            position: relative;
+        }
+
+        .company-logo {
+            font-size: 36px;
+            font-weight: 800;
+            color: white;
+            letter-spacing: 2px;
+        }
+
+        .card-title {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+            margin-top: 5px;
+            letter-spacing: 3px;
+        }
+
+        .card-body {
+            padding: 40px 50px;
+            display: flex;
+            gap: 40px;
+            align-items: flex-start;
+        }
+
+        .photo-section {
+            flex-shrink: 0;
+        }
+
+        .employee-photo {
+            width: 180px;
+            height: 180px;
+            border-radius: 15px;
+            object-fit: cover;
+            border: 4px solid #667eea;
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
+        }
+
+        .photo-placeholder {
+            width: 180px;
+            height: 180px;
+            border-radius: 15px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border: 4px solid #667eea;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 64px;
+            font-weight: 700;
+            color: #667eea;
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
+        }
+
+        .details-section {
+            flex: 1;
+        }
+
+        .id-heading {
+            color: #667eea;
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .detail-row {
+            display: flex;
+            padding: 12px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            width: 180px;
+            color: #6c757d;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .detail-value {
+            flex: 1;
+            color: #333;
+            font-weight: 600;
+            font-size: 15px;
+        }
+
+        .card-footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            text-align: center;
+            color: white;
+            font-size: 12px;
+        }
+
+        .actions-container {
+            margin-top: 30px;
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 14px 32px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: white;
+            color: #667eea;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(255, 255, 255, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid white;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-active {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-inactive {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            .back-link,
+            .actions-container {
+                display: none;
+            }
+
+            .id-card {
+                box-shadow: none;
+                page-break-inside: avoid;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .id-card {
+                width: 100%;
+                height: auto;
+            }
+
+            .card-body {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+
+            .detail-row {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .detail-label {
+                width: 100%;
+                margin-bottom: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="{% url 'forms:user_profile' %}" class="back-link">← Back to Profile</a>
+
+    <div class="id-card-container">
+        <div class="id-card">
+            <!-- Card Header -->
+            <div class="card-header">
+                <div class="company-logo">DEYE INDIA</div>
+                <div class="card-title">EMPLOYEE IDENTIFICATION CARD</div>
+            </div>
+
+            <!-- Card Body -->
+            <div class="card-body">
+                <!-- Photo Section -->
+                <div class="photo-section">
+                    {% if profile.profile_photo %}
+                        <img src="{{ profile.profile_photo.url }}" alt="Employee Photo" class="employee-photo">
+                    {% else %}
+                        <div class="photo-placeholder">
+                            {{ user.first_name|default:user.username|slice:":1"|upper }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Details Section -->
+                <div class="details-section">
+                    <div class="id-heading">EMPLOYEE DETAILS</div>
+
+                    <div class="detail-row">
+                        <div class="detail-label">Name:</div>
+                        <div class="detail-value">{{ user.get_full_name|default:user.username|upper }}</div>
+                    </div>
+
+                    <div class="detail-row">
+                        <div class="detail-label">Employee ID:</div>
+                        <div class="detail-value">{{ profile.employee_id|default:"N/A" }}</div>
+                    </div>
+
+                    <div class="detail-row">
+                        <div class="detail-label">Department:</div>
+                        <div class="detail-value">{{ profile.department|default:"N/A" }}</div>
+                    </div>
+
+                    <div class="detail-row">
+                        <div class="detail-label">Designation:</div>
+                        <div class="detail-value">{{ profile.designation|default:"N/A" }}</div>
+                    </div>
+
+                    <div class="detail-row">
+                        <div class="detail-label">Location:</div>
+                        <div class="detail-value">{{ profile.location|default:"N/A" }}</div>
+                    </div>
+
+                    <div class="detail-row">
+                        <div class="detail-label">Date of Joining:</div>
+                        <div class="detail-value">{{ profile.joining_date|date:"d MMMM Y"|default:"N/A" }}</div>
+                    </div>
+
+                    <div class="detail-row">
+                        <div class="detail-label">Status:</div>
+                        <div class="detail-value">
+                            {% if profile.is_active %}
+                                <span class="status-badge status-active">✓ ACTIVE</span>
+                            {% else %}
+                                <span class="status-badge status-inactive">✗ INACTIVE</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card Footer -->
+            <div class="card-footer">
+                <strong>Deye Energy Solutions</strong> | www.deyeindia.com | Empowering the Future with Innovative Solar PV and Energy Storage Systems
+            </div>
+        </div>
+    </div>
+
+    <div class="actions-container">
+        <a href="{% url 'forms:download_id_card' %}" class="btn btn-primary">
+            ⬇️ Download ID Card
+        </a>
+        <button onclick="window.print()" class="btn btn-secondary">
+            🖨️ Print ID Card
+        </button>
+    </div>
+</body>
+</html>

@@ -7,7 +7,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import LeaveRequest, UpcomingEvent, UserProfile, RepairingForm, InwardForm, OutwardForm, ServiceReportForm, StockItem, StockRequisition, DispatchedStock
+from .models import LeaveRequest, UpcomingEvent, UserProfile, RepairingForm, InwardForm, OutwardForm, ServiceReportForm, StockItem, StockRequisition, DispatchedStock, Holiday, CheckInOut, LocationTracking, DailyTravelSummary
 
 
 # Inline for UserProfile
@@ -16,7 +16,17 @@ class UserProfileInline(admin.StackedInline):
     can_delete = False
     verbose_name_plural = 'Profile'
     fk_name = 'user'  # Specify which ForeignKey to use
-    fields = ('date_of_birth', 'phone', 'department', 'manager', 'location', 'designation')
+    fieldsets = (
+        ('Employee Information', {
+            'fields': ('employee_id', 'joining_date', 'is_active')
+        }),
+        ('Personal Details', {
+            'fields': ('profile_photo', 'date_of_birth', 'phone')
+        }),
+        ('Work Details', {
+            'fields': ('department', 'designation', 'manager', 'location', 'region')
+        }),
+    )
 
 
 # Custom User Admin to show first name, last name, email on creation
@@ -41,19 +51,43 @@ class CustomUserAdmin(BaseUserAdmin):
         }),
         ('Important dates', {'fields': ('last_login', 'date_joined')}),
     )
-    list_display = ('username', 'email', 'first_name', 'last_name', 'get_date_of_birth', 'get_phone', 'is_staff')
+    list_display = ('username', 'email', 'first_name', 'last_name', 'get_employee_id', 'get_department', 'get_designation', 'get_joining_date', 'get_is_active', 'is_staff')
+    list_filter = ('is_staff', 'is_superuser', 'is_active', 'profile__department', 'profile__is_active')
     
-    def get_date_of_birth(self, obj):
+    def get_employee_id(self, obj):
         if hasattr(obj, 'profile'):
-            return obj.profile.date_of_birth or '-'
+            return obj.profile.employee_id or '-'
         return '-'
-    get_date_of_birth.short_description = 'Date of Birth'
+    get_employee_id.short_description = 'Employee ID'
+    get_employee_id.admin_order_field = 'profile__employee_id'
     
-    def get_phone(self, obj):
+    def get_department(self, obj):
         if hasattr(obj, 'profile'):
-            return obj.profile.phone or '-'
+            return obj.profile.department or '-'
         return '-'
-    get_phone.short_description = 'Phone'
+    get_department.short_description = 'Department'
+    get_department.admin_order_field = 'profile__department'
+    
+    def get_designation(self, obj):
+        if hasattr(obj, 'profile'):
+            return obj.profile.designation or '-'
+        return '-'
+    get_designation.short_description = 'Designation'
+    get_designation.admin_order_field = 'profile__designation'
+    
+    def get_joining_date(self, obj):
+        if hasattr(obj, 'profile'):
+            return obj.profile.joining_date or '-'
+        return '-'
+    get_joining_date.short_description = 'Joining Date'
+    get_joining_date.admin_order_field = 'profile__joining_date'
+    
+    def get_is_active(self, obj):
+        if hasattr(obj, 'profile'):
+            return '✓ Active' if obj.profile.is_active else '✗ Inactive'
+        return '-'
+    get_is_active.short_description = 'Employee Status'
+    get_is_active.admin_order_field = 'profile__is_active'
 
 
 @admin.register(UpcomingEvent)
@@ -1046,3 +1080,242 @@ class DispatchedStockAdmin(admin.ModelAdmin):
         if not change:  # Only set dispatched_by on creation
             obj.dispatched_by = request.user
         super().save_model(request, obj, form, change)
+
+
+@admin.register(Holiday)
+class HolidayAdmin(admin.ModelAdmin):
+    """Admin interface for Holiday management"""
+    list_display = ('date_display', 'name', 'category', 'holiday_type', 'created_at')
+    list_filter = ('is_floating', 'category', 'date')
+    search_fields = ('name', 'description')
+    ordering = ('date',)
+    readonly_fields = ('created_at', 'updated_at')
+    
+    fieldsets = (
+        ('Holiday Information', {
+            'fields': ('date', 'name', 'category')
+        }),
+        ('Classification', {
+            'fields': ('is_floating',),
+            'description': 'Mark as Floating if employees can choose this as one of their 3 optional holidays'
+        }),
+        ('Additional Details', {
+            'fields': ('description',),
+            'classes': ('collapse',)
+        }),
+        ('Metadata', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def date_display(self, obj):
+        """Display date in readable format"""
+        return obj.date.strftime('%d %b %Y (%A)')
+    date_display.short_description = 'Date'
+    
+    def holiday_type(self, obj):
+        """Show holiday type with color coding"""
+        if obj.is_floating:
+            color = '#d97706'  # Orange
+            text = '🟠 Floating'
+        else:
+            color = '#dc2626'  # Red
+            text = '🔴 Fixed'
+        return format_html('<span style="color: {}; font-weight: bold;">{}</span>', color, text)
+    holiday_type.short_description = 'Type'
+
+@admin.register(CheckInOut)
+class CheckInOutAdmin(admin.ModelAdmin):
+    """Admin interface for Check-In/Check-Out management"""
+    list_display = ('user_display', 'date', 'check_in_time_display', 'check_out_time_display', 
+                    'duration_display', 'status_display')
+    list_filter = ('date', 'user')
+    search_fields = ('user__username', 'user__first_name', 'user__last_name', 
+                     'check_in_location', 'check_out_location')
+    ordering = ('-date', '-check_in_time')
+    readonly_fields = ('duration_hours',)
+    date_hierarchy = 'date'
+    
+    fieldsets = (
+        ('Employee', {
+            'fields': ('user',)
+        }),
+        ('Check-In Details', {
+            'fields': ('date', 'check_in_time', 'check_in_location', 
+                      'check_in_latitude', 'check_in_longitude')
+        }),
+        ('Check-Out Details', {
+            'fields': ('check_out_time', 'check_out_location',
+                      'check_out_latitude', 'check_out_longitude')
+        }),
+        ('Duration', {
+            'fields': ('duration_hours',)
+        }),
+    )
+    
+    def user_display(self, obj):
+        return obj.user.get_full_name() or obj.user.username
+    user_display.short_description = 'Employee'
+    
+    def check_in_time_display(self, obj):
+        return obj.check_in_time.strftime('%I:%M %p') if obj.check_in_time else '-'
+    check_in_time_display.short_description = 'Check-In'
+    
+    def check_out_time_display(self, obj):
+        return obj.check_out_time.strftime('%I:%M %p') if obj.check_out_time else '-'
+    check_out_time_display.short_description = 'Check-Out'
+    
+    def duration_display(self, obj):
+        if obj.duration_hours:
+            hours = int(obj.duration_hours)
+            minutes = int((obj.duration_hours - hours) * 60)
+            return f"{hours}h {minutes}m"
+        return '-'
+    duration_display.short_description = 'Duration'
+    
+    def status_display(self, obj):
+        if obj.is_checked_in():
+            color = '#16a34a'  # Green
+            text = '✓ Checked In'
+        else:
+            color = '#dc2626'  # Red
+            text = '✓ Checked Out'
+        return format_html('<span style="color: {}; font-weight: bold;">{}</span>', color, text)
+    status_display.short_description = 'Status'
+
+
+@admin.register(LocationTracking)
+class LocationTrackingAdmin(admin.ModelAdmin):
+    """Admin interface for Location Tracking management"""
+    list_display = ('user_display', 'ping_time_display', 'ping_type', 
+                    'location_status', 'location_address_short', 'accuracy')
+    list_filter = ('ping_type', 'is_location_available', 'ping_time', 'user')
+    search_fields = ('user__username', 'user__first_name', 'user__last_name', 'location_address')
+    ordering = ('-ping_time',)
+    readonly_fields = ('ping_time', 'get_maps_url')
+    date_hierarchy = 'ping_time'
+    
+    fieldsets = (
+        ('Employee & Session', {
+            'fields': ('user', 'checkin', 'ping_time')
+        }),
+        ('Location Data', {
+            'fields': ('latitude', 'longitude', 'location_address', 'get_maps_url')
+        }),
+        ('Tracking Info', {
+            'fields': ('ping_type', 'is_location_available', 'coverage_gap_seconds', 'accuracy')
+        }),
+        ('Device Info', {
+            'fields': ('device_info',),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def user_display(self, obj):
+        return obj.user.get_full_name() or obj.user.username
+    user_display.short_description = 'Employee'
+    
+    def ping_time_display(self, obj):
+        return obj.ping_time.strftime('%d %b %Y, %I:%M %p')
+    ping_time_display.short_description = 'Time'
+    
+    def location_status(self, obj):
+        if obj.is_location_available:
+            color = '#16a34a'  # Green
+            text = '📍 Available'
+        else:
+            color = '#dc2626'  # Red
+            text = '❌ Unavailable'
+        return format_html('<span style="color: {}; font-weight: bold;">{}</span>', color, text)
+    location_status.short_description = 'Status'
+    
+    def location_address_short(self, obj):
+        if obj.location_address:
+            return obj.location_address[:50] + '...' if len(obj.location_address) > 50 else obj.location_address
+        return '-'
+    location_address_short.short_description = 'Location'
+    
+    def get_maps_url(self, obj):
+        url = obj.get_maps_url()
+        if url:
+            return format_html('<a href="{}" target="_blank">View on Google Maps</a>', url)
+        return 'No location data'
+    get_maps_url.short_description = 'Map Link'
+
+
+@admin.register(DailyTravelSummary)
+class DailyTravelSummaryAdmin(admin.ModelAdmin):
+    """Admin interface for Daily Travel Summary management"""
+    list_display = ('user_display', 'date', 'total_distance_display', 'location_count',
+                    'work_duration_display', 'view_route_link')
+    list_filter = ('date', 'user')
+    search_fields = ('user__username', 'user__first_name', 'user__last_name', 
+                     'start_location', 'end_location')
+    ordering = ('-date',)
+    readonly_fields = ('created_at', 'updated_at', 'get_maps_route_url')
+    date_hierarchy = 'date'
+    actions = ['regenerate_summaries']
+    
+    fieldsets = (
+        ('Employee & Date', {
+            'fields': ('user', 'date', 'checkin')
+        }),
+        ('Travel Summary', {
+            'fields': ('total_distance_km', 'location_count', 'work_duration_hours')
+        }),
+        ('Time Details', {
+            'fields': ('first_ping_time', 'last_ping_time')
+        }),
+        ('Locations', {
+            'fields': ('start_location', 'end_location', 'get_maps_route_url')
+        }),
+        ('Metadata', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def user_display(self, obj):
+        return obj.user.get_full_name() or obj.user.username
+    user_display.short_description = 'Employee'
+    
+    def total_distance_display(self, obj):
+        if obj.total_distance_km > 0:
+            color = '#2563eb'  # Blue
+            return format_html('<span style="color: {}; font-weight: bold;">{} km</span>', 
+                             color, obj.total_distance_km)
+        return '0 km'
+    total_distance_display.short_description = 'Distance'
+    
+    def work_duration_display(self, obj):
+        if obj.work_duration_hours:
+            hours = int(obj.work_duration_hours)
+            minutes = int((obj.work_duration_hours - hours) * 60)
+            return f"{hours}h {minutes}m"
+        return '-'
+    work_duration_display.short_description = 'Duration'
+    
+    def view_route_link(self, obj):
+        url = obj.get_maps_route_url()
+        if url:
+            return format_html('<a href="{}" target="_blank" style="color: #dc2626; font-weight: bold;">🗺️ View Route</a>', url)
+        return '-'
+    view_route_link.short_description = 'Map'
+    
+    def get_maps_route_url(self, obj):
+        url = obj.get_maps_route_url()
+        if url:
+            return format_html('<a href="{}" target="_blank">View Full Route on Google Maps</a>', url)
+        return 'Insufficient location data'
+    get_maps_route_url.short_description = 'Route Link'
+    
+    def regenerate_summaries(self, request, queryset):
+        """Action to regenerate selected daily summaries"""
+        from .models import DailyTravelSummary
+        count = 0
+        for summary in queryset:
+            DailyTravelSummary.generate_summary(summary.user, summary.date)
+            count += 1
+        self.message_user(request, f'Successfully regenerated {count} daily summaries.')
+    regenerate_summaries.short_description = 'Regenerate selected summaries'

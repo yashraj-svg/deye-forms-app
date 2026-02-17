@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Travel Summary - {{ target_user.get_full_name }} - Deye</title>
+    {% load static %}
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            scroll-behavior: smooth;
+        }
+
+        .header {
+            background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            margin-bottom: 30px;
+            text-align: center;
+            animation: slideDown 0.6s ease;
+        }
+
+        .header h1 {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #667eea 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+            animation: gradientShift 3s ease infinite;
+            background-size: 200% auto;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header p {
+            color: #64748b;
+            font-size: 1.1em;
+        }
+
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(145deg, #ffffff 0%, #fafbff 100%);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            animation: fadeInUp 0.6s ease backwards;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .stat-card:hover::before {
+            left: 100%;
+        }
+
+        .stat-card:nth-child(1) { animation-delay: 0.1s; }
+        .stat-card:nth-child(2) { animation-delay: 0.2s; }
+        .stat-card:nth-child(3) { animation-delay: 0.3s; }
+        .stat-card:nth-child(4) { animation-delay: 0.4s; }
+
+        .stat-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 12px 30px rgba(102, 126, 234, 0.25);
+        }
+
+        .stat-card .icon {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .value {
+            font-size: 2em;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-card .label {
+            color: #64748b;
+            font-size: 0.95em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .filters-section {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+            animation: fadeInUp 0.6s ease 0.5s backwards;
+        }
+
+        .filters-section h3 {
+            color: #1e293b;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .filter-row {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: end;
+        }
+
+        .filter-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .filter-group label {
+            display: block;
+            color: #475569;
+            margin-bottom: 8px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.85em;
+        }
+
+        .filter-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: all 0.3s;
+            background-color: white;
+            cursor: pointer;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23667eea' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 20px;
+            padding-right: 40px;
+            appearance: none;
+        }
+
+        .filter-group input[type="date"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: all 0.3s;
+            background-color: white;
+            cursor: pointer;
+        }
+
+        .filter-group select:hover,
+        .filter-group input[type="date"]:hover {
+            border-color: #667eea;
+            background-color: #f8faff;
+        }
+
+        .filter-group select:focus,
+        .filter-group input[type="date"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15);
+        }
+
+        .filter-group button {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.35);
+        }
+
+        .filter-group button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+        }
+
+        .summary-container {
+            background: linear-gradient(145deg, #ffffff 0%, #fafbff 100%);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+            animation: fadeInUp 0.6s ease 0.6s backwards;
+        }
+
+        .summary-container h2 {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+
+        .summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .summary-table thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .summary-table th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.85em;
+        }
+
+        .summary-table td {
+            padding: 15px;
+            border-bottom: 1px solid #e2e8f0;
+            color: #334155;
+        }
+
+        .summary-table tbody tr {
+            transition: all 0.3s;
+        }
+
+        .summary-table tbody tr:hover {
+            background: #f8faff;
+            transform: scale(1.01);
+        }
+
+        .distance-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+
+        .location-count {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+
+        .map-button {
+            display: inline-block;
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
+        }
+
+        .map-button:hover {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.5);
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        .pagination a, .pagination span {
+            padding: 12px 20px;
+            background: white;
+            color: #667eea;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .pagination a:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .pagination .current {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 60px 20px;
+            color: #64748b;
+        }
+
+        .no-data .icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .no-data h3 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>📍 Daily Travel Summary</h1>
+    <p>{{ target_user.get_full_name }} | Day-wise Travel Records with Total Distance</p>
+</div>
+
+<div class="stats-container">
+    <div class="stat-card">
+        <div class="icon">📅</div>
+        <div class="value">{{ total_days }}</div>
+        <div class="label">Total Days</div>
+    </div>
+    <div class="stat-card">
+        <div class="icon">🚗</div>
+        <div class="value">{{ total_distance }} km</div>
+        <div class="label">Total Distance</div>
+    </div>
+    <div class="stat-card">
+        <div class="icon">📊</div>
+        <div class="value">{{ avg_distance }} km</div>
+        <div class="label">Avg per Day</div>
+    </div>
+    <div class="stat-card">
+        <div class="icon">📍</div>
+        <div class="value">{{ total_locations }}</div>
+        <div class="label">Total Locations</div>
+    </div>
+</div>
+
+<div class="filters-section">
+    <h3>🔍 Filters</h3>
+    <form method="get" class="filter-row">
+        {% if can_switch_user %}
+        <div class="filter-group">
+            <label for="employee">Employee</label>
+            <select name="username" id="employee">
+                {% for emp in all_employees %}
+                    <option value="{{ emp.username }}" {% if emp.username == target_user.username %}selected{% endif %}>
+                        {{ emp.get_full_name|default:emp.username }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        {% endif %}
+        <div class="filter-group">
+            <label for="from_date">From Date</label>
+            <input type="date" name="from_date" id="from_date" value="{{ from_date|date:'Y-m-d' }}">
+        </div>
+        <div class="filter-group">
+            <label for="to_date">To Date</label>
+            <input type="date" name="to_date" id="to_date" value="{{ to_date|date:'Y-m-d' }}">
+        </div>
+        <div class="filter-group">
+            <button type="submit">Apply Filters</button>
+        </div>
+    </form>
+</div>
+
+<div class="summary-container">
+    <h2>📋 Daily Travel Records</h2>
+    
+    {% if daily_summaries %}
+        <table class="summary-table">
+            <thead>
+                <tr>
+                    <th>📅 Date</th>
+                    <th>🕐 Check-In</th>
+                    <th>🕐 Check-Out</th>
+                    <th>⏱️ Duration</th>
+                    <th>🚗 Distance</th>
+                    <th>📍 Locations</th>
+                    <th>🗺️ Map</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for summary in daily_summaries %}
+                <tr>
+                    <td><strong>{{ summary.date|date:"d M Y (D)" }}</strong></td>
+                    <td>{{ summary.first_ping_time|date:"g:i A"|default:"-" }}</td>
+                    <td>{{ summary.last_ping_time|date:"g:i A"|default:"-" }}</td>
+                    <td>
+                        {% if summary.work_duration_hours %}
+                            {% widthratio summary.work_duration_hours 1 1 %}h 
+                            {% widthratio summary.work_duration_hours 1 60|floatformat:0|add:"-60" %}m
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="distance-badge">{{ summary.total_distance_km }} km</span>
+                    </td>
+                    <td>
+                        <span class="location-count">{{ summary.location_count }} points</span>
+                    </td>
+                    <td>
+                        <a href="{% url 'forms:day_route_map' summary.user.username summary.date|date:'Y-m-d' %}" 
+                           class="map-button" target="_blank">
+                            🗺️ View Route
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        {% if daily_summaries.has_other_pages %}
+        <div class="pagination">
+            {% if daily_summaries.has_previous %}
+                <a href="?page=1&days={{ days_filter }}">« First</a>
+                <a href="?page={{ daily_summaries.previous_page_number }}&days={{ days_filter }}">‹ Previous</a>
+            {% endif %}
+            
+            <span class="current">Page {{ daily_summaries.number }} of {{ daily_summaries.paginator.num_pages }}</span>
+            
+            {% if daily_summaries.has_next %}
+                <a href="?page={{ daily_summaries.next_page_number }}&days={{ days_filter }}">Next ›</a>
+                <a href="?page={{ daily_summaries.paginator.num_pages }}&days={{ days_filter }}">Last »</a>
+            {% endif %}
+        </div>
+        {% endif %}
+        
+    {% else %}
+        <div class="no-data">
+            <div class="icon">🗺️</div>
+            <h3>No Travel Data Available</h3>
+            <p>No travel records found for the selected period.</p>
+        </div>
+    {% endif %}
+</div>
+
+</body>
+</html>

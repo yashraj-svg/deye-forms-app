@@ -1,6 +1,8 @@
 from django.contrib import admin
 from django.urls import path, include
 from forms.leave_admin_site import leave_admin_site
+from django.conf import settings
+from django.conf.urls.static import static
 
 # Override admin site permission to allow only superusers
 class SuperuserAdminSite(admin.AdminSite):
@@ -20,3 +22,7 @@ urlpatterns = [
     # Namespace the app to support `{% url 'forms:...' %}` consistently
     path('', include(('forms.urls', 'forms'), namespace='forms')),
 ]
+
+# Serve media files in development
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

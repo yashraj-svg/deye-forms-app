@@ -1,9 +1,12 @@
 import os
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponseForbidden
+from django.http import HttpResponseForbidden, JsonResponse
 from functools import wraps
 import openpyxl
 from pathlib import Path
+from decimal import Decimal
+from datetime import datetime
+from django.utils import timezone
 
 # Permission decorators
 def stock_manager_required(view_func):
@@ -297,7 +300,7 @@ from django.conf import settings
 from django.db.models import Sum, Count, Q
 from django.utils import timezone
 from django.urls import reverse
-from datetime import date
+from datetime import date, timedelta
 import csv
 
 from .models import (
@@ -341,7 +344,18 @@ def simple_home(request):
     team_members = []
     if hasattr(request.user, 'profile'):
         team_members = request.user.profile.get_team_members()
-    return render(request, 'forms/simple_home_modern.html', {'events': events, 'user': request.user, 'team_members': team_members})
+    
+    # Check if user can view team attendance (manager or superuser)
+    from django.contrib.auth.models import User
+    is_manager = User.objects.filter(profile__manager=request.user).exists()
+    show_team_attendance = is_manager or request.user.is_superuser
+    
+    return render(request, 'forms/simple_home_modern.html', {
+        'events': events, 
+        'user': request.user, 
+        'team_members': team_members,
+        'show_team_attendance': show_team_attendance
+    })
 
 
 @login_required
@@ -405,6 +419,194 @@ def change_password(request):
         form = PasswordChangeForm()
     
     return render(request, 'forms/change_password.html', {'form': form, 'user': request.user})
+
+
+@login_required
+def user_profile(request):
+    """View and edit user profile"""
+    from django import forms
+    from .models import UserProfile
+    
+    # Create or get user profile
+    profile, created = UserProfile.objects.get_or_create(user=request.user)
+    
+    class ProfileEditForm(forms.ModelForm):
+        first_name = forms.CharField(
+            max_length=30,
+            required=False,
+            widget=forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'First Name'})
+        )
+        last_name = forms.CharField(
+            max_length=30,
+            required=False,
+            widget=forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'Last Name'})
+        )
+        email = forms.EmailField(
+            required=False,
+            widget=forms.EmailInput(attrs={'class': 'form-input', 'placeholder': 'Email Address'})
+        )
+        
+        class Meta:
+            model = UserProfile
+            fields = ['profile_photo', 'phone']
+            widgets = {
+                'profile_photo': forms.FileInput(attrs={'class': 'form-input', 'accept': 'image/*'}),
+                'phone': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'Phone Number'}),
+            }
+    
+    if request.method == 'POST':
+        form = ProfileEditForm(request.POST, request.FILES, instance=profile)
+        if form.is_valid():
+            # Update user fields
+            request.user.first_name = form.cleaned_data.get('first_name', '')
+            request.user.last_name = form.cleaned_data.get('last_name', '')
+            request.user.email = form.cleaned_data.get('email', '')
+            request.user.save()
+            
+            # Save profile (including photo)
+            form.save()
+            
+            from django.contrib import messages
+            messages.success(request, '✅ Profile updated successfully!')
+            return redirect('forms:user_profile')
+    else:
+        form = ProfileEditForm(instance=profile, initial={
+            'first_name': request.user.first_name,
+            'last_name': request.user.last_name,
+            'email': request.user.email,
+        })
+    
+    return render(request, 'forms/user_profile.html', {
+        'form': form,
+        'user': request.user,
+        'profile': profile
+    })
+
+
+@login_required
+def user_id_card(request):
+    """Display user ID card"""
+    profile, created = UserProfile.objects.get_or_create(user=request.user)
+    
+    return render(request, 'forms/user_id_card.html', {
+        'user': request.user,
+        'profile': profile
+    })
+
+
+@login_required
+def download_id_card(request):
+    """Download ID card as image"""
+    from django.http import HttpResponse
+    from io import BytesIO
+    try:
+        from PIL import Image, ImageDraw, ImageFont
+    except ImportError:
+        from django.contrib import messages
+        messages.error(request, 'ID card download feature requires Pillow library.')
+        return redirect('forms:user_id_card')
+    
+    profile, created = UserProfile.objects.get_or_create(user=request.user)
+    
+    # Create ID card image (850x540 pixels)
+    width, height = 850, 540
+    img = Image.new('RGB', (width, height), color='white')
+    draw = ImageDraw.Draw(img)
+    
+    # Background gradient effect (simple two-tone)
+    for y in range(height):
+        shade = int(255 - (y / height) * 50)
+        draw.rectangle([(0, y), (width, y+1)], fill=(shade, shade, 255))
+    
+    # Company header
+    draw.rectangle([(0, 0), (width, 100)], fill=(102, 126, 234))
+    
+    try:
+        # Try to load fonts
+        title_font = ImageFont.truetype("arial.ttf", 40)
+        heading_font = ImageFont.truetype("arial.ttf", 24)
+        text_font = ImageFont.truetype("arial.ttf", 20)
+        small_font = ImageFont.truetype("arial.ttf", 16)
+    except:
+        # Fallback to default font
+        title_font = ImageFont.load_default()
+        heading_font = ImageFont.load_default()
+        text_font = ImageFont.load_default()
+        small_font = ImageFont.load_default()
+    
+    # Draw company name
+    draw.text((width//2, 50), "DEYE INDIA", fill='white', font=title_font, anchor='mm')
+    
+    # Draw "EMPLOYEE ID CARD" text
+    draw.text((width//2, 140), "EMPLOYEE ID CARD", fill=(102, 126, 234), font=heading_font, anchor='mm')
+    
+    # Profile photo placeholder/actual photo
+    photo_x, photo_y = 80, 200
+    photo_size = 150
+    if profile.profile_photo:
+        try:
+            from django.conf import settings
+            import os
+            photo_path = os.path.join(settings.MEDIA_ROOT, profile.profile_photo.name)
+            if os.path.exists(photo_path):
+                photo = Image.open(photo_path)
+                photo = photo.resize((photo_size, photo_size))
+                img.paste(photo, (photo_x, photo_y))
+        except:
+            # Draw placeholder if photo fails to load
+            draw.rectangle([(photo_x, photo_y), (photo_x + photo_size, photo_y + photo_size)], fill=(200, 200, 200), outline=(102, 126, 234), width=3)
+            draw.text((photo_x + photo_size//2, photo_y + photo_size//2), "PHOTO", fill=(102, 126, 234), font=text_font, anchor='mm')
+    else:
+        # Draw placeholder
+        draw.rectangle([(photo_x, photo_y), (photo_x + photo_size, photo_y + photo_size)], fill=(220, 220, 220), outline=(102, 126, 234), width=3)
+        draw.text((photo_x + photo_size//2, photo_y + photo_size//2), "NO PHOTO", fill=(102, 126, 234), font=small_font, anchor='mm')
+    
+    # Employee details
+    details_x = 280
+    y_pos = 210
+    line_height = 40
+    
+    # Name
+    name = request.user.get_full_name() or request.user.username
+    draw.text((details_x, y_pos), f"Name:", fill=(60, 60, 60), font=text_font)
+    draw.text((details_x + 150, y_pos), name.upper(), fill=(20, 20, 20), font=text_font)
+    
+    # Employee ID
+    y_pos += line_height
+    emp_id = profile.employee_id or "N/A"
+    draw.text((details_x, y_pos), f"Employee ID:", fill=(60, 60, 60), font=text_font)
+    draw.text((details_x + 150, y_pos), emp_id, fill=(20, 20, 20), font=text_font)
+    
+    # Department
+    y_pos += line_height
+    department = profile.department or "N/A"
+    draw.text((details_x, y_pos), f"Department:", fill=(60, 60, 60), font=text_font)
+    draw.text((details_x + 150, y_pos), department, fill=(20, 20, 20), font=text_font)
+    
+    # Designation
+    y_pos += line_height
+    designation = profile.designation or "N/A"
+    draw.text((details_x, y_pos), f"Designation:", fill=(60, 60, 60), font=text_font)
+    draw.text((details_x + 150, y_pos), designation, fill=(20, 20, 20), font=text_font)
+    
+    # Joining Date
+    y_pos += line_height
+    joining = profile.joining_date.strftime("%d %b %Y") if profile.joining_date else "N/A"
+    draw.text((details_x, y_pos), f"Joined:", fill=(60, 60, 60), font=text_font)
+    draw.text((details_x + 150, y_pos), joining, fill=(20, 20, 20), font=text_font)
+    
+    # Footer
+    draw.rectangle([(0, height-60), (width, height)], fill=(102, 126, 234))
+    draw.text((width//2, height-30), "Deye Energy Solutions | www.deyeindia.com", fill='white', font=small_font, anchor='mm')
+    
+    # Save to bytes
+    buffer = BytesIO()
+    img.save(buffer, format='PNG')
+    buffer.seek(0)
+    
+    response = HttpResponse(buffer, content_type='image/png')
+    response['Content-Disposition'] = f'attachment; filename="employee_id_{request.user.username}.png"'
+    return response
 
 
 @login_required
@@ -1244,21 +1446,125 @@ def pincode_lookup_api(request):
 # ─────────────────────────────
 
 @login_required
+@login_required
 def leave_home(request):
-    return render(request, 'leave/leave_home.html')
+    # Check if user is a manager (has team members) or superuser
+    from django.contrib.auth.models import User
+    is_manager = User.objects.filter(profile__manager=request.user).exists()
+    is_superuser = request.user.is_superuser
+    
+    # Show team attendance button if user is manager or superuser
+    show_team_attendance = is_manager or is_superuser
+    
+    # Get holiday data for display
+    from forms.models import Holiday
+    fixed_holidays = Holiday.get_fixed_holidays()
+    floating_holidays = Holiday.get_floating_holidays()
+    
+    # Count floating holidays used by employee (in days, not dates)
+    floating_used_this_year = LeaveRequest.objects.filter(
+        user=request.user,
+        status='approved',
+        start_date__year=date.today().year
+    )
+    
+    floating_count = 0.0
+    for leave in floating_used_this_year:
+        check_date = leave.start_date
+        while check_date <= leave.end_date:
+            if Holiday.is_floating_holiday(check_date):
+                # Figure out if this is a half-day or full-day
+                if check_date == leave.start_date and check_date == leave.end_date:
+                    # Same day - use the breakdown
+                    if leave.start_breakdown == 'half' or leave.end_breakdown == 'half':
+                        floating_count += 0.5
+                    else:
+                        floating_count += 1.0
+                elif check_date == leave.start_date:
+                    # Start day
+                    if leave.start_breakdown == 'half':
+                        floating_count += 0.5
+                    else:
+                        floating_count += 1.0
+                elif check_date == leave.end_date:
+                    # End day
+                    if leave.end_breakdown == 'half':
+                        floating_count += 0.5
+                    else:
+                        floating_count += 1.0
+                else:
+                    # Middle days are always full days
+                    floating_count += 1.0
+            check_date += timedelta(days=1)
+    
+    return render(request, 'leave/leave_home.html', {
+        'is_manager': show_team_attendance,
+        'fixed_holidays': fixed_holidays,
+        'floating_holidays': floating_holidays,
+        'floating_used': floating_count,
+        'floating_remaining': max(3 - floating_count, 0),
+    })
 
 
 @login_required
 def apply_leave(request):
+    def _count_non_holiday_days(start_date, end_date, start_breakdown, end_breakdown):
+        """Count leave days excluding holidays"""
+        from forms.models import Holiday
+        
+        days = 0.0
+        current = start_date
+        
+        # Count all work days (excluding Sundays)
+        while current <= end_date:
+            if current.weekday() != 6:  # 6 = Sunday
+                # Check if it's a holiday (fixed or floating)
+                if not Holiday.is_holiday(current):
+                    days += 1.0
+            current += timedelta(days=1)
+        
+        # Apply half-day adjustments only for non-holiday days
+        if start_date == end_date:
+            # Same day case
+            if start_date.weekday() != 6 and not Holiday.is_holiday(start_date):
+                if start_breakdown == 'half' and end_breakdown == 'half':
+                    return 0.5
+                elif start_breakdown == 'half' or end_breakdown == 'half':
+                    return 0.5
+                else:
+                    return 1.0
+            return 0.0
+        else:
+            # Multiple days
+            if start_date.weekday() != 6 and not Holiday.is_holiday(start_date) and start_breakdown == 'half':
+                days -= 0.5
+            if end_date.weekday() != 6 and not Holiday.is_holiday(end_date) and end_breakdown == 'half':
+                days -= 0.5
+        
+        return max(days, 0.0)
+    
     def _remaining_paid_leave(user, year):
-        # Only count APPROVED leaves towards used balance
-        used = LeaveRequest.objects.filter(
+        """Calculate remaining paid leave excluding holidays"""
+        # Get all approved paid leaves for the user this year
+        approved_leaves = LeaveRequest.objects.filter(
             user=user,
             leave_type='leave',
             start_date__year=year,
-            status='approved'  # Only approved leaves deduct from balance
-        ).aggregate(total=Sum('total_days'))['total'] or 0.0
-        return max(21.0 - used, 0.0)
+            status='approved'
+        )
+        
+        # Count only non-holiday days
+        used = 0.0
+        for leave in approved_leaves:
+            non_holiday_days = _count_non_holiday_days(
+                leave.start_date,
+                leave.end_date,
+                leave.start_breakdown,
+                leave.end_breakdown
+            )
+            used += non_holiday_days
+        
+        return max(22.0 - used, 0.0)  # 22 total paid days per year
 
     if request.method == 'POST':
         leave_type = request.POST.get('leave_type')
@@ -1297,10 +1603,115 @@ def apply_leave(request):
                 'success': False,
             })
 
-        remaining = _remaining_paid_leave(request.user, sd.year)
-        if leave_type == 'leave' and requested_days > remaining:
+        # ===== HOLIDAY VALIDATION =====
+        from forms.models import Holiday
+        
+        # Check for fixed holidays in the date range
+        fixed_holidays_in_range = []
+        current_date = sd
+        while current_date <= ed:
+            if Holiday.is_fixed_holiday(current_date):
+                holiday = Holiday.objects.get(date=current_date, is_floating=False)
+                fixed_holidays_in_range.append(holiday)
+            current_date += timedelta(days=1)
+        
+        # Cannot request leave on fixed holidays
+        if fixed_holidays_in_range:
+            holiday_names = ', '.join([h.name for h in fixed_holidays_in_range])
             return render(request, 'leave/apply_leave.html', {
-                'error': f'Insufficient balance. Remaining paid leave: {remaining:.1f} days. Requested: {requested_days:.1f} days.',
+                'error': f'Cannot request leave on fixed holidays: {holiday_names}. These are compulsory holidays.',
+                'success': False,
+            })
+        
+        # Check floating holiday usage (if applicable)
+        floating_holidays_used = LeaveRequest.objects.filter(
+            user=request.user,
+            status='approved',
+            leave_type=leave_type,
+            start_date__year=sd.year
+        ).exclude(id=lr.id)  # Exclude current request if updating
+        
+        # Count actual days of floating holidays in approved leaves
+        floating_count = 0.0
+        for leave in floating_holidays_used:
+            check_date = leave.start_date
+            while check_date <= leave.end_date:
+                if Holiday.is_floating_holiday(check_date):
+                    # Calculate day fraction for this floating holiday
+                    if check_date == leave.start_date and check_date == leave.end_date:
+                        # Same day
+                        if leave.start_breakdown == 'half' or leave.end_breakdown == 'half':
+                            floating_count += 0.5
+                        else:
+                            floating_count += 1.0
+                    elif check_date == leave.start_date:
+                        # Start day
+                        if leave.start_breakdown == 'half':
+                            floating_count += 0.5
+                        else:
+                            floating_count += 1.0
+                    elif check_date == leave.end_date:
+                        # End day
+                        if leave.end_breakdown == 'half':
+                            floating_count += 0.5
+                        else:
+                            floating_count += 1.0
+                    else:
+                        # Middle days are always full days
+                        floating_count += 1.0
+                check_date += timedelta(days=1)
+        
+        # Count floating holiday days in current request
+        floating_in_request = 0.0
+        check_date = sd
+        while check_date <= ed:
+            if Holiday.is_floating_holiday(check_date):
+                # Calculate day fraction for this floating holiday
+                if check_date == sd and check_date == ed:
+                    # Same day
+                    if start_breakdown == 'half' or end_breakdown == 'half':
+                        floating_in_request += 0.5
+                    else:
+                        floating_in_request += 1.0
+                elif check_date == sd:
+                    # Start day
+                    if start_breakdown == 'half':
+                        floating_in_request += 0.5
+                    else:
+                        floating_in_request += 1.0
+                elif check_date == ed:
+                    # End day
+                    if end_breakdown == 'half':
+                        floating_in_request += 0.5
+                    else:
+                        floating_in_request += 1.0
+                else:
+                    # Middle days are always full days
+                    floating_in_request += 1.0
+            check_date += timedelta(days=1)
+        
+        # Warn if already used 3 floating holidays and trying to add more
+        if floating_count >= 3 and floating_in_request > 0:
+            return render(request, 'leave/apply_leave.html', {
+                'error': f'You have already used your 3 floating holidays for {sd.year}. You cannot request more.',
+                'success': False,
+            })
+        
+        if floating_count + floating_in_request > 3:
+            return render(request, 'leave/apply_leave.html', {
+                'error': f'This request would exceed your 3 floating holiday limit. Already used: {floating_count:.1f} days, Requested: {floating_in_request:.1f} days.',
+                'success': False,
+            })
+        # ===== END HOLIDAY VALIDATION =====
+
+        remaining = _remaining_paid_leave(request.user, sd.year)
+        
+        # For balance check, only count non-holiday days
+        requested_non_holiday_days = _count_non_holiday_days(sd, ed, start_breakdown, end_breakdown)
+        
+        if leave_type == 'leave' and requested_non_holiday_days > remaining:
+            return render(request, 'leave/apply_leave.html', {
+                'error': f'Insufficient balance. Remaining paid leave: {remaining:.1f} days. Requested (excluding holidays): {requested_non_holiday_days:.1f} days.',
                 'success': False,
             })
 
@@ -1399,17 +1810,29 @@ Approve: {approve_url}
 Reject: {reject_url}
         """
         
-        # Send email to HR and manager via SendGrid Web API (non-blocking)
+        # Send email to HR and CC manager via SendGrid Web API (non-blocking)
         try:
             from forms.emails import send_sendgrid_email
             import threading
             
             def _send_leave_email():
+                # Get manager's email if exists
+                cc_list = []
+                try:
+                    if hasattr(request.user, 'profile') and request.user.profile.manager:
+                        manager_email = request.user.profile.manager.email
+                        if manager_email:
+                            cc_list.append(manager_email)
+                            print(f"[EMAIL] CC to manager: {manager_email}")
+                except Exception as e:
+                    print(f"[EMAIL] ⚠️ Could not get manager email: {e}")
+                
                 send_sendgrid_email(
                     ['hr@deyeindia.com'],
                     f'New {lr.get_leave_type_display()} Request - {request.user.get_full_name() or request.user.username}',
                     email_html,
-                    email_text
+                    email_text,
+                    cc_emails=cc_list if cc_list else None
                 )
                 print(f"[EMAIL] ✅ Leave request email sent for {lr.user.username}")
             
@@ -1437,15 +1860,63 @@ def leave_status(request):
 
 @login_required
 def leave_history(request):
+    def _count_non_holiday_days(start_date, end_date, start_breakdown, end_breakdown):
+        """Count leave days excluding holidays"""
+        from forms.models import Holiday
+        
+        days = 0.0
+        current = start_date
+        
+        # Count all work days (excluding Sundays)
+        while current <= end_date:
+            if current.weekday() != 6:  # 6 = Sunday
+                # Check if it's a holiday (fixed or floating)
+                if not Holiday.is_holiday(current):
+                    days += 1.0
+            current += timedelta(days=1)
+        
+        # Apply half-day adjustments only for non-holiday days
+        if start_date == end_date:
+            # Same day case
+            if start_date.weekday() != 6 and not Holiday.is_holiday(start_date):
+                if start_breakdown == 'half' and end_breakdown == 'half':
+                    return 0.5
+                elif start_breakdown == 'half' or end_breakdown == 'half':
+                    return 0.5
+                else:
+                    return 1.0
+            return 0.0
+        else:
+            # Multiple days
+            if start_date.weekday() != 6 and not Holiday.is_holiday(start_date) and start_breakdown == 'half':
+                days -= 0.5
+            if end_date.weekday() != 6 and not Holiday.is_holiday(end_date) and end_breakdown == 'half':
+                days -= 0.5
+        
+        return max(days, 0.0)
+    
     def _remaining_paid_leave(user, year):
-        # Only count APPROVED leaves towards used balance
-        used = LeaveRequest.objects.filter(
+        """Calculate remaining paid leave excluding holidays"""
+        # Get all approved paid leaves for the user this year
+        approved_leaves = LeaveRequest.objects.filter(
             user=user,
             leave_type='leave',
             start_date__year=year,
-            status='approved'  # Only approved leaves deduct from balance
-        ).aggregate(total=Sum('total_days'))['total'] or 0.0
-        return max(21.0 - used, 0.0)
+            status='approved'
+        )
+        
+        # Count only non-holiday days
+        used = 0.0
+        for leave in approved_leaves:
+            non_holiday_days = _count_non_holiday_days(
+                leave.start_date,
+                leave.end_date,
+                leave.start_breakdown,
+                leave.end_breakdown
+            )
+            used += non_holiday_days
+        
+        return max(22.0 - used, 0.0)  # 22 total paid days per year
 
     leaves = LeaveRequest.objects.filter(
         user=request.user
@@ -1461,6 +1932,96 @@ def leave_history(request):
     })
 
 
+@login_required
+def team_attendance(request):
+    """
+    Team attendance dashboard for managers and superusers.
+    Superusers can see all employees, managers see only their team.
+    """
+    from django.contrib.auth.models import User
+    from .models import LeaveRequest
+    
+    # Check if user is superuser - they can see all employees
+    is_superuser = request.user.is_superuser
+    
+    if is_superuser:
+        # Superusers see all employees
+        team_members = User.objects.filter(is_active=True).select_related('profile')
+        viewer_role = 'superuser'
+    else:
+        # Get team members where current user is the manager
+        team_members = User.objects.filter(profile__manager=request.user).select_related('profile')
+        viewer_role = 'manager'
+    
+    # If user is not a manager and not superuser (no team members), show message
+    if not team_members.exists():
+        return render(request, 'leave/team_attendance.html', {
+            'is_manager': False,
+            'is_superuser': False,
+            'team_status': []
+        })
+    
+    # Get today's date
+    today = date.today()
+    
+    # Get all approved leaves that overlap with today
+    leaves_today = LeaveRequest.objects.filter(
+        user__in=team_members,
+        status='approved',
+        start_date__lte=today,
+        end_date__gte=today
+    ).select_related('user')
+    
+    # Create a dictionary of user_id -> leave for quick lookup
+    leave_map = {leave.user.id: leave for leave in leaves_today}
+    
+    # Build status for each team member
+    team_status = []
+    for member in team_members:
+        leave_today = leave_map.get(member.id)
+        
+        # Determine status
+        if leave_today:
+            if leave_today.leave_type == 'wfh':
+                status = 'wfh'
+                status_display = 'Work From Home'
+                status_class = 'info'
+            else:
+                status = 'on_leave'
+                status_display = 'On Leave'
+                status_class = 'warning'
+        else:
+            status = 'working'
+            status_display = 'Working'
+            status_class = 'success'
+        
+        team_status.append({
+            'user': member,
+            'status': status,
+            'status_display': status_display,
+            'status_class': status_class,
+            'leave': leave_today
+        })
+    
+    # Calculate stats
+    total_team = len(team_status)
+    working_count = sum(1 for t in team_status if t['status'] == 'working')
+    on_leave_count = sum(1 for t in team_status if t['status'] == 'on_leave')
+    wfh_count = sum(1 for t in team_status if t['status'] == 'wfh')
+    
+    return render(request, 'leave/team_attendance.html', {
+        'is_manager': True,
+        'is_superuser': is_superuser,
+        'viewer_role': viewer_role,
+        'team_status': team_status,
+        'total_team': total_team,
+        'working_count': working_count,
+        'on_leave_count': on_leave_count,
+        'wfh_count': wfh_count,
+        'today': today
+    })
+
+
 # ─────────────────────────────
 # ADMIN LEAVE MANAGEMENT
 # ─────────────────────────────
@@ -1472,6 +2033,8 @@ def _is_admin(user):
 @login_required
 @user_passes_test(_is_admin)
 def leave_admin(request):
+    from django.contrib.auth.models import User
+    
     leaves = LeaveRequest.objects.select_related('user', 'status_changed_by').order_by('-applied_at')
     status_filter = request.GET.get('status')
     type_filter = request.GET.get('type')
@@ -1481,10 +2044,65 @@ def leave_admin(request):
     if type_filter:
         leaves = leaves.filter(leave_type=type_filter)
 
+    # Add team attendance data for today
+    today = date.today()
+    all_employees = User.objects.filter(is_active=True).select_related('profile')
+    
+    # Get all approved leaves that overlap with today
+    leaves_today = LeaveRequest.objects.filter(
+        user__in=all_employees,
+        status='approved',
+        start_date__lte=today,
+        end_date__gte=today
+    ).select_related('user')
+    
+    # Create a dictionary of user_id -> leave for quick lookup
+    leave_map = {leave.user.id: leave for leave in leaves_today}
+    
+    # Build status for each employee
+    team_status = []
+    for employee in all_employees:
+        leave_today = leave_map.get(employee.id)
+        
+        # Determine status
+        if leave_today:
+            if leave_today.leave_type == 'wfh':
+                status = 'wfh'
+                status_display = 'Work From Home'
+                status_class = 'info'
+            else:
+                status = 'on_leave'
+                status_display = 'On Leave'
+                status_class = 'warning'
+        else:
+            status = 'working'
+            status_display = 'Working'
+            status_class = 'success'
+        
+        team_status.append({
+            'user': employee,
+            'status': status,
+            'status_display': status_display,
+            'status_class': status_class,
+            'leave': leave_today
+        })
+    
+    # Calculate stats
+    total_employees = len(team_status)
+    working_count = sum(1 for t in team_status if t['status'] == 'working')
+    on_leave_count = sum(1 for t in team_status if t['status'] == 'on_leave')
+    wfh_count = sum(1 for t in team_status if t['status'] == 'wfh')
+
     return render(request, 'leave/admin_leave_list.html', {
         'leaves': leaves,
         'status_filter': status_filter or '',
         'type_filter': type_filter or '',
+        'team_status': team_status,
+        'total_employees': total_employees,
+        'working_count': working_count,
+        'on_leave_count': on_leave_count,
+        'wfh_count': wfh_count,
+        'today': today,
     })
 
 
@@ -1636,6 +2254,7 @@ def leave_admin_report(request):
 def approve_leave_email(request, leave_id):
     """
     Handle leave approval via email link.
+    Allows both HR and the employee's manager to approve.
     """
     leave = get_object_or_404(LeaveRequest, id=leave_id)
     
@@ -1646,9 +2265,24 @@ def approve_leave_email(request, leave_id):
             'leave': leave
         })
     
+    # Track who approved (if user is logged in)
+    approver = None
+    if request.user.is_authenticated:
+        # Check if user is HR (admin/staff) or the employee's manager
+        is_hr = request.user.is_staff
+        is_manager = False
+        try:
+            if hasattr(leave.user, 'profile') and leave.user.profile.manager:
+                is_manager = leave.user.profile.manager == request.user
+        except:
+            pass
+        
+        if is_hr or is_manager:
+            approver = request.user
+    
     leave.status = 'approved'
     leave.status_changed_at = timezone.now()
-    leave.status_changed_by = None  # Email action, no specific user
+    leave.status_changed_by = approver  # Track who approved
     leave.save()
     
     # Send confirmation email to employee via SendGrid Web API
@@ -3398,6 +4032,609 @@ def bigship_diagnostic(request):
 
 # Import login_required decorator
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.cache import never_cache
+
+
+# ===== CHECK-IN / CHECK-OUT SYSTEM =====
+
+@login_required
+@never_cache
+def checkin_page(request):
+    """Display check-in/check-out page with geolocation"""
+    from django.shortcuts import render
+    from .models import CheckInOut
+    
+    # Get today's check-in record if exists
+    today_checkin = CheckInOut.get_today_checkin(request.user)
+    
+    context = {
+        'today_checkin': today_checkin,
+        'is_checked_in': today_checkin and today_checkin.is_checked_in(),
+    }
+    
+    return render(request, 'forms/checkin.html', context)
+
+
+@login_required
+def checkin_submit(request):
+    """Handle check-in submission with geolocation data"""
+    from .models import CheckInOut
+    from django.utils import timezone
+    import json
+    
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            
+            latitude = data.get('latitude')
+            longitude = data.get('longitude')
+            location = data.get('location', '')
+            
+            if not latitude or not longitude:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Location data not available. Please enable location services.'
+                }, status=400)
+            
+            # Check if already checked in today
+            today_checkin = CheckInOut.get_today_checkin(request.user)
+            
+            if today_checkin and today_checkin.is_checked_in():
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Already checked in today. Please check out first.'
+                }, status=400)
+            
+            # Create new check-in record
+            checkin = CheckInOut.objects.create(
+                user=request.user,
+                check_in_time=timezone.now(),
+                check_in_latitude=Decimal(str(latitude)),
+                check_in_longitude=Decimal(str(longitude)),
+                check_in_location=location[:255] if location else 'Location Not Captured'
+            )
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Checked in successfully!',
+                'check_in_time': checkin.check_in_time.strftime('%I:%M %p'),
+                'location': checkin.check_in_location
+            })
+            
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            }, status=500)
+    
+    return JsonResponse({'success': False, 'error': 'Invalid request'}, status=400)
+
+
+@login_required
+def checkout_submit(request):
+    """Handle check-out submission with geolocation data"""
+    from .models import CheckInOut
+    from django.utils import timezone
+    import json
+    
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            
+            latitude = data.get('latitude')
+            longitude = data.get('longitude')
+            location = data.get('location', '')
+            
+            if not latitude or not longitude:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Location data not available. Please enable location services.'
+                }, status=400)
+            
+            # Get active check-in
+            checkin = CheckInOut.get_active_checkin(request.user)
+            
+            if not checkin:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'No active check-in found. Please check in first.'
+                }, status=400)
+            
+            # Update check-out time and location
+            checkin.check_out_time = timezone.now()
+            checkin.check_out_latitude = Decimal(str(latitude))
+            checkin.check_out_longitude = Decimal(str(longitude))
+            checkin.check_out_location = location[:255] if location else 'Location Not Captured'
+            
+            # Calculate duration
+            checkin.calculate_duration()
+            checkin.save()
+            
+            # Generate daily travel summary for this day
+            from .models import DailyTravelSummary
+            DailyTravelSummary.generate_summary(request.user, checkin.date)
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Checked out successfully!',
+                'check_out_time': checkin.check_out_time.strftime('%I:%M %p'),
+                'duration': f"{int(checkin.duration_hours)}h {int((checkin.duration_hours - int(checkin.duration_hours)) * 60)}m",
+                'location': checkin.check_out_location
+            })
+            
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            }, status=500)
+    
+    return JsonResponse({'success': False, 'error': 'Invalid request'}, status=400)
+
+
+@login_required
+def get_checkin_status(request):
+    """Get current check-in status and location"""
+    from .models import CheckInOut
+    import json
+    
+    try:
+        today_checkin = CheckInOut.get_today_checkin(request.user)
+        
+        if today_checkin:
+            is_checked_in = today_checkin.is_checked_in()
+            
+            response = {
+                'success': True,
+                'is_checked_in': is_checked_in,
+                'check_in_time': today_checkin.check_in_time.strftime('%H:%M:%S'),
+                'check_in_location': today_checkin.check_in_location,
+                'check_in_coords': {
+                    'lat': float(today_checkin.check_in_latitude),
+                    'lng': float(today_checkin.check_in_longitude)
+                }
+            }
+            
+            if today_checkin.check_out_time:
+                response.update({
+                    'check_out_time': today_checkin.check_out_time.strftime('%H:%M:%S'),
+                    'check_out_location': today_checkin.check_out_location,
+                    'check_out_coords': {
+                        'lat': float(today_checkin.check_out_latitude),
+                        'lng': float(today_checkin.check_out_longitude)
+                    },
+                    'duration_hours': float(today_checkin.duration_hours)
+                })
+            
+            return JsonResponse(response)
+        
+        else:
+            return JsonResponse({
+                'success': True,
+                'is_checked_in': False,
+                'message': 'No check-in record for today'
+            })
+    
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+@login_required
+def attendance_history(request):
+    """View employee's check-in/check-out history"""
+    from django.shortcuts import render
+    from django.core.paginator import Paginator
+    from .models import CheckInOut
+    
+    # Get all check-ins for the logged-in user, ordered by date descending
+    checkins = CheckInOut.objects.filter(user=request.user).order_by('-date', '-check_in_time')
+    
+    # Pagination
+    paginator = Paginator(checkins, 50)  # 50 records per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'checkins': page_obj,
+        'total_records': paginator.count,
+    }
+    
+    return render(request, 'forms/attendance_history.html', context)
+
+
+@login_required
+def manager_attendance_view(request):
+    """Manager view of team's attendance (for managers)"""
+    from django.shortcuts import render
+    from django.contrib.auth.models import User
+    from .models import CheckInOut, UserProfile
+    from django.utils import timezone
+    
+    # Check if user is a manager or superuser
+    has_team_members = User.objects.filter(profile__manager=request.user).exists()
+    
+    if not (request.user.is_superuser or has_team_members):
+        return HttpResponseForbidden("Access Denied: Manager access required.")
+    
+    # Get team members under this manager
+    team_members = User.objects.filter(
+        profile__manager=request.user
+    ).select_related('profile').order_by('first_name', 'last_name')
+    
+    # Get today's attendance for all team members
+    today_checkins = CheckInOut.objects.filter(
+        user__in=team_members,
+        date=timezone.now().date()
+    ).select_related('user').order_by('-check_in_time')
+    
+    context = {
+        'team_members': team_members,
+        'today_checkins': today_checkins,
+        'attended': today_checkins.count(),
+    }
+    
+    return render(request, 'forms/manager_attendance.html', context)
+
+
+# ═══════════════════════════════════════════════════════════════════
+# LOCATION TRACKING VIEWS - Hourly Pings & Travel History
+# ═══════════════════════════════════════════════════════════════════
+
+@login_required
+def save_location_ping(request):
+    """
+    Save periodic location ping during check-in session.
+    Tracks location every hour and handles coverage gaps.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'POST method required'})
+    
+    from .models import LocationTracking, CheckInOut
+    from django.utils import timezone
+    import json
+    
+    try:
+        data = json.loads(request.body)
+        
+        # Get current active check-in session
+        active_checkin = CheckInOut.get_active_checkin(request.user)
+        
+        # Extract location data
+        ping_type = data.get('ping_type', 'hourly')
+        latitude = data.get('latitude')
+        longitude = data.get('longitude')
+        location_address = data.get('location', '')
+        accuracy = data.get('accuracy')
+        device_info = data.get('device_info', '')
+        coverage_gap_seconds = data.get('coverage_gap_seconds', 0)
+        
+        # Create location ping record
+        location_ping = LocationTracking.record_ping(
+            user=request.user,
+            checkin=active_checkin,
+            ping_type=ping_type,
+            latitude=latitude,
+            longitude=longitude,
+            location_address=location_address,
+            accuracy=accuracy,
+            device_info=device_info,
+            coverage_gap_seconds=coverage_gap_seconds
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Location ping saved successfully',
+            'ping_id': location_ping.id,
+            'ping_time': location_ping.ping_time.strftime('%I:%M %p'),
+            'is_available': location_ping.is_location_available
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=400)
+
+
+@login_required
+def travel_history_view(request, username=None):
+    """
+    View employee's detailed travel history with all location pings.
+    Shows TODAY'S data by default.
+    Access: Users see own data, Managers see team data, Superusers see all.
+    """
+    from django.shortcuts import render, get_object_or_404
+    from django.contrib.auth.models import User
+    from .models import LocationTracking, CheckInOut, UserProfile
+    from django.core.paginator import Paginator
+    from django.utils import timezone
+    from datetime import timedelta, datetime, time
+    from django.db import models
+    
+    # Determine accessible employees based on role
+    if request.user.is_superuser:
+        # Superuser: Can see all employees
+        accessible_users = User.objects.filter(is_active=True).exclude(username='admin')
+        can_switch_user = True
+    else:
+        # Check if user is a manager
+        try:
+            user_profile = request.user.profile
+            team_members = user_profile.get_team_members()
+            if team_members.exists():
+                # Manager: Can see self and team members
+                accessible_users = User.objects.filter(
+                    models.Q(id=request.user.id) | models.Q(id__in=team_members.values_list('id', flat=True))
+                ).filter(is_active=True)
+                can_switch_user = True
+            else:
+                # Regular user: Can only see own data
+                accessible_users = User.objects.filter(id=request.user.id)
+                can_switch_user = False
+        except UserProfile.DoesNotExist:
+            # No profile: Can only see own data
+            accessible_users = User.objects.filter(id=request.user.id)
+            can_switch_user = False
+    
+    # Get target user (with access control)
+    if username and can_switch_user:
+        target_user = get_object_or_404(User, username=username)
+        # Verify access
+        if target_user not in accessible_users:
+            return HttpResponseForbidden("Access Denied: You don't have permission to view this user's data.")
+    else:
+        target_user = request.user
+    
+    # Get today's date range by default
+    today = timezone.now().date()
+    start_datetime = timezone.make_aware(datetime.combine(today, time.min))
+    end_datetime = timezone.make_aware(datetime.combine(today, time.max))
+    
+    # Get location tracking records for TODAY only
+    location_pings = LocationTracking.objects.filter(
+        user=target_user,
+        ping_time__gte=start_datetime,
+        ping_time__lte=end_datetime
+    ).select_related('checkin', 'user').order_by('-ping_time')
+    
+    # Get today's check-in session
+    today_checkin = CheckInOut.objects.filter(
+        user=target_user,
+        date=today
+    ).first()
+    
+    # Statistics
+    total_pings = location_pings.count()
+    available_pings = location_pings.filter(is_location_available=True).count()
+    unavailable_pings = total_pings - available_pings
+    total_coverage_gap = sum(ping.coverage_gap_seconds for ping in location_pings)
+    
+    # Paginate location pings (50 per page)
+    paginator = Paginator(location_pings, 50)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    # Get list of accessible employees (for dropdown)
+    all_employees = accessible_users.order_by('first_name', 'last_name')
+    
+    context = {
+        'target_user': target_user,
+        'location_pings': page_obj,
+        'today_checkin': today_checkin,
+        'today_date': today,
+        'total_pings': total_pings,
+        'available_pings': available_pings,
+        'unavailable_pings': unavailable_pings,
+        'total_coverage_gap': total_coverage_gap,
+        'coverage_gap_hours': total_coverage_gap // 3600,
+        'coverage_gap_minutes': (total_coverage_gap % 3600) // 60,
+        'all_employees': all_employees,
+        'can_switch_user': can_switch_user,
+        'is_authorized': True,
+    }
+    
+    return render(request, 'forms/travel_history.html', context)
+
+
+@login_required
+def daily_travel_summary_view(request, username=None):
+    """
+    View employee's day-wise travel summary with total distance.
+    Shows 6 locations max per day (check-in + 4 hourly + check-out).
+    Access: Users see own data, Managers see team data, Superusers see all.
+    """
+    from django.shortcuts import render, get_object_or_404
+    from django.contrib.auth.models import User
+    from .models import DailyTravelSummary, LocationTracking, CheckInOut, UserProfile
+    from django.core.paginator import Paginator
+    from django.utils import timezone
+    from datetime import timedelta, datetime
+    from django.db import models
+    
+    # Determine accessible employees based on role
+    if request.user.is_superuser:
+        # Superuser: Can see all employees
+        accessible_users = User.objects.filter(is_active=True).exclude(username='admin')
+        can_switch_user = True
+    else:
+        # Check if user is a manager
+        try:
+            user_profile = request.user.profile
+            team_members = user_profile.get_team_members()
+            if team_members.exists():
+                # Manager: Can see self and team members
+                accessible_users = User.objects.filter(
+                    models.Q(id=request.user.id) | models.Q(id__in=team_members.values_list('id', flat=True))
+                ).filter(is_active=True)
+                can_switch_user = True
+            else:
+                # Regular user: Can only see own data
+                accessible_users = User.objects.filter(id=request.user.id)
+                can_switch_user = False
+        except UserProfile.DoesNotExist:
+            # No profile: Can only see own data
+            accessible_users = User.objects.filter(id=request.user.id)
+            can_switch_user = False
+    
+    # Get target user (with access control)
+    if username and can_switch_user:
+        target_user = get_object_or_404(User, username=username)
+        # Verify access
+        if target_user not in accessible_users:
+            return HttpResponseForbidden("Access Denied: You don't have permission to view this user's data.")
+    else:
+        target_user = request.user
+    
+    # Custom date filtering
+    from_date_str = request.GET.get('from_date')
+    to_date_str = request.GET.get('to_date')
+    
+    # Default date range: last 30 days
+    today = timezone.now().date()
+    if to_date_str:
+        try:
+            to_date = datetime.strptime(to_date_str, '%Y-%m-%d').date()
+        except ValueError:
+            to_date = today
+    else:
+        to_date = today
+    
+    if from_date_str:
+        try:
+            from_date = datetime.strptime(from_date_str, '%Y-%m-%d').date()
+        except ValueError:
+            from_date = today - timedelta(days=30)
+    else:
+        from_date = today - timedelta(days=30)
+    
+    # Ensure from_date is not after to_date
+    if from_date > to_date:
+        from_date, to_date = to_date, from_date
+    
+    start_date = from_date
+    end_date = to_date
+    
+    # Get or generate daily summaries
+    # First ensure all summaries exist for days with check-ins
+    checkins = CheckInOut.objects.filter(
+        user=target_user,
+        date__gte=start_date,
+        date__lte=end_date
+    )
+    
+    for checkin in checkins:
+        DailyTravelSummary.generate_summary(target_user, checkin.date)
+    
+    # Get daily summaries
+    daily_summaries = DailyTravelSummary.objects.filter(
+        user=target_user,
+        date__gte=start_date,
+        date__lte=end_date
+    ).order_by('-date')
+    
+    # Statistics
+    total_days = daily_summaries.count()
+    total_distance = sum(summary.total_distance_km for summary in daily_summaries)
+    avg_distance = round(total_distance / total_days, 2) if total_days > 0 else 0
+    total_locations = sum(summary.location_count for summary in daily_summaries)
+    
+    # Paginate daily summaries (20 per page)
+    paginator = Paginator(daily_summaries, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    # Get list of accessible employees (for dropdown)
+    all_employees = accessible_users.order_by('first_name', 'last_name')
+    
+    context = {
+        'target_user': target_user,
+        'daily_summaries': page_obj,
+        'total_days': total_days,
+        'total_distance': total_distance,
+        'avg_distance': avg_distance,
+        'total_locations': total_locations,
+        'from_date': from_date,
+        'to_date': to_date,
+        'all_employees': all_employees,
+        'can_switch_user': can_switch_user,
+        'is_authorized': True,
+    }
+    
+    return render(request, 'forms/daily_travel_summary.html', context)
+
+
+@login_required
+def day_route_map_view(request, username, date_str):
+    """
+    Display all locations for a specific day on an interactive map.
+    Shows the complete route with all 6 locations (check-in + 4 hourly + check-out).
+    Access: Users see own data, Managers see team data, Superusers see all.
+    """
+    from django.shortcuts import render, get_object_or_404
+    from django.contrib.auth.models import User
+    from .models import LocationTracking, DailyTravelSummary, UserProfile
+    from datetime import datetime
+    import json
+    
+    # Get target user
+    target_user = get_object_or_404(User, username=username)
+    
+    # Access control check
+    if request.user.is_superuser:
+        # Superuser: Can see all
+        pass
+    elif target_user == request.user:
+        # User viewing own data
+        pass
+    else:
+        # Check if user is manager of target user
+        try:
+            user_profile = request.user.profile
+            team_members = user_profile.get_team_members()
+            if target_user not in team_members:
+                return HttpResponseForbidden("Access Denied: You don't have permission to view this user's data.")
+        except UserProfile.DoesNotExist:
+            return HttpResponseForbidden("Access Denied: You don't have permission to view this user's data.")
+    
+    # Parse date
+    try:
+        date = datetime.strptime(date_str, '%Y-%m-%d').date()
+    except ValueError:
+        return HttpResponseForbidden("Invalid date format")
+    
+    # Get all locations for this day
+    locations = LocationTracking.get_daily_locations(target_user, date)
+    
+    # Get daily summary
+    try:
+        daily_summary = DailyTravelSummary.objects.get(user=target_user, date=date)
+    except DailyTravelSummary.DoesNotExist:
+        daily_summary = DailyTravelSummary.generate_summary(target_user, date)
+    
+    # Prepare location data for map
+    location_data = []
+    for i, loc in enumerate(locations, 1):
+        location_data.append({
+            'seq': i,
+            'lat': float(loc.latitude),
+            'lng': float(loc.longitude),
+            'address': loc.location_address,
+            'time': loc.ping_time.strftime('%I:%M %p'),
+            'type': loc.ping_type,
+        })
+    
+    context = {
+        'target_user': target_user,
+        'date': date,
+        'daily_summary': daily_summary,
+        'locations': json.dumps(location_data),  # Convert to JSON string
+        'location_count': len(location_data),
+    }
+    
+    return render(request, 'forms/day_route_map.html', context)
+
 
 
 

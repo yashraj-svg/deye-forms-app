@@ -286,35 +286,100 @@
                 <a href="{% url 'forms:simple_home' %}" style="padding: 10px 24px; border: 2px solid #667eea; background: rgba(102, 126, 234, 0.1); color: #667eea; font-size: 14px; font-weight: 600; border-radius: 8px; cursor: pointer; text-decoration: none; transition: all 0.3s ease; display: inline-flex; align-items: center; justify-content: center; gap: 8px;">🏠 Back to Home</a>
             </div>
 
-            <label for="leave_type">Type</label>
+            <label for="leave_type">Leave Type</label>
             <select id="leave_type" name="leave_type" required>
-                <option value="">Select...</option>
-                <option value="leave">Leave</option>
-                <option value="wfh">Work From Home</option>
+                <option value="">-- Select Type --</option>
+                <option value="leave">🏖️ Leave (Paid Time Off)</option>
+                <option value="wfh">🏡 Work From Home</option>
             </select>
+
+            <!-- Quick Selection Options -->
+            <div style="margin: 20px 0; padding: 16px; background: #f8f9fa; border-radius: 8px; border: 1px solid #e9ecef;">
+                <div style="font-weight: 600; font-size: 14px; color: #495057; margin-bottom: 12px;">Quick Select:</div>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button type="button" onclick="setToday()" style="padding: 8px 16px; background: #e7f1ff; color: #0066cc; border: 1px solid #b3d7ff; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500;">📅 Today (Full Day)</button>
+                    <button type="button" onclick="setTodayHalf()" style="padding: 8px 16px; background: #fff3cd; color: #856404; border: 1px solid #ffeeba; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500;">🕐 Today (Half Day)</button>
+                    <button type="button" onclick="setTomorrow()" style="padding: 8px 16px; background: #d4edda; color: #155724; border: 1px solid #c3e6cb; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500;">📆 Tomorrow</button>
+                </div>
+                <div style="margin-top: 8px; font-size: 12px; color: #6c757d;">
+                    💡 Tip: Click a button to auto-fill dates, or manually select dates below
+                </div>
+            </div>
 
             <label for="start_date">Start Date</label>
             <input type="date" id="start_date" name="start_date" required>
 
-            <label for="start_breakdown">Start Day Portion</label>
+            <label for="start_breakdown">
+                Start Day Type
+                <span style="font-weight: normal; color: #6c757d; font-size: 12px;">(For first day of leave)</span>
+            </label>
             <select id="start_breakdown" name="start_breakdown">
-                <option value="full">Full Day</option>
-                <option value="half">Half Day</option>
+                <option value="full">Full Day (8 hours)</option>
+                <option value="half">Half Day (4 hours)</option>
             </select>
 
-            <label for="end_date">End Date</label>
+            <label for="end_date">
+                End Date
+                <span style="font-weight: normal; color: #6c757d; font-size: 12px;">(Auto-filled for single day)</span>
+            </label>
             <input type="date" id="end_date" name="end_date" required>
 
-            <label for="end_breakdown">End Day Portion</label>
+            <label for="end_breakdown">
+                End Day Type
+                <span style="font-weight: normal; color: #6c757d; font-size: 12px;">(For last day of leave)</span>
+            </label>
             <select id="end_breakdown" name="end_breakdown">
-                <option value="full">Full Day</option>
-                <option value="half">Half Day</option>
+                <option value="full">Full Day (8 hours)</option>
+                <option value="half">Half Day (4 hours)</option>
             </select>
 
-            <label for="reason">Reason / Description</label>
-            <textarea id="reason" name="reason" required></textarea>
+            <div style="margin: 12px 0; padding: 12px; background: #e8f4f8; border-left: 4px solid #17a2b8; border-radius: 4px; font-size: 13px; color: #0c5460;">
+                <strong>📌 Note:</strong> For same-day leave (e.g., today only), start and end dates must be the same.
+            </div>
 
-            <button type="submit">Apply</button>
+            <label for="reason">Reason / Description</label>
+            <textarea id="reason" name="reason" placeholder="Please provide a brief reason for your leave request..." required></textarea>
+
+            <button type="submit">Submit Leave Request</button>
+
+            <script>
+                // Auto-fill end date when start date changes
+                document.getElementById('start_date').addEventListener('change', function() {
+                    const endDateInput = document.getElementById('end_date');
+                    if (!endDateInput.value || new Date(endDateInput.value) < new Date(this.value)) {
+                        endDateInput.value = this.value;
+                    }
+                });
+
+                // Quick select: Today (Full Day)
+                function setToday() {
+                    const today = new Date().toISOString().split('T')[0];
+                    document.getElementById('start_date').value = today;
+                    document.getElementById('end_date').value = today;
+                    document.getElementById('start_breakdown').value = 'full';
+                    document.getElementById('end_breakdown').value = 'full';
+                }
+
+                // Quick select: Today (Half Day)
+                function setTodayHalf() {
+                    const today = new Date().toISOString().split('T')[0];
+                    document.getElementById('start_date').value = today;
+                    document.getElementById('end_date').value = today;
+                    document.getElementById('start_breakdown').value = 'half';
+                    document.getElementById('end_breakdown').value = 'half';
+                }
+
+                // Quick select: Tomorrow (Full Day)
+                function setTomorrow() {
+                    const tomorrow = new Date();
+                    tomorrow.setDate(tomorrow.getDate() + 1);
+                    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+                    document.getElementById('start_date').value = tomorrowStr;
+                    document.getElementById('end_date').value = tomorrowStr;
+                    document.getElementById('start_breakdown').value = 'full';
+                    document.getElementById('end_breakdown').value = 'full';
+                }
+            </script>
         </form>
     </div>
 

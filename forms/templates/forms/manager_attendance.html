@@ -1,0 +1,275 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Team Attendance{% endblock %}
+
+{% block extra_css %}
+<style>
+    .attendance-container {
+        max-width: 1200px;
+        margin: 30px auto;
+        padding: 20px;
+    }
+
+    .attendance-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid #e0e0e0;
+    }
+
+    .attendance-header h1 {
+        margin: 0;
+        font-size: 28px;
+        color: #333;
+    }
+
+    .attendance-summary {
+        display: flex;
+        gap: 20px;
+        margin-bottom: 30px;
+        flex-wrap: wrap;
+    }
+
+    .summary-card {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        flex: 1;
+        min-width: 150px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        text-align: center;
+    }
+
+    .summary-value {
+        font-size: 28px;
+        font-weight: 700;
+        color: #007bff;
+        margin: 0;
+    }
+
+    .summary-label {
+        font-size: 12px;
+        color: #666;
+        text-transform: uppercase;
+        margin-top: 8px;
+        font-weight: 600;
+    }
+
+    .team-checkins-container {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+
+    .checkin-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .checkin-item {
+        padding: 16px;
+        border-bottom: 1px solid #e0e0e0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: background-color 0.3s ease;
+    }
+
+    .checkin-item:hover {
+        background-color: #f8f9fa;
+    }
+
+    .checkin-item:last-child {
+        border-bottom: none;
+    }
+
+    .employee-info {
+        flex: 1;
+    }
+
+    .employee-name {
+        font-weight: 600;
+        color: #333;
+        margin: 0;
+        font-size: 14px;
+    }
+
+    .employee-location {
+        font-size: 12px;
+        color: #666;
+        margin: 4px 0 0 0;
+    }
+
+    .checkin-time {
+        text-align: right;
+        margin: 0 20px;
+    }
+
+    .time-badge {
+        font-family: 'Courier New', monospace;
+        font-weight: 600;
+        color: #28a745;
+        font-size: 14px;
+        margin: 0;
+    }
+
+    .location-badge {
+        font-size: 12px;
+        color: #666;
+        margin: 4px 0 0 0;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #666;
+    }
+
+    .empty-state-icon {
+        font-size: 48px;
+        margin-bottom: 16px;
+    }
+
+    .empty-state p {
+        margin: 8px 0;
+        font-size: 14px;
+    }
+
+    .back-button {
+        display: inline-block;
+        padding: 10px 16px;
+        background-color: #f8f9fa;
+        color: #007bff;
+        text-decoration: none;
+        border-radius: 6px;
+        border: 1px solid #dee2e6;
+        font-size: 13px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .back-button:hover {
+        background-color: #e3f2fd;
+        border-color: #007bff;
+    }
+
+    .maps-link {
+        color: #007bff;
+        text-decoration: none;
+        font-size: 11px;
+        margin-left: 8px;
+    }
+
+    .maps-link:hover {
+        text-decoration: underline;
+    }
+
+    .person-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #007bff;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        margin-right: 12px;
+    }
+
+    .checkin-row {
+        display: flex;
+        align-items: center;
+    }
+
+    .time-display {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="attendance-container">
+    <div class="attendance-header">
+        <div>
+            <h1>👥 Team Attendance</h1>
+            <p style="margin: 8px 0 0 0; color: #666;">Today's check-in status for your team</p>
+        </div>
+        <div>
+            <a href="{% url 'forms:simple_home' %}" class="back-button">⬅ Back</a>
+        </div>
+    </div>
+
+    <div class="attendance-summary">
+        <div class="summary-card">
+            <p class="summary-value">{{ team_members|length }}</p>
+            <p class="summary-label">Team Members</p>
+        </div>
+        <div class="summary-card">
+            <p class="summary-value">{{ attended }}</p>
+            <p class="summary-label">Checked In Today</p>
+        </div>
+        <div class="summary-card">
+            <p class="summary-value">{{ team_members|length|add:attended|add:-attended }}</p>
+            <p class="summary-label">Not Checked In</p>
+        </div>
+    </div>
+
+    {% if today_checkins %}
+        <div class="team-checkins-container">
+            <ul class="checkin-list">
+                {% for checkin in today_checkins %}
+                    <li class="checkin-item">
+                        <div class="checkin-row" style="flex: 1;">
+                            <div class="person-avatar">
+                                {{ checkin.user.first_name|upper|first }}
+                            </div>
+                            <div class="employee-info">
+                                <p class="employee-name">{{ checkin.user.get_full_name|default:checkin.user.username }}</p>
+                                <p class="employee-location">
+                                    📍 {{ checkin.check_in_location }}
+                                    <a href="https://www.google.com/maps?q={{ checkin.check_in_latitude }},{{ checkin.check_in_longitude }}" 
+                                       target="_blank" class="maps-link">View Map</a>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="time-display">
+                            <p class="time-badge">
+                                {% if checkin.is_checked_in %}
+                                    🟢 {{ checkin.check_in_time|date:"H:i:s" }}
+                                {% else %}
+                                    🔴 {{ checkin.check_out_time|date:"H:i:s" }}
+                                {% endif %}
+                            </p>
+                            {% if not checkin.is_checked_in and checkin.duration_hours %}
+                                <p class="location-badge">
+                                    Duration: {{ checkin.duration_hours|floatformat:1 }}h
+                                </p>
+                            {% endif %}
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">📭</div>
+            <p>No team members have checked in yet today.</p>
+            <p style="font-size: 12px; color: #999;">Check back later for attendance updates.</p>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+    setInterval(function() {
+        location.reload();
+    }, 30000);
+</script>
+{% endblock %}

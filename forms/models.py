@@ -24,12 +24,17 @@ class RequiredStock(models.Model):
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    employee_id = models.CharField(max_length=50, blank=True, help_text="Employee ID/Number")
+    profile_photo = models.ImageField(upload_to='profile_photos/', blank=True, null=True, help_text="Profile Photo")
     date_of_birth = models.DateField(null=True, blank=True)
+    joining_date = models.DateField(null=True, blank=True, help_text="Date of Joining")
     phone = models.CharField(max_length=15, blank=True)
     department = models.CharField(max_length=100, blank=True)
+    designation = models.CharField(max_length=255, blank=True)
     manager = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='team_members', help_text="Manager of this user")
     location = models.CharField(max_length=255, blank=True)
-    designation = models.CharField(max_length=255, blank=True)
+    region = models.CharField(max_length=100, blank=True, help_text="Region/Territory")
+    is_active = models.BooleanField(default=True, help_text="Is employee currently active")
     
     def __str__(self):
         return f"{self.user.username}'s profile"
@@ -338,6 +343,19 @@ class LeaveRequest(models.Model):
 
         if start > end:
             return 0.0
+        
+        # Special case: Same day leave
+        if start == end:
+            if start.weekday() == 6:  # Sunday
+                return 0.0
+            # Same day: both half days = 0.5 days, otherwise count based on breakdown
+            if self.start_breakdown == 'half' and self.end_breakdown == 'half':
+                return 0.5
+            elif self.start_breakdown == 'half' or self.end_breakdown == 'half':
+                return 0.5
+            else:  # Both full days
+                return 1.0
+        
         # Count days excluding Sundays
         days = 0.0
         current = start
@@ -488,3 +506,463 @@ class DispatchedStock(models.Model):
     
     def __str__(self):
         return f"Dispatch: {self.serial_number} - {self.component_type} ({self.quantity_dispatched}) to {self.dispatch_location}"
+
+
+class Holiday(models.Model):
+    """
+    Holiday model to store 2026 holiday calendar
+    Fixed holidays: cannot request leave on these dates
+    Floating holidays: employees can choose 3 from the available pool
+    """
+    CATEGORY_CHOICES = [
+        ('National', 'National Holiday'),
+        ('Festival', 'Festival'),
+        ('Regional', 'Regional Holiday'),
+        ('Optional', 'Optional Holiday'),
+    ]
+
+    date = models.DateField(unique=True, db_index=True)
+    name = models.CharField(max_length=255)
+    category = models.CharField(max_length=50, choices=CATEGORY_CHOICES)
+    is_floating = models.BooleanField(default=False, help_text="True if employees can choose this as floating holiday (max 3)")
+    description = models.TextField(blank=True, help_text="Additional description or region-specific info")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'holidays'
+        verbose_name = 'Holiday'
+        verbose_name_plural = 'Holidays'
+        ordering = ['date']
+        indexes = [
+            models.Index(fields=['date']),
+            models.Index(fields=['is_floating']),
+        ]
+
+    def __str__(self):
+        holiday_type = "Floating" if self.is_floating else "Fixed"
+        return f"{self.date.strftime('%d-%b-%Y')} - {self.name} ({holiday_type})"
+    
+    @classmethod
+    def get_fixed_holidays(cls):
+        """Get all fixed holidays"""
+        return cls.objects.filter(is_floating=False).order_by('date')
+    
+    @classmethod
+    def get_floating_holidays(cls):
+        """Get all floating holidays"""
+        return cls.objects.filter(is_floating=True).order_by('date')
+    
+    @classmethod
+    def is_holiday(cls, check_date):
+        """Check if a date is a holiday"""
+        return cls.objects.filter(date=check_date).exists()
+    
+    @classmethod
+    def is_fixed_holiday(cls, check_date):
+        """Check if a date is a fixed holiday"""
+        return cls.objects.filter(date=check_date, is_floating=False).exists()
+    
+    @classmethod
+    def is_floating_holiday(cls, check_date):
+        """Check if a date is a floating holiday"""
+        return cls.objects.filter(date=check_date, is_floating=True).exists()
+
+
+class CheckInOut(models.Model):
+    """
+    Employee check-in/check-out tracking with location data.
+    Stores exact timestamps and GPS coordinates for attendance monitoring.
+    """
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='checkins',
+        help_text="Employee who checked in"
+    )
+    date = models.DateField(
+        auto_now_add=True,
+        help_text="Date of check-in"
+    )
+    
+    # Check-in data
+    check_in_time = models.DateTimeField(
+        help_text="Exact timestamp when employee checked in"
+    )
+    check_in_latitude = models.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        help_text="GPS latitude at check-in"
+    )
+    check_in_longitude = models.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        help_text="GPS longitude at check-in"
+    )
+    check_in_location = models.CharField(
+        max_length=255,
+        help_text="Address/location name at check-in"
+    )
+    
+    # Check-out data
+    check_out_time = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Exact timestamp when employee checked out"
+    )
+    check_out_latitude = models.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        null=True,
+        blank=True,
+        help_text="GPS latitude at check-out"
+    )
+    check_out_longitude = models.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        null=True,
+        blank=True,
+        help_text="GPS longitude at check-out"
+    )
+    check_out_location = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="Address/location name at check-out"
+    )
+    
+    # Duration calculation
+    duration_hours = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Total hours worked (automatically calculated)"
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'employee_checkin'
+        ordering = ['-date', '-check_in_time']
+        indexes = [
+            models.Index(fields=['user', 'date']),
+            models.Index(fields=['date']),
+        ]
+        verbose_name = 'Check-In/Check-Out'
+        verbose_name_plural = 'Check-Ins/Check-Outs'
+    
+    def __str__(self):
+        status = "Checked In" if self.is_checked_in() else "Checked Out"
+        return f"{self.user.get_full_name() or self.user.username} - {self.date} ({status})"
+    
+    def is_checked_in(self):
+        """Check if user is currently checked in (no check-out time)"""
+        return self.check_out_time is None
+    
+    def calculate_duration(self):
+        """Calculate duration between check-in and check-out in hours"""
+        if self.check_in_time and self.check_out_time:
+            delta = self.check_out_time - self.check_in_time
+            hours = delta.total_seconds() / 3600
+            self.duration_hours = round(hours, 2)
+        return self.duration_hours
+    
+    @classmethod
+    def get_today_checkin(cls, user):
+        """Get today's check-in record for a user"""
+        from django.utils import timezone
+        today = timezone.now().date()
+        try:
+            return cls.objects.filter(user=user, date=today).first()
+        except cls.DoesNotExist:
+            return None
+    
+    @classmethod
+    def get_active_checkin(cls, user):
+        """Get currently active (not checked out) check-in for a user"""
+        return cls.objects.filter(user=user, check_out_time__isnull=True).first()
+
+
+class LocationTracking(models.Model):
+    """
+    Model to track hourly location pings for employees during work hours.
+    Stores location every hour while checked in, tracks coverage gaps.
+    Data retained for 4 months only.
+    """
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='location_pings')
+    checkin = models.ForeignKey(CheckInOut, on_delete=models.CASCADE, related_name='location_pings', 
+                                null=True, blank=True, help_text="Associated check-in session")
+    
+    # Timestamp
+    ping_time = models.DateTimeField(auto_now_add=True, help_text="When location was captured")
+    
+    # Location data
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True,
+                                   help_text="GPS Latitude")
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True,
+                                    help_text="GPS Longitude")
+    location_address = models.TextField(blank=True, help_text="Reverse geocoded address")
+    
+    # Tracking metadata
+    ping_type = models.CharField(max_length=20, choices=[
+        ('checkin', 'Check-In'),
+        ('hourly', 'Hourly Ping'),
+        ('checkout', 'Check-Out'),
+        ('recovery', 'Coverage Recovery'),
+    ], default='hourly')
+    
+    is_location_available = models.BooleanField(default=True, 
+                                                help_text="Was location available at ping time?")
+    coverage_gap_seconds = models.IntegerField(default=0, 
+                                               help_text="Seconds without location before this ping")
+    
+    # Browser/Device info
+    accuracy = models.FloatField(null=True, blank=True, help_text="GPS accuracy in meters")
+    device_info = models.CharField(max_length=200, blank=True, help_text="Browser/Device details")
+    
+    class Meta:
+        db_table = 'employee_location_tracking'
+        ordering = ['-ping_time']
+        indexes = [
+            models.Index(fields=['user', 'ping_time']),
+            models.Index(fields=['checkin', 'ping_time']),
+            models.Index(fields=['ping_time']),  # For cleanup queries
+        ]
+        verbose_name = 'Location Tracking'
+        verbose_name_plural = 'Location Tracking Records'
+    
+    def __str__(self):
+        status = "📍" if self.is_location_available else "❌"
+        return f"{status} {self.user.username} - {self.ping_type} at {self.ping_time.strftime('%I:%M %p')}"
+    
+    def get_maps_url(self):
+        """Generate Google Maps URL for this location"""
+        if self.latitude and self.longitude:
+            return f"https://www.google.com/maps?q={self.latitude},{self.longitude}"
+        return None
+    
+    @classmethod
+    def cleanup_old_records(cls):
+        """Delete records older than 4 months"""
+        from django.utils import timezone
+        from datetime import timedelta
+        cutoff_date = timezone.now() - timedelta(days=120)  # 4 months
+        deleted_count = cls.objects.filter(ping_time__lt=cutoff_date).delete()[0]
+        return deleted_count
+    
+    @classmethod
+    def get_user_travel_history(cls, user, days=30):
+        """Get user's location tracking history for specified days"""
+        from django.utils import timezone
+        from datetime import timedelta
+        start_date = timezone.now() - timedelta(days=days)
+        return cls.objects.filter(user=user, ping_time__gte=start_date).select_related('checkin')
+    
+    @classmethod
+    def record_ping(cls, user, checkin, ping_type='hourly', latitude=None, longitude=None, 
+                   location_address='', accuracy=None, device_info='', coverage_gap_seconds=0):
+        """Create a new location ping record"""
+        is_available = latitude is not None and longitude is not None
+        
+        return cls.objects.create(
+            user=user,
+            checkin=checkin,
+            ping_type=ping_type,
+            latitude=latitude,
+            longitude=longitude,
+            location_address=location_address,
+            is_location_available=is_available,
+            accuracy=accuracy,
+            device_info=device_info,
+            coverage_gap_seconds=coverage_gap_seconds
+        )
+    
+    @staticmethod
+    def calculate_distance(lat1, lon1, lat2, lon2):
+        """
+        Calculate distance between two GPS coordinates using Haversine formula.
+        Returns distance in kilometers.
+        """
+        from math import radians, sin, cos, sqrt, atan2
+        
+        if not all([lat1, lon1, lat2, lon2]):
+            return 0.0
+        
+        # Convert to radians
+        lat1, lon1, lat2, lon2 = map(radians, [float(lat1), float(lon1), float(lat2), float(lon2)])
+        
+        # Haversine formula
+        dlat = lat2 - lat1
+        dlon = lon2 - lon1
+        a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
+        c = 2 * atan2(sqrt(a), sqrt(1-a))
+        
+        # Earth radius in kilometers
+        radius = 6371.0
+        distance = radius * c
+        
+        return round(distance, 2)
+    
+    @classmethod
+    def get_daily_locations(cls, user, date):
+        """Get all location pings for a specific day"""
+        from django.utils import timezone
+        from datetime import datetime, time
+        
+        # Create date range for the day
+        start_datetime = timezone.make_aware(datetime.combine(date, time.min))
+        end_datetime = timezone.make_aware(datetime.combine(date, time.max))
+        
+        return cls.objects.filter(
+            user=user,
+            ping_time__gte=start_datetime,
+            ping_time__lte=end_datetime,
+            is_location_available=True
+        ).order_by('ping_time')
+    
+    @classmethod
+    def calculate_daily_distance(cls, user, date):
+        """Calculate total distance travelled in a day"""
+        locations = cls.get_daily_locations(user, date)
+        
+        if locations.count() < 2:
+            return 0.0
+        
+        total_distance = 0.0
+        prev_location = None
+        
+        for location in locations:
+            if prev_location:
+                distance = cls.calculate_distance(
+                    prev_location.latitude, prev_location.longitude,
+                    location.latitude, location.longitude
+                )
+                total_distance += distance
+            prev_location = location
+        
+        return round(total_distance, 2)
+
+
+class DailyTravelSummary(models.Model):
+    """
+    Day-wise summary of employee travel with total distance.
+    Automatically calculated from LocationTracking records.
+    """
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='daily_travel_summaries')
+    date = models.DateField(help_text="Date of travel")
+    
+    # Summary data
+    total_distance_km = models.DecimalField(max_digits=10, decimal_places=2, default=0,
+                                           help_text="Total distance travelled in kilometers")
+    location_count = models.IntegerField(default=0, help_text="Number of location pings recorded")
+    
+    # Time data
+    first_ping_time = models.DateTimeField(null=True, blank=True, help_text="Check-in time")
+    last_ping_time = models.DateTimeField(null=True, blank=True, help_text="Check-out time")
+    work_duration_hours = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True,
+                                              help_text="Total work hours")
+    
+    # Location data for quick access
+    start_location = models.TextField(blank=True, help_text="Check-in location address")
+    end_location = models.TextField(blank=True, help_text="Check-out location address")
+    
+    # Reference to check-in session
+    checkin = models.ForeignKey(CheckInOut, on_delete=models.SET_NULL, null=True, blank=True,
+                                related_name='travel_summary')
+    
+    # Metadata
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'daily_travel_summary'
+        unique_together = ('user', 'date')
+        ordering = ['-date']
+        indexes = [
+            models.Index(fields=['user', 'date']),
+            models.Index(fields=['date']),
+        ]
+        verbose_name = 'Daily Travel Summary'
+        verbose_name_plural = 'Daily Travel Summaries'
+    
+    def __str__(self):
+        return f"{self.user.get_full_name() or self.user.username} - {self.date} ({self.total_distance_km} km)"
+    
+    @classmethod
+    def generate_summary(cls, user, date):
+        """Generate or update daily travel summary for a specific date"""
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        # Get all locations for the day
+        locations = LocationTracking.get_daily_locations(user, date)
+        location_count = locations.count()
+        
+        if location_count == 0:
+            # No data for this day
+            return None
+        
+        # Calculate total distance
+        total_distance = LocationTracking.calculate_daily_distance(user, date)
+        
+        # Get first and last ping
+        first_ping = locations.first()
+        last_ping = locations.last()
+        
+        # Calculate work duration
+        work_duration = None
+        if first_ping and last_ping and first_ping != last_ping:
+            duration_seconds = (last_ping.ping_time - first_ping.ping_time).total_seconds()
+            work_duration = round(duration_seconds / 3600, 2)
+        
+        # Get checkin session
+        checkin = CheckInOut.objects.filter(user=user, date=date).first()
+        
+        # Create or update summary
+        summary, created = cls.objects.update_or_create(
+            user=user,
+            date=date,
+            defaults={
+                'total_distance_km': total_distance,
+                'location_count': location_count,
+                'first_ping_time': first_ping.ping_time,
+                'last_ping_time': last_ping.ping_time,
+                'work_duration_hours': work_duration,
+                'start_location': first_ping.location_address,
+                'end_location': last_ping.location_address,
+                'checkin': checkin,
+            }
+        )
+        
+        return summary
+    
+    def get_all_locations(self):
+        """Get all location pings for this day"""
+        return LocationTracking.get_daily_locations(self.user, self.date)
+    
+    def get_maps_route_url(self):
+        """Generate Google Maps URL showing the entire day's route"""
+        locations = self.get_all_locations()
+        
+        if locations.count() < 2:
+            # Single location - just show that point
+            if locations.count() == 1:
+                loc = locations.first()
+                return f"https://www.google.com/maps?q={loc.latitude},{loc.longitude}"
+            return None
+        
+        # Multiple locations - create route with waypoints
+        coords = [f"{loc.latitude},{loc.longitude}" for loc in locations]
+        
+        # Start and end
+        origin = coords[0]
+        destination = coords[-1]
+        
+        # Middle waypoints (Google Maps supports up to 25 waypoints)
+        waypoints = "|".join(coords[1:-1][:25]) if len(coords) > 2 else ""
+        
+        if waypoints:
+            return f"https://www.google.com/maps/dir/?api=1&origin={origin}&destination={destination}&waypoints={waypoints}&travelmode=driving"
+        else:
+            return f"https://www.google.com/maps/dir/?api=1&origin={origin}&destination={destination}&travelmode=driving"

@@ -10,6 +10,9 @@ urlpatterns = [
     path('hierarchy/', views.hierarchy_static_view, name='hierarchy'),
     path('', views.simple_home, name='simple_home'),
     path('password-change/', views.change_password, name='change_password'),
+    path('profile/', views.user_profile, name='user_profile'),
+    path('profile/id-card/', views.user_id_card, name='user_id_card'),
+    path('profile/id-card/download/', views.download_id_card, name='download_id_card'),
     path('calculator/', views.freight_calculator, name='calculator'),
     path('calculator/diagnose/', views.bigship_diagnostic, name='bigship_diagnostic'),
     path('stock/', views.stock_home, name='stock'),
@@ -56,6 +59,7 @@ urlpatterns = [
     path('leave/apply/', views.apply_leave, name='apply_leave'),
     path('leave/status/', views.leave_status, name='leave_status'),
     path('leave/history/', views.leave_history, name='leave_history'),
+    path('leave/team-attendance/', views.team_attendance, name='team_attendance'),
 
     # Admin leave management
     path('leave/admin/', views.leave_admin, name='leave_admin'),
@@ -66,6 +70,24 @@ urlpatterns = [
     # Email approve/reject actions
     path('leave/email/approve/<int:leave_id>/', views.approve_leave_email, name='approve_leave_email'),
     path('leave/email/reject/<int:leave_id>/', views.reject_leave_email, name='reject_leave_email'),
+
+    # Check-In / Check-Out
+    path('checkin/', views.checkin_page, name='checkin_page'),
+    path('api/checkin/submit/', views.checkin_submit, name='checkin_submit'),
+    path('api/checkin/checkout/', views.checkout_submit, name='checkout_submit'),
+    path('api/checkin/status/', views.get_checkin_status, name='get_checkin_status'),
+    path('attendance/history/', views.attendance_history, name='attendance_history'),
+    path('attendance/team/', views.manager_attendance_view, name='manager_attendance'),
+    
+    # Location Tracking (Hourly Pings & Travel History)
+    path('api/location/ping/', views.save_location_ping, name='save_location_ping'),
+    path('travel/history/', views.travel_history_view, name='travel_history'),
+    path('travel/history/<str:username>/', views.travel_history_view, name='travel_history'),
+    
+    # Daily Travel Summary (Day-wise with total distance)
+    path('travel/daily-summary/', views.daily_travel_summary_view, name='daily_travel_summary'),
+    path('travel/daily-summary/<str:username>/', views.daily_travel_summary_view, name='daily_travel_summary'),
+    path('travel/map/<str:username>/<str:date_str>/', views.day_route_map_view, name='day_route_map'),
 
     path('api/available-inverter-serials/', available_inverter_serials, name='available_inverter_serials'),
     path('api/available-battery-serials/', available_battery_serials, name='available_battery_serials'),

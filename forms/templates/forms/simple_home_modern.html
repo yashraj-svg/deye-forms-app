@@ -98,6 +98,31 @@
             transform: translateY(0);
         }
 
+        .profile-btn {
+            padding: 10px 18px;
+            background: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .profile-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(86, 171, 47, 0.3);
+        }
+
+        .profile-btn:active {
+            transform: translateY(0);
+        }
+
         /* ========== HERO SECTION ========== */
         .hero-section {
             position: relative;
@@ -433,6 +458,7 @@
         <img src="{% static 'admin/Images/logo-deye-300x225.webp' %}" alt="DEYE">
     </div>
     <div class="header-actions">
+        <a href="{% url 'forms:user_profile' %}" class="profile-btn">👤 My Profile</a>
         <a href="{% url 'forms:change_password' %}" class="change-password-btn">🔐 Change Password</a>
         <div class="user-greeting">
             <div class="user-avatar">{{ request.user.username|slice:":1"|upper }}</div>
@@ -469,6 +495,18 @@
                 <div class="nav-card-title">Request Leave</div>
                 <div class="nav-card-desc">Submit leave applications</div>
             </a>
+            <a href="{% url 'forms:checkin_page' %}" class="nav-card">
+                <div class="nav-card-icon">🕐</div>
+                <div class="nav-card-title">Check-In / Out</div>
+                <div class="nav-card-desc">Track your attendance</div>
+            </a>
+            {% if show_team_attendance %}
+            <a href="{% url 'forms:team_attendance' %}" class="nav-card">
+                <div class="nav-card-icon">📊</div>
+                <div class="nav-card-title">Team Attendance</div>
+                <div class="nav-card-desc">View team status today</div>
+            </a>
+            {% endif %}
             <a href="/leave-admin/" class="nav-card">
                 <div class="nav-card-icon">👥</div>
                 <div class="nav-card-title">Leave Admin</div>

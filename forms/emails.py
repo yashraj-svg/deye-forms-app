@@ -7,7 +7,7 @@ from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail, Email, To, Content
 
 
-def send_sendgrid_email(to_emails, subject, html_content, plain_content=None):
+def send_sendgrid_email(to_emails, subject, html_content, plain_content=None, cc_emails=None):
     """
     Send email using SendGrid Web API (not SMTP).
     
@@ -16,9 +16,13 @@ def send_sendgrid_email(to_emails, subject, html_content, plain_content=None):
         subject: email subject
         html_content: HTML email body
         plain_content: plain text fallback (optional)
+        cc_emails: list of CC email addresses (optional)
     """
     if isinstance(to_emails, str):
         to_emails = [to_emails]
+    
+    if isinstance(cc_emails, str):
+        cc_emails = [cc_emails]
     
     try:
         if not settings.SENDGRID_API_KEY:
@@ -26,8 +30,11 @@ def send_sendgrid_email(to_emails, subject, html_content, plain_content=None):
             return False
         
         print(f"[EMAIL] Preparing SendGrid email to: {to_emails}")
+        if cc_emails:
+            print(f"[EMAIL] CC: {cc_emails}")
         
         # Create Mail object
+        from sendgrid.helpers.mail import Cc
         mail = Mail(
             from_email=Email(settings.DEFAULT_FROM_EMAIL),
             to_emails=[To(email) for email in to_emails],
@@ -35,6 +42,12 @@ def send_sendgrid_email(to_emails, subject, html_content, plain_content=None):
             plain_text_content=plain_content or strip_tags(html_content),
             html_content=html_content
         )
+        
+        # Add CC recipients if provided
+        if cc_emails:
+            for cc_email in cc_emails:
+                if cc_email:  # Skip empty emails
+                    mail.add_cc(Cc(cc_email))
         
         # Send via SendGrid API
         sg = SendGridAPIClient(settings.SENDGRID_API_KEY)

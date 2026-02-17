@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <title>Admin Leave Requests</title>
+    <title>Admin Leave & Attendance Dashboard</title>
     <style>
         body { 
             margin:0; 
@@ -245,6 +245,118 @@
             </button>
         </div>
     </div>
+
+    <!-- Team Attendance Section -->
+    <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
+        <h3 style="margin-top: 0; color: #333; display: flex; align-items: center; gap: 8px;">
+            👥 Today's Attendance Overview
+            <span style="font-size: 14px; color: #666; font-weight: normal;">{{ today|date:"l, F d, Y" }}</span>
+        </h3>
+        
+        <!-- Stats Cards -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px; text-align: center; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);">
+                <div style="font-size: 32px; font-weight: bold; margin-bottom: 5px;">{{ total_employees }}</div>
+                <div style="font-size: 14px; opacity: 0.9;">Total Employees</div>
+            </div>
+            
+            <div style="background: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%); color: white; padding: 20px; border-radius: 10px; text-align: center; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);">
+                <div style="font-size: 32px; font-weight: bold; margin-bottom: 5px;">{{ working_count }}</div>
+                <div style="font-size: 14px; opacity: 0.9;">Working in Office</div>
+            </div>
+            
+            <div style="background: linear-gradient(135deg, #f2994a 0%, #f2c94c 100%); color: white; padding: 20px; border-radius: 10px; text-align: center; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);">
+                <div style="font-size: 32px; font-weight: bold; margin-bottom: 5px;">{{ on_leave_count }}</div>
+                <div style="font-size: 14px; opacity: 0.9;">On Leave</div>
+            </div>
+            
+            <div style="background: linear-gradient(135deg, #2193b0 0%, #6dd5ed 100%); color: white; padding: 20px; border-radius: 10px; text-align: center; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);">
+                <div style="font-size: 32px; font-weight: bold; margin-bottom: 5px;">{{ wfh_count }}</div>
+                <div style="font-size: 14px; opacity: 0.9;">Work From Home</div>
+            </div>
+        </div>
+        
+        <!-- Attendance Table -->
+        <details open>
+            <summary style="cursor: pointer; font-weight: 600; padding: 10px; background: #f8f9fa; border-radius: 6px; margin-bottom: 10px;">
+                View Detailed Attendance ({{ team_status|length }} employees)
+            </summary>
+            <div style="max-height: 400px; overflow-y: auto; margin-top: 10px;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead style="position: sticky; top: 0; background: #007bff; color: white; z-index: 10;">
+                        <tr>
+                            <th style="padding: 10px; text-align: left;">Employee ID</th>
+                            <th style="padding: 10px; text-align: left;">Name</th>
+                            <th style="padding: 10px; text-align: left;">Department</th>
+                            <th style="padding: 10px; text-align: left;">Designation</th>
+                            <th style="padding: 10px; text-align: left;">Status</th>
+                            <th style="padding: 10px; text-align: left;">Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for member_status in team_status %}
+                            <tr style="border-bottom: 1px solid #e1e4e8;">
+                                <td style="padding: 10px;">
+                                    {% if member_status.user.profile.employee_id %}
+                                        {{ member_status.user.profile.employee_id }}
+                                    {% else %}
+                                        <span style="color: #999;">-</span>
+                                    {% endif %}
+                                </td>
+                                <td style="padding: 10px;">
+                                    <strong>{{ member_status.user.get_full_name|default:member_status.user.username }}</strong>
+                                    {% if not member_status.user.profile.is_active %}
+                                        <span style="color: #dc3545; font-size: 11px; font-weight: 600; margin-left: 6px;">(INACTIVE)</span>
+                                    {% endif %}
+                                </td>
+                                <td style="padding: 10px;">
+                                    {% if member_status.user.profile.department %}
+                                        {{ member_status.user.profile.department }}
+                                    {% else %}
+                                        <span style="color: #999;">-</span>
+                                    {% endif %}
+                                </td>
+                                <td style="padding: 10px;">
+                                    {% if member_status.user.profile.designation %}
+                                        {{ member_status.user.profile.designation }}
+                                    {% else %}
+                                        <span style="color: #999;">-</span>
+                                    {% endif %}
+                                </td>
+                                <td style="padding: 10px;">
+                                    {% if member_status.status == 'working' %}
+                                        <span class="badge" style="background-color: #d4edda; color: #155724;">✓ Working</span>
+                                    {% elif member_status.status == 'on_leave' %}
+                                        <span class="badge" style="background-color: #fff3cd; color: #856404;">⚠ On Leave</span>
+                                    {% elif member_status.status == 'wfh' %}
+                                        <span class="badge" style="background-color: #d1ecf1; color: #0c5460;">🏠 WFH</span>
+                                    {% endif %}
+                                </td>
+                                <td style="padding: 10px;">
+                                    {% if member_status.leave %}
+                                        <div style="font-size: 12px; color: #666;">
+                                            <strong>{{ member_status.leave.get_leave_type_display }}</strong><br>
+                                            {{ member_status.leave.start_date|date:"d M" }} to {{ member_status.leave.end_date|date:"d M Y" }}
+                                            {% if member_status.leave.reason %}
+                                                <br>Reason: {{ member_status.leave.reason|truncatewords:10 }}
+                                            {% endif %}
+                                        </div>
+                                    {% else %}
+                                        <span style="color: #999;">-</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </details>
+    </div>
+
+    <!-- Leave Requests Section -->
+    <h3 style="color: #333; margin: 30px 0 15px 0; display: flex; align-items: center; gap: 8px;">
+        📋 All Leave Requests & Applications
+    </h3>
 
     <div class="filter-bar">
         <form method="get" class="filter-group">

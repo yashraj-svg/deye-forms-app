@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Travel Route - {{ target_user.get_full_name }} - {{ date|date:"d M Y" }} - Deye</title>
+    {% load static %}
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 25px;
+            border-radius: 12px 12px 0 0;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .header .info {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #64748b;
+            font-size: 1em;
+        }
+
+        .info-item .icon {
+            font-size: 1.3em;
+        }
+
+        .info-item .value {
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .map-container {
+            background: white;
+            padding: 0;
+            border-radius: 0 0 12px 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        #map {
+            height: 600px;
+            width: 100%;
+        }
+
+        .location-list {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+        }
+
+        .location-list h2 {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .location-items {
+            display: grid;
+            gap: 15px;
+        }
+
+        .location-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: #f8faff;
+            border-left: 4px solid #667eea;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .location-item:hover {
+            transform: translateX(8px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        }
+
+        .location-item.checkin {
+            border-left-color: #10b981;
+        }
+
+        .location-item.checkout {
+            border-left-color: #dc2626;
+        }
+
+        .location-number {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.1em;
+            flex-shrink: 0;
+        }
+
+        .location-item.checkin .location-number {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        .location-item.checkout .location-number {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+        }
+
+        .location-details {
+            flex: 1;
+        }
+
+        .location-details .time {
+            font-weight: 700;
+            color: #1e293b;
+            font-size: 1.1em;
+            margin-bottom: 5px;
+        }
+
+        .location-details .address {
+            color: #64748b;
+            font-size: 0.95em;
+        }
+
+        .location-details .type-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            background: #667eea;
+            color: white;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-top: 5px;
+        }
+
+        .location-item.checkin .type-badge {
+            background: #10b981;
+        }
+
+        .location-item.checkout .type-badge {
+            background: #dc2626;
+        }
+
+        /* Leaflet custom styles */
+        .custom-marker {
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            border: 3px solid white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .custom-marker.checkin {
+            background: #10b981;
+        }
+
+        .custom-marker.checkout {
+            background: #dc2626;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 60px 20px;
+            color: #64748b;
+        }
+
+        .no-data .icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .no-data h3 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+
+        .back-button {
+            display: inline-block;
+            padding: 10px 20px;
+            background: white;
+            color: #667eea;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+        }
+
+        .back-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>🗺️ Daily Travel Route</h1>
+        <p><strong>{{ target_user.get_full_name }}</strong> | {{ date|date:"l, d F Y" }}</p>
+        
+        {% if daily_summary %}
+        <div class="info">
+            <div class="info-item">
+                <span class="icon">🚗</span>
+                <span>Total Distance: <span class="value">{{ daily_summary.total_distance_km }} km</span></span>
+            </div>
+            <div class="info-item">
+                <span class="icon">📍</span>
+                <span>Locations: <span class="value">{{ location_count }} points</span></span>
+            </div>
+            <div class="info-item">
+                <span class="icon">⏱️</span>
+                <span>Duration: <span class="value">
+                    {% if daily_summary.work_duration_hours %}
+                        {% widthratio daily_summary.work_duration_hours 1 1 %}h 
+                        {% widthratio daily_summary.work_duration_hours 1 60|floatformat:0|add:"-60" %}m
+                    {% else %}
+                        -
+                    {% endif %}
+                </span></span>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if locations %}
+    <div class="map-container">
+        <div id="map"></div>
+    </div>
+
+    <div class="location-list">
+        <h2>📍 Location Timeline ({{ location_count }} Points)</h2>
+        <div class="location-items">
+            {% for loc in locations %}
+            <div class="location-item {{ loc.type }}">
+                <div class="location-number">{{ loc.seq }}</div>
+                <div class="location-details">
+                    <div class="time">⏰ {{ loc.time }}</div>
+                    <div class="address">{{ loc.address|default:"Location coordinates recorded" }}</div>
+                    <span class="type-badge">{{ loc.type }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% else %}
+    <div class="location-list">
+        <div class="no-data">
+            <div class="icon">📍</div>
+            <h3>No Location Data</h3>
+            <p>No location records found for this date.</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <a href="{% url 'forms:daily_travel_summary' target_user.username %}" class="back-button">
+        ← Back to Daily Summary
+    </a>
+</div>
+
+{% if locations %}
+<script>
+    // Initialize map
+    const locations = {{ locations|safe }};
+    
+    if (locations.length > 0) {
+        // Create map centered on first location
+        const map = L.map('map').setView([locations[0].lat, locations[0].lng], 13);
+        
+        // Add OpenStreetMap tiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19
+        }).addTo(map);
+        
+        // Add markers for each location
+        const markers = [];
+        locations.forEach((loc, index) => {
+            const markerClass = loc.type === 'checkin' ? 'checkin' : 
+                              loc.type === 'checkout' ? 'checkout' : 'hourly';
+            
+            const icon = L.divIcon({
+                className: 'custom-marker ' + markerClass,
+                html: loc.seq,
+                iconSize: [35, 35],
+                iconAnchor: [17, 17]
+            });
+            
+            const marker = L.marker([loc.lat, loc.lng], { icon: icon }).addTo(map);
+            
+            const popupContent = `
+                <div style="font-family: 'Segoe UI', sans-serif;">
+                    <strong style="color: #667eea; font-size: 1.1em;">Point ${loc.seq}</strong><br/>
+                    <strong>⏰ ${loc.time}</strong><br/>
+                    <span style="color: #64748b; font-size: 0.9em;">${loc.address || 'Location coordinates'}</span><br/>
+                    <span style="background: #667eea; color: white; padding: 2px 8px; border-radius: 8px; font-size: 0.8em; margin-top: 5px; display: inline-block;">${loc.type.toUpperCase()}</span>
+                </div>
+            `;
+            
+            marker.bindPopup(popupContent);
+            markers.push(marker);
+        });
+        
+        // Draw polyline connecting all locations
+        if (locations.length > 1) {
+            const coords = locations.map(loc => [loc.lat, loc.lng]);
+            const polyline = L.polyline(coords, {
+                color: '#667eea',
+                weight: 4,
+                opacity: 0.7,
+                smoothFactor: 1,
+                lineCap: 'round',
+                lineJoin: 'round'
+            }).addTo(map);
+            
+            // Add arrows to show direction
+            const arrowSymbol = L.Symbol.arrowHead({
+                pixelSize: 10,
+                polygon: false,
+                pathOptions: {
+                    stroke: true,
+                    weight: 2,
+                    color: '#764ba2'
+                }
+            });
+            
+            // Fit map bounds to show all markers
+            const group = L.featureGroup(markers);
+            map.fitBounds(group.getBounds().pad(0.1));
+        }
+    }
+</script>
+{% endif %}
+
+</body>
+</html>
