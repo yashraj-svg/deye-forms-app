@@ -528,32 +528,37 @@ function handleCheckin() {
     btn.textContent = ' Checking in...';
 
     getCurrentLocation().then(function() {
-        const formData = new FormData();
-        formData.append('csrfmiddlewaretoken', csrftoken);
-        formData.append('latitude', currentLocation.lat);
-        formData.append('longitude', currentLocation.lng);
-        formData.append('location_address', '');
+        const data = {
+            latitude: currentLocation.lat,
+            longitude: currentLocation.lng,
+            location: ''
+        };
 
         return fetch('{% url "forms:checkin_submit" %}', {
             method: 'POST',
-            body: formData
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken
+            },
+            body: JSON.stringify(data)
         });
     })
     .then(response => response.json())
     .then(result => {
-        if (result.status === 'success') {
+        if (result.success) {
             recordLocationPing('checkin');
             startLocationTracking();
             alert(' Checked in successfully!');
             location.reload();
         } else {
-            alert('Error: ' + result.message);
+            alert('Error: ' + (result.error || 'Unknown error'));
             btn.disabled = false;
             btn.textContent = ' Check In';
         }
     })
     .catch(error => {
-        alert('Please enable location access and try again.');
+        console.error('Check-in error:', error);
+        alert('Failed to check in. Please enable location access and try again.');
         btn.disabled = false;
         btn.textContent = ' Check In';
     });
@@ -565,32 +570,37 @@ function handleCheckout() {
     btn.textContent = ' Checking out...';
 
     getCurrentLocation().then(function() {
-        const formData = new FormData();
-        formData.append('csrfmiddlewaretoken', csrftoken);
-        formData.append('latitude', currentLocation.lat);
-        formData.append('longitude', currentLocation.lng);
-        formData.append('location_address', '');
+        const data = {
+            latitude: currentLocation.lat,
+            longitude: currentLocation.lng,
+            location: ''
+        };
 
         return fetch('{% url "forms:checkout_submit" %}', {
             method: 'POST',
-            body: formData
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken
+            },
+            body: JSON.stringify(data)
         });
     })
     .then(response => response.json())
     .then(result => {
-        if (result.status === 'success') {
+        if (result.success) {
             recordLocationPing('checkout');
             stopLocationTracking();
             alert(' Checked out successfully!');
             location.reload();
         } else {
-            alert('Error: ' + result.message);
+            alert('Error: ' + (result.error || 'Unknown error'));
             btn.disabled = false;
             btn.textContent = ' Check Out';
         }
     })
     .catch(error => {
-        alert('Please enable location access and try again.');
+        console.error('Check-out error:', error);
+        alert('Failed to check out. Please enable location access and try again.');
         btn.disabled = false;
         btn.textContent = ' Check Out';
     });
