@@ -60,6 +60,66 @@ class UpcomingEvent(models.Model):
         return f"{self.title} ({date_text})"
 
 
+class LogisticBooking(models.Model):
+    OBJECT_CHOICES = [
+        ('Inverter', 'Inverter'),
+        ('PCB', 'PCB'),
+        ('Battery', 'Battery'),
+    ]
+
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    engineer = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='logistic_bookings'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    customer_name = models.CharField(max_length=255)
+    contact_details = models.CharField(max_length=255)
+
+    pickup_pincode = models.CharField(max_length=10)
+    pickup_state = models.CharField(max_length=100, blank=True)
+    pickup_district = models.CharField(max_length=100, blank=True)
+    pickup_city = models.CharField(max_length=100, blank=True)
+    pickup_address = models.TextField(blank=True)
+
+    delivery_name = models.CharField(max_length=255)
+    delivery_contact = models.CharField(max_length=255)
+    delivery_pincode = models.CharField(max_length=10)
+    delivery_state = models.CharField(max_length=100, blank=True)
+    delivery_district = models.CharField(max_length=100, blank=True)
+    delivery_city = models.CharField(max_length=100, blank=True)
+    delivery_address = models.TextField(blank=True)
+
+    object_type = models.CharField(max_length=20, choices=OBJECT_CHOICES)
+    object_capacity = models.CharField(max_length=100, blank=True)
+    object_variant = models.CharField(max_length=150, blank=True)
+    object_serial_number = models.CharField(max_length=100, blank=True)
+    object_quantity = models.PositiveIntegerField(default=1)
+
+    courier_partner = models.CharField(max_length=100)
+    shipment_weight = models.DecimalField(max_digits=10, decimal_places=2)
+    awb_number = models.CharField(max_length=100, blank=True)
+    invoice_number = models.CharField(max_length=100)
+
+    pickup_status = models.CharField(max_length=50, blank=True)
+    pickup_date = models.DateField(null=True, blank=True)
+    delivery_status = models.CharField(max_length=50, blank=True)
+    delivery_date = models.DateField(null=True, blank=True)
+    remark = models.TextField(blank=True)
+
+    batch_id = models.CharField(max_length=36, db_index=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.customer_name} - {self.object_type} ({self.object_quantity})"
+
+
 class RepairingForm(models.Model):
     user = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True, blank=True, help_text="User who filled the form")
     # PCB Details (for PCB object)
@@ -112,6 +172,7 @@ class RepairingForm(models.Model):
 
 
 class InwardForm(models.Model):
+    inward_id = models.CharField(max_length=20, unique=True, blank=True, null=True)
     user = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True, blank=True, help_text="User who filled the form")
     inward_object = models.CharField(max_length=50, blank=True, null=True, help_text="Type of object for inward (Inverter, Battery, PCB)")
     # Accessories (optional, only for Inverter)
@@ -149,6 +210,7 @@ class InwardForm(models.Model):
     reason = models.CharField(max_length=255)
     transportation_mode = models.CharField(max_length=255, blank=True)
     awb_lr_number = models.CharField(max_length=255, blank=True)
+    invoice_number = models.CharField(max_length=100, blank=True)
 
     remarks = models.TextField(blank=True)
 
@@ -156,7 +218,20 @@ class InwardForm(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"Inward {self.customer_name} - {self.email}"
+        return f"Inward {self.inward_id or self.customer_name} - {self.email}"
+
+    def save(self, *args, **kwargs):
+        if not self.inward_id:
+            from datetime import date
+            prefix = date.today().strftime('INW-%Y%m%d-')
+            seq = 1
+            while True:
+                candidate = f"{prefix}{seq:03d}"
+                if not InwardForm.objects.filter(inward_id=candidate).exists():
+                    self.inward_id = candidate
+                    break
+                seq += 1
+        super().save(*args, **kwargs)
 
 
 class OutwardForm(models.Model):
@@ -188,6 +263,12 @@ class OutwardForm(models.Model):
     inverter_rating = models.CharField(max_length=255, blank=True)
     battery = models.CharField(max_length=255, blank=True)
     battery_id = models.CharField(max_length=255, blank=True, null=True, help_text="Unique Battery Serial Number")
+
+    # PCB Details (for PCB object)
+    pcb_serial_number = models.CharField(max_length=255, blank=True, null=True, help_text="PCB Serial Number")
+    pcb_quantity = models.PositiveIntegerField(blank=True, null=True, help_text="No of Quantity")
+    pcb_rating = models.CharField(max_length=255, blank=True)
+    pcb_specification = models.CharField(max_length=255, blank=True)
 
     # Replacement status
     inverter_replaced = models.CharField(max_length=10)

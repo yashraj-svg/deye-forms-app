@@ -607,12 +607,17 @@
                     <div class="event-date">
                         📅 {{ event.event_date|date:"F d, Y" }}
                     </div>
+                    <div class="event-location" style="margin-bottom: 8px; color: #667eea; font-weight: 600;">
+                        {{ event.event_kind }}
+                    </div>
                     <h3 class="event-title">{{ event.title }}</h3>
                 </div>
                 <div class="event-body">
+                    {% if event.location %}
                     <div class="event-location">
                         📍 {{ event.location }}
                     </div>
+                    {% endif %}
                     <div class="event-desc">{{ event.description }}</div>
                 </div>
             </div>

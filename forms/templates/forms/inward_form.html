@@ -228,6 +228,7 @@ input::-webkit-validation-bubble-message {
 
 <h1>Inward Tracking</h1>
 <div class="note">* Indicates required question</div>
+<div class="note" style="color:#667eea;">Inward ID will be generated automatically after submission.</div>
 {% if form_errors %}
 <div style="background:#fdecea;color:#611a15;border:1px solid #f5c6cb;padding:8px 12px;border-radius:6px;margin:12px 0;">
   <strong>There were errors with your submission:</strong>
@@ -240,7 +241,17 @@ input::-webkit-validation-bubble-message {
 </div>
 {% endif %}
 
+<label style="background:#e8f0fe;padding:12px;border-left:4px solid #667eea;border-radius:4px;font-size:16px;font-weight:700;">🔍 AWB Number (Search & Auto-Fill)<span class="req">*</span></label>
+<input type="text" class="awb-input" name="awb_lr_number" list="awb-suggestions" placeholder="Type AWB number to search and auto-fill details" required style="font-size:16px;font-weight:600;">
+<div style="font-size:12px;color:#666;margin:6px 0 20px 0;">Enter the AWB/LR number from your logistics booking. Details will automatically populate below.</div>
 
+<div id="awb-item-container" style="display:none; margin:-6px 0 20px 0;">
+  <label style="background:#fff7ed;padding:10px;border-left:4px solid #fb923c;border-radius:4px;font-size:14px;font-weight:700;">📦 Select Item For This AWB<span class="req">*</span></label>
+  <select id="awb-item-select" style="margin-top:8px;" disabled>
+    <option value="">Select item</option>
+  </select>
+  <div style="font-size:12px;color:#7c2d12;margin-top:6px;">This AWB has multiple shipped items. Select one to auto-fill exact inward details.</div>
+</div>
 
 <label>Customer Abbreviation <span class="req">*</span></label>
 <select name="customer_abbrev" required>
@@ -549,11 +560,13 @@ input::-webkit-validation-bubble-message {
   <option>Blue Dart</option>
   <option>Anjani</option>
   <option>Delhivery</option>
+  <option>Safexpress</option>
+  <option>Global Cargo</option>
   <option>Other</option>
 </select>
 
-<label>AWB Number<span class="req">*</span></label>
-<input type="text" name="awb_lr_number" required>
+<label>Invoice Number <span class="req">*</span></label>
+<input type="text" name="invoice_number" required>
 </div>
 
 <div class="battery-only">
@@ -601,11 +614,13 @@ input::-webkit-validation-bubble-message {
   <option>Blue Dart</option>
   <option>Anjani</option>
   <option>Delhivery</option>
+  <option>Safexpress</option>
+  <option>Global Cargo</option>
   <option>Other</option>
 </select>
 
-<label>AWB Number <span class="req">*</span></label>
-<input type="text" name="awb_lr_number" required>
+<label>Invoice Number <span class="req">*</span></label>
+<input type="text" name="invoice_number" required>
 </div>
 
 <div class="pcb-only">
@@ -613,7 +628,7 @@ input::-webkit-validation-bubble-message {
 <input type="text" name="pcb_serial_number" required>
 
 <label>No of Quantity <span class="req">*</span></label>
-<input type="number" name="no_of_quantity" required min="1">
+<input type="number" name="pcb_quantity" required min="1">
 
 <label>PCB Ratings</label>
 <select name="pcb_ratings">
@@ -691,18 +706,259 @@ input::-webkit-validation-bubble-message {
   <option>Bigship</option>
   <option>Blue Dart</option>
   <option>Anjani</option>
+  <option>Delhivery</option>
+  <option>Safexpress</option>
+  <option>Global Cargo</option>
   <option>Other</option>
 </select>
 
-<label>AWB Number <span class="req">*</span></label>
-<input type="text" name="awb_lr_number" required>
+<label>Invoice Number <span class="req">*</span></label>
+<input type="text" name="invoice_number" required>
 </div>
 
 <button type="submit">Submit</button>
 
+<datalist id="awb-suggestions"></datalist>
+
 </form>
 
 <script>
+const awbInputs = document.querySelectorAll('.awb-input');
+const awbDatalist = document.getElementById('awb-suggestions');
+const awbItemContainer = document.getElementById('awb-item-container');
+const awbItemSelect = document.getElementById('awb-item-select');
+let awbItemsCache = [];
+
+function normalizeText(value) {
+  return (value || '').toString().trim().toLowerCase().replace(/\s+/g, ' ').replace(/-/g, ' ').replace(/_/g, ' ');
+}
+
+function selectByValueOrText(selectEl, rawValue) {
+  if (!selectEl || !rawValue) return false;
+  const wanted = normalizeText(rawValue);
+  for (const option of selectEl.options) {
+    const optionValue = normalizeText(option.value);
+    const optionText = normalizeText(option.text);
+    if (optionValue === wanted || optionText === wanted) {
+      selectEl.value = option.value;
+      return true;
+    }
+  }
+  return false;
+}
+
+function buildAwbItemLabel(item, index) {
+  const parts = [];
+  parts.push(`Item ${index + 1}`);
+  if (item.object_type) parts.push(item.object_type);
+  if (item.object_variant) parts.push(item.object_variant);
+  if (item.object_capacity) parts.push(item.object_capacity);
+  if (item.object_serial_number) parts.push(`SN: ${item.object_serial_number}`);
+  if (item.object_quantity) parts.push(`Qty: ${item.object_quantity}`);
+  return parts.join(' | ');
+}
+
+function resetAwbItemSelector() {
+  awbItemsCache = [];
+  if (!awbItemSelect) return;
+  awbItemSelect.innerHTML = '<option value="">Select item</option>';
+  awbItemSelect.disabled = true;
+  if (awbItemContainer) awbItemContainer.style.display = 'none';
+}
+
+function renderAwbItemSelector(items) {
+  if (!awbItemSelect) return;
+  awbItemsCache = Array.isArray(items) ? items : [];
+
+  if (awbItemsCache.length <= 1) {
+    awbItemSelect.innerHTML = '<option value="">Select item</option>';
+    awbItemSelect.disabled = true;
+    if (awbItemContainer) awbItemContainer.style.display = 'none';
+    return;
+  }
+
+  awbItemSelect.innerHTML = '<option value="">Select item</option>';
+  awbItemsCache.forEach((item, idx) => {
+    const option = document.createElement('option');
+    option.value = String(item.booking_id || idx);
+    option.dataset.index = String(idx);
+    option.textContent = buildAwbItemLabel(item, idx);
+    awbItemSelect.appendChild(option);
+  });
+  awbItemSelect.disabled = false;
+  if (awbItemContainer) awbItemContainer.style.display = 'block';
+}
+
+function fillFromAwb(detail) {
+  if (!detail) return;
+  const invoiceInputs = document.querySelectorAll('input[name="invoice_number"]');
+  invoiceInputs.forEach(input => { input.value = detail.invoice_number || ''; });
+
+  const customerName = document.querySelector('input[name="customer_name"]');
+  if (customerName && detail.customer_name) customerName.value = detail.customer_name;
+
+  const pincode = document.querySelector('input[name="pincode"]');
+  if (pincode && detail.pickup_pincode) pincode.value = detail.pickup_pincode;
+
+  const state = document.querySelector('select[name="received_from_state"]');
+  if (state && detail.pickup_state) {
+    for (let option of state.options) {
+      if (option.value.toLowerCase() === detail.pickup_state.toLowerCase()) {
+        state.value = option.value;
+        break;
+      }
+    }
+  }
+
+  const district = document.querySelector('input[name="received_from_district"]');
+  if (district && detail.pickup_district) district.value = detail.pickup_district;
+
+  const location = document.querySelector('input[name="received_from_location"]');
+  if (location) {
+    location.value = detail.pickup_city || detail.pickup_address || location.value;
+  }
+
+  const inwardObject = document.querySelector('#inwardObject');
+  if (inwardObject && detail.object_type) {
+    if (selectByValueOrText(inwardObject, detail.object_type)) {
+      if (typeof toggleInwardFields === 'function') {
+        toggleInwardFields();
+      }
+    }
+  }
+
+  const transportSelects = document.querySelectorAll('select[name="transportation_mode"]');
+  if (transportSelects.length && detail.courier_partner) {
+    transportSelects.forEach((transport) => {
+      if (!selectByValueOrText(transport, detail.courier_partner)) {
+        selectByValueOrText(transport, 'Other');
+      }
+    });
+  }
+
+  const inverterId = document.querySelector('input[name="inverter_id"]');
+  if (inverterId && detail.object_type === 'Inverter' && detail.object_serial_number) {
+    inverterId.value = detail.object_serial_number;
+  }
+
+  const inverterSpecs = document.querySelector('select[name="inverter_specs"]');
+  if (inverterSpecs && detail.object_variant && detail.object_type === 'Inverter') {
+    selectByValueOrText(inverterSpecs, detail.object_variant);
+  }
+
+  const inverterRatings = document.querySelector('select[name="inverter_ratings"]');
+  if (inverterRatings && detail.object_capacity && detail.object_type === 'Inverter') {
+    selectByValueOrText(inverterRatings, detail.object_capacity);
+  }
+
+  const batteryId = document.querySelector('input[name="battery_id"]');
+  if (batteryId && detail.object_type === 'Battery' && detail.object_serial_number) {
+    batteryId.value = detail.object_serial_number;
+  }
+
+  const batteryModel = document.querySelector('select[name="battery"]');
+  if (batteryModel && detail.object_variant && detail.object_type === 'Battery') {
+    selectByValueOrText(batteryModel, detail.object_variant);
+  }
+
+  const pcbSerial = document.querySelector('input[name="pcb_serial_number"]');
+  if (pcbSerial && detail.object_type === 'PCB' && detail.object_serial_number) {
+    pcbSerial.value = detail.object_serial_number;
+  }
+
+  const pcbQty = document.querySelector('input[name="pcb_quantity"]');
+  if (pcbQty && detail.object_type === 'PCB' && detail.object_quantity) {
+    pcbQty.value = detail.object_quantity;
+  }
+
+  const pcbSpecs = document.querySelector('select[name="pcb_specifications"]');
+  if (pcbSpecs && detail.object_variant && detail.object_type === 'PCB') {
+    selectByValueOrText(pcbSpecs, detail.object_variant);
+  }
+
+  const pcbRatings = document.querySelector('select[name="pcb_ratings"]');
+  if (pcbRatings && detail.object_capacity && detail.object_type === 'PCB') {
+    selectByValueOrText(pcbRatings, detail.object_capacity);
+  }
+}
+
+function updateAwbSuggestions(value) {
+  if (!value) {
+    awbDatalist.innerHTML = '';
+    resetAwbItemSelector();
+  }
+  fetch('/api/awb-lookup/?q=' + encodeURIComponent(value))
+    .then(r => r.ok ? r.json() : Promise.reject(r))
+    .then(j => {
+      if (j && j.ok) {
+        awbDatalist.innerHTML = '';
+        (j.suggestions || []).forEach(s => {
+          const opt = document.createElement('option');
+          opt.value = s;
+          awbDatalist.appendChild(opt);
+        });
+        const items = Array.isArray(j.items) ? j.items : [];
+        renderAwbItemSelector(items);
+
+        if (items.length === 1) {
+          fillFromAwb(items[0]);
+        } else if (items.length === 0 && j.detail) {
+          fillFromAwb(j.detail);
+        }
+      }
+    })
+    .catch(err => {
+      console.error('AWB lookup error:', err);
+    });
+}
+
+awbInputs.forEach(input => {
+  input.setAttribute('autocomplete', 'off');
+
+  input.addEventListener('focus', (e) => {
+    updateAwbSuggestions(e.target.value || '');
+  });
+
+  input.addEventListener('input', (e) => {
+    updateAwbSuggestions(e.target.value);
+  });
+
+  // When user selects from datalist, fetch the full details
+  input.addEventListener('change', (e) => {
+    const selectedValue = e.target.value;
+    if (selectedValue && selectedValue.length > 0) {
+      // Fetch details for the selected AWB
+      fetch('/api/awb-lookup/?q=' + encodeURIComponent(selectedValue))
+        .then(r => r.ok ? r.json() : Promise.reject(r))
+        .then(j => {
+          if (!j || !j.ok) return;
+          const items = Array.isArray(j.items) ? j.items : [];
+          renderAwbItemSelector(items);
+
+          if (items.length === 1) {
+            fillFromAwb(items[0]);
+          } else if (items.length === 0 && j.detail) {
+            fillFromAwb(j.detail);
+          }
+        })
+        .catch(err => {
+          console.error('AWB detail fetch error:', err);
+        });
+    }
+  });
+});
+
+if (awbItemSelect) {
+  awbItemSelect.addEventListener('change', (e) => {
+    const selectedIndex = e.target.selectedOptions && e.target.selectedOptions[0]
+      ? Number(e.target.selectedOptions[0].dataset.index)
+      : -1;
+    if (selectedIndex >= 0 && awbItemsCache[selectedIndex]) {
+      fillFromAwb(awbItemsCache[selectedIndex]);
+    }
+  });
+}
+
 // Toggle conditional fields based on Inward Object selection
 function toggleInwardFields() {
   const inwardObject = document.querySelector('#inwardObject').value;

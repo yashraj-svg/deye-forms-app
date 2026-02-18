@@ -285,6 +285,20 @@ input::-webkit-validation-bubble-message {
 <h1>Outward Tracking</h1>
 <div class="req-note">* Indicates required question</div>
 
+<label style="background:#e8f0fe;padding:12px;border-left:4px solid #667eea;border-radius:4px;font-size:16px;font-weight:700;">🔍 AWB Number (Search & Auto-Fill)<span class="req">*</span></label>
+<input type="text" class="outward-awb-input" name="awb_number" list="outward-awb-suggestions" placeholder="Type AWB number to search and auto-fill details" required style="font-size:16px;font-weight:600;">
+<div style="font-size:12px;color:#666;margin:6px 0 12px 0;">Enter AWB from logistics booking. Outward details will auto-fill.</div>
+
+<div id="outward-awb-item-container" style="display:none; margin:-2px 0 20px 0;">
+  <label style="background:#fff7ed;padding:10px;border-left:4px solid #fb923c;border-radius:4px;font-size:14px;font-weight:700;">📦 Select Item For This AWB<span class="req">*</span></label>
+  <select id="outward-awb-item-select" style="margin-top:8px;" disabled>
+    <option value="">Select item</option>
+  </select>
+  <div style="font-size:12px;color:#7c2d12;margin-top:6px;">This AWB has multiple items. Select one item to fill exact outward details.</div>
+</div>
+
+<datalist id="outward-awb-suggestions"></datalist>
+
 <label>Sent By <span class="req">*</span></label>
 <select name="sent_by" required>
 <option value="">Select</option>
@@ -535,7 +549,7 @@ input::-webkit-validation-bubble-message {
   </div>
 
   <label>Battery Model</label>
-  <select name="battery_model">
+  <select name="battery">
     <option value="">Select</option>
     <option>RW - L 2.5 Neutral</option>
     <option>RW - M 5.3 Neutral</option>
@@ -560,10 +574,10 @@ input::-webkit-validation-bubble-message {
 <input type="text" name="pcb_serial_number" required>
 
 <label>No of Quantity <span class="req">*</span></label>
-<input type="number" name="no_of_quantity" required min="1">
+<input type="number" name="pcb_quantity" required min="1">
 
 <label>PCB Ratings</label>
-<select name="pcb_ratings">
+<select name="pcb_rating">
 <option value="">Select</option>
 <option>2.2 KW</option>
 <option>3 KW</option>
@@ -592,7 +606,7 @@ input::-webkit-validation-bubble-message {
 </select>
 
 <label>PCB Specifications</label>
-<select name="pcb_specifications">
+<select name="pcb_specification">
 <option value="">Select</option>
 <option>1PH - Hybrid</option>
 <option>3PH - Hybrid</option>
@@ -609,18 +623,234 @@ input::-webkit-validation-bubble-message {
 <option>Bigship</option>
 <option>Blue Dart</option>
 <option>Anjani</option>
+<option>Delhivery</option>
 <option>Safexpress</option>
+<option>Global Cargo</option>
 <option>Other</option>
 </select>
-
-<label>AWB Number <span class="req">*</span></label>
-<input type="text" name="awb_number" required>
 
 <button type="submit">Submit</button>
 
 </form>
 
 <script>
+
+const outwardAwbInput = document.querySelector('.outward-awb-input');
+const outwardAwbDatalist = document.getElementById('outward-awb-suggestions');
+const outwardAwbItemContainer = document.getElementById('outward-awb-item-container');
+const outwardAwbItemSelect = document.getElementById('outward-awb-item-select');
+let outwardAwbItemsCache = [];
+
+function normalizeOutwardText(value) {
+  return (value || '').toString().trim().toLowerCase().replace(/\s+/g, ' ').replace(/-/g, ' ').replace(/_/g, ' ');
+}
+
+function outwardSelectByValueOrText(selectEl, rawValue) {
+  if (!selectEl || !rawValue) return false;
+  const wanted = normalizeOutwardText(rawValue);
+  for (const option of selectEl.options) {
+    const optionValue = normalizeOutwardText(option.value);
+    const optionText = normalizeOutwardText(option.text);
+    if (optionValue === wanted || optionText === wanted) {
+      selectEl.value = option.value;
+      return true;
+    }
+  }
+  return false;
+}
+
+function outwardBuildItemLabel(item, index) {
+  const parts = [];
+  parts.push(`Item ${index + 1}`);
+  if (item.object_type) parts.push(item.object_type);
+  if (item.object_variant) parts.push(item.object_variant);
+  if (item.object_capacity) parts.push(item.object_capacity);
+  if (item.object_serial_number) parts.push(`SN: ${item.object_serial_number}`);
+  if (item.object_quantity) parts.push(`Qty: ${item.object_quantity}`);
+  return parts.join(' | ');
+}
+
+function outwardResetItemSelector() {
+  outwardAwbItemsCache = [];
+  if (!outwardAwbItemSelect) return;
+  outwardAwbItemSelect.innerHTML = '<option value="">Select item</option>';
+  outwardAwbItemSelect.disabled = true;
+  if (outwardAwbItemContainer) outwardAwbItemContainer.style.display = 'none';
+}
+
+function outwardRenderItemSelector(items) {
+  if (!outwardAwbItemSelect) return;
+  outwardAwbItemsCache = Array.isArray(items) ? items : [];
+
+  if (outwardAwbItemsCache.length <= 1) {
+    outwardAwbItemSelect.innerHTML = '<option value="">Select item</option>';
+    outwardAwbItemSelect.disabled = true;
+    if (outwardAwbItemContainer) outwardAwbItemContainer.style.display = 'none';
+    return;
+  }
+
+  outwardAwbItemSelect.innerHTML = '<option value="">Select item</option>';
+  outwardAwbItemsCache.forEach((item, idx) => {
+    const option = document.createElement('option');
+    option.value = String(item.booking_id || idx);
+    option.dataset.index = String(idx);
+    option.textContent = outwardBuildItemLabel(item, idx);
+    outwardAwbItemSelect.appendChild(option);
+  });
+  outwardAwbItemSelect.disabled = false;
+  if (outwardAwbItemContainer) outwardAwbItemContainer.style.display = 'block';
+}
+
+function fillOutwardFromAwbItem(detail) {
+  if (!detail) return;
+
+  if (outwardAwbInput && detail.awb_number) {
+    outwardAwbInput.value = detail.awb_number;
+  }
+
+  const outwardObject = document.getElementById('outwardObject');
+  if (outwardObject && detail.object_type) {
+    outwardSelectByValueOrText(outwardObject, detail.object_type);
+    if (typeof toggleOutwardFields === 'function') {
+      toggleOutwardFields();
+    }
+    if (typeof toggleAccessoriesSection === 'function') {
+      toggleAccessoriesSection();
+    }
+    if (typeof toggleControlCardChangedSection === 'function') {
+      toggleControlCardChangedSection();
+    }
+  }
+
+  const sentToCompany = document.querySelector('input[name="sent_to_company"]');
+  if (sentToCompany) {
+    sentToCompany.value = detail.delivery_name || detail.customer_name || sentToCompany.value;
+  }
+
+  const pincodeInput = document.querySelector('input[name="pincode"]');
+  if (pincodeInput && detail.delivery_pincode) {
+    pincodeInput.value = detail.delivery_pincode;
+  }
+
+  const sentToState = document.querySelector('select[name="sent_to_state"]');
+  if (sentToState && detail.delivery_state) {
+    sentToState.disabled = false;
+    outwardSelectByValueOrText(sentToState, detail.delivery_state);
+    sentToState.disabled = true;
+  }
+
+  const sentToDistrict = document.querySelector('input[name="sent_to_district"]');
+  if (sentToDistrict && detail.delivery_district) {
+    sentToDistrict.value = detail.delivery_district;
+  }
+
+  const sentToAddress = document.querySelector('input[name="sent_to_address"]');
+  if (sentToAddress) {
+    sentToAddress.value = detail.delivery_address || detail.delivery_city || sentToAddress.value;
+  }
+
+  const deliveredThrough = document.querySelector('select[name="delivered_through"]');
+  if (deliveredThrough && detail.courier_partner) {
+    if (!outwardSelectByValueOrText(deliveredThrough, detail.courier_partner)) {
+      outwardSelectByValueOrText(deliveredThrough, 'Other');
+    }
+  }
+
+  const inverterId = document.getElementById('inverterIdOutward');
+  if (inverterId && detail.object_type === 'Inverter' && detail.object_serial_number) {
+    inverterId.value = detail.object_serial_number;
+  }
+
+  const inverterSpec = document.getElementById('inverterSpec');
+  if (inverterSpec && detail.object_type === 'Inverter' && detail.object_variant) {
+    outwardSelectByValueOrText(inverterSpec, detail.object_variant);
+  }
+
+  const inverterRating = document.getElementById('inverterRating');
+  if (inverterRating && detail.object_type === 'Inverter' && detail.object_capacity) {
+    outwardSelectByValueOrText(inverterRating, detail.object_capacity);
+  }
+
+  const batteryId = document.getElementById('batteryIdOutward');
+  if (batteryId && detail.object_type === 'Battery' && detail.object_serial_number) {
+    batteryId.value = detail.object_serial_number;
+  }
+
+  const batteryModel = document.querySelector('select[name="battery"]');
+  if (batteryModel && detail.object_type === 'Battery' && detail.object_variant) {
+    outwardSelectByValueOrText(batteryModel, detail.object_variant);
+  }
+
+  const pcbSerial = document.querySelector('input[name="pcb_serial_number"]');
+  if (pcbSerial && detail.object_type === 'PCB' && detail.object_serial_number) {
+    pcbSerial.value = detail.object_serial_number;
+  }
+
+  const pcbQty = document.querySelector('input[name="pcb_quantity"]');
+  if (pcbQty && detail.object_type === 'PCB' && detail.object_quantity) {
+    pcbQty.value = detail.object_quantity;
+  }
+
+  const pcbSpecs = document.querySelector('select[name="pcb_specification"]');
+  if (pcbSpecs && detail.object_type === 'PCB' && detail.object_variant) {
+    outwardSelectByValueOrText(pcbSpecs, detail.object_variant);
+  }
+
+  const pcbRatings = document.querySelector('select[name="pcb_rating"]');
+  if (pcbRatings && detail.object_type === 'PCB' && detail.object_capacity) {
+    outwardSelectByValueOrText(pcbRatings, detail.object_capacity);
+  }
+}
+
+function updateOutwardAwbSuggestions(value) {
+  if (!outwardAwbInput || !outwardAwbDatalist) return;
+  if (!value) {
+    outwardAwbDatalist.innerHTML = '';
+    outwardResetItemSelector();
+  }
+
+  fetch('/api/awb-lookup/?q=' + encodeURIComponent(value || ''))
+    .then(r => r.ok ? r.json() : Promise.reject(r))
+    .then(j => {
+      if (!j || !j.ok) return;
+      outwardAwbDatalist.innerHTML = '';
+      (j.suggestions || []).forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s;
+        outwardAwbDatalist.appendChild(opt);
+      });
+
+      const items = Array.isArray(j.items) ? j.items : [];
+      outwardRenderItemSelector(items);
+
+      if (items.length === 1) {
+        fillOutwardFromAwbItem(items[0]);
+      } else if (items.length === 0 && j.detail) {
+        fillOutwardFromAwbItem(j.detail);
+      }
+    })
+    .catch(err => {
+      console.error('Outward AWB lookup error:', err);
+    });
+}
+
+if (outwardAwbInput) {
+  outwardAwbInput.setAttribute('autocomplete', 'off');
+  outwardAwbInput.addEventListener('focus', (e) => updateOutwardAwbSuggestions(e.target.value || ''));
+  outwardAwbInput.addEventListener('input', (e) => updateOutwardAwbSuggestions(e.target.value));
+  outwardAwbInput.addEventListener('change', (e) => updateOutwardAwbSuggestions(e.target.value));
+}
+
+if (outwardAwbItemSelect) {
+  outwardAwbItemSelect.addEventListener('change', (e) => {
+    const selectedIndex = e.target.selectedOptions && e.target.selectedOptions[0]
+      ? Number(e.target.selectedOptions[0].dataset.index)
+      : -1;
+    if (selectedIndex >= 0 && outwardAwbItemsCache[selectedIndex]) {
+      fillOutwardFromAwbItem(outwardAwbItemsCache[selectedIndex]);
+    }
+  });
+}
 
 // Toggle conditional fields based on Outward Object selection
 function toggleOutwardFields() {

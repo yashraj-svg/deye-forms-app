@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logistic Bookings - Deye</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --ink: #0f172a;
+            --muted: #64748b;
+            --line: #e2e8f0;
+            --accent: #2563eb;
+            --panel: #ffffff;
+            --wash: #f8fafc;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: radial-gradient(circle at top left, #e0f2fe 0%, #f8fafc 45%, #eef2ff 100%);
+            color: var(--ink);
+            padding: 24px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 16px 20px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.12), rgba(14, 165, 233, 0.12));
+            border: 1px solid rgba(37, 99, 235, 0.15);
+            margin-bottom: 16px;
+        }
+        .header h1 { font-size: 24px; font-weight: 800; }
+        .btn {
+            padding: 8px 12px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 12px;
+            text-decoration: none;
+            background: #eef2ff;
+            color: var(--ink);
+            border: 1px solid #c7d2fe;
+            margin-right: 8px;
+            display: inline-flex;
+            gap: 6px;
+            align-items: center;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white;
+            border: none;
+        }
+        .filters {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+        }
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 12px;
+        }
+        .filters label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--muted);
+            font-weight: 700;
+            display: block;
+            margin-bottom: 6px;
+        }
+        .filters input, .filters select {
+            width: 100%;
+            padding: 9px 10px;
+            border-radius: 10px;
+            border: 1px solid var(--line);
+            background: #f8fafc;
+            font-size: 13px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+        }
+        th, td { padding: 10px; border-bottom: 1px solid var(--line); font-size: 13px; }
+        th { text-align: left; color: var(--muted); text-transform: uppercase; font-size: 11px; background: #f1f5f9; }
+        tr:nth-child(even) { background: #f8fafc; }
+        .actions a { text-decoration: none; color: #2563eb; font-weight: 700; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>📦 Logistic Bookings</h1>
+        <div>
+            <a class="btn btn-primary" href="{% url 'forms:logistic_form' %}">+ New Booking</a>
+            <a class="btn" href="{% url 'forms:select_form' %}">Back to Forms</a>
+        </div>
+    </div>
+
+    <div class="filters">
+        <form method="get">
+            <div class="filters-grid">
+                <div>
+                    <label>From Date</label>
+                    <input type="date" name="from_date" value="{{ filters.from_date }}">
+                </div>
+                <div>
+                    <label>To Date</label>
+                    <input type="date" name="to_date" value="{{ filters.to_date }}">
+                </div>
+                <div>
+                    <label>Engineer</label>
+                    <select name="engineer">
+                        <option value="">All</option>
+                        {% for engineer in engineers %}
+                            <option value="{{ engineer.id }}" {% if filters.engineer == engineer.id|stringformat:"s" %}selected{% endif %}>
+                                {{ engineer.get_full_name|default:engineer.username }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label>Filled By</label>
+                    <select name="filled_by">
+                        <option value="">All</option>
+                        {% for engineer in engineers %}
+                            <option value="{{ engineer.id }}" {% if filters.filled_by == engineer.id|stringformat:"s" %}selected{% endif %}>
+                                {{ engineer.get_full_name|default:engineer.username }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label>Courier</label>
+                    <select name="courier">
+                        <option value="">All</option>
+                        {% for c in couriers %}
+                            <option value="{{ c }}" {% if filters.courier == c %}selected{% endif %}>{{ c }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label>Object</label>
+                    <select name="object_type">
+                        <option value="">All</option>
+                        <option value="Inverter" {% if filters.object_type == 'Inverter' %}selected{% endif %}>Inverter</option>
+                        <option value="PCB" {% if filters.object_type == 'PCB' %}selected{% endif %}>PCB</option>
+                        <option value="Battery" {% if filters.object_type == 'Battery' %}selected{% endif %}>Battery</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Search</label>
+                    <input type="text" name="search" placeholder="Customer, serial, AWB, invoice" value="{{ filters.search }}">
+                </div>
+                <div style="display:flex; align-items: flex-end; gap: 8px;">
+                    <button type="submit" class="btn btn-primary">Apply</button>
+                    <a class="btn" href="{% url 'forms:logistic_list' %}">Clear</a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Filled By</th>
+                <th>Engineer</th>
+                <th>Customer</th>
+                <th>Pickup Pin</th>
+                <th>Delivery Pin</th>
+                <th>Object</th>
+                <th>Type</th>
+                <th>Capacity</th>
+                <th>Serial</th>
+                <th>Qty</th>
+                <th>Courier</th>
+                <th>Weight</th>
+                <th>AWB</th>
+                <th>Invoice</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for booking in bookings %}
+            <tr>
+                <td>{{ booking.created_at|date:"d-M-Y" }}</td>
+                <td>
+                    {% if booking.created_by %}
+                        {{ booking.created_by.get_full_name|default:booking.created_by.username }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+                <td>
+                    {% if booking.engineer %}
+                        {{ booking.engineer.get_full_name|default:booking.engineer.username }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+                <td>{{ booking.customer_name }}</td>
+                <td>{{ booking.pickup_pincode }}</td>
+                <td>{{ booking.delivery_pincode }}</td>
+                <td>{{ booking.object_type }}</td>
+                <td>{{ booking.object_variant|default:"-" }}</td>
+                <td>{{ booking.object_capacity|default:"-" }}</td>
+                <td>{{ booking.object_serial_number }}</td>
+                <td>{{ booking.object_quantity }}</td>
+                <td>{{ booking.courier_partner }}</td>
+                <td>{{ booking.shipment_weight }}</td>
+                <td>{{ booking.awb_number|default:"-" }}</td>
+                <td>{{ booking.invoice_number }}</td>
+                <td class="actions"><a href="{% url 'forms:logistic_edit' booking.id %}">Edit</a></td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="15">No logistic bookings found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+</body>
+</html>

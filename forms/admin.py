@@ -7,7 +7,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import LeaveRequest, UpcomingEvent, UserProfile, RepairingForm, InwardForm, OutwardForm, ServiceReportForm, StockItem, StockRequisition, DispatchedStock, Holiday, CheckInOut, LocationTracking, DailyTravelSummary
+from .models import LeaveRequest, UpcomingEvent, UserProfile, RepairingForm, InwardForm, OutwardForm, ServiceReportForm, StockItem, StockRequisition, DispatchedStock, Holiday, CheckInOut, LocationTracking, DailyTravelSummary, LogisticBooking
 
 
 # Inline for UserProfile
@@ -107,6 +107,38 @@ class UpcomingEventAdmin(admin.ModelAdmin):
         return actions
 
 
+@admin.register(LogisticBooking)
+class LogisticBookingAdmin(admin.ModelAdmin):
+    list_display = (
+        'customer_name',
+        'engineer',
+        'pickup_pincode',
+        'delivery_pincode',
+        'object_type',
+        'object_variant',
+        'object_quantity',
+        'courier_partner',
+        'pickup_status',
+        'pickup_date',
+        'delivery_status',
+        'delivery_date',
+        'awb_number',
+        'invoice_number',
+        'created_at',
+    )
+    list_filter = ('object_type', 'courier_partner', 'created_at')
+    search_fields = (
+        'customer_name',
+        'delivery_name',
+        'pickup_pincode',
+        'delivery_pincode',
+        'object_serial_number',
+        'awb_number',
+        'invoice_number',
+    )
+    ordering = ('-created_at',)
+
+
 @admin.register(RepairingForm)
 class RepairingFormAdmin(admin.ModelAdmin):
     change_list_template = 'admin/forms/change_list.html'
@@ -197,7 +229,7 @@ class RepairingFormAdmin(admin.ModelAdmin):
 @admin.register(InwardForm)
 class InwardFormAdmin(admin.ModelAdmin):
     change_list_template = 'admin/forms/change_list.html'
-    list_display = ('email', 'received_by', 'customer_abbrev', 'customer_name', 'received_from_location', 'received_from_district', 'received_from_state', 'pincode', 'inverter_id', 'inverter_specs', 'inverter_ratings', 'battery', 'reason', 'transportation_mode', 'awb_lr_number', 'remarks', 'created_at')
+    list_display = ('email', 'received_by', 'customer_abbrev', 'customer_name', 'received_from_location', 'received_from_district', 'received_from_state', 'pincode', 'inverter_id', 'inverter_specs', 'inverter_ratings', 'battery', 'reason', 'transportation_mode', 'awb_lr_number', 'invoice_number', 'inward_id', 'remarks', 'created_at')
     search_fields = ('email', 'customer_name', 'inverter_id', 'awb_lr_number', 'customer_abbrev', 'reason')
     list_filter = ()  # Using header filters instead of sidebar filters
     readonly_fields = ('created_at', 'updated_at')

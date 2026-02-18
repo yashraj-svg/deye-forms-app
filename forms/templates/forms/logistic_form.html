@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logistic Booking - Deye</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --ink: #0f172a;
+            --muted: #64748b;
+            --line: #e2e8f0;
+            --accent: #2563eb;
+            --accent-dark: #1d4ed8;
+            --surface: #ffffff;
+            --panel: #f8fafc;
+            --warn: #b91c1c;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: radial-gradient(circle at top left, #e0f2fe 0%, #f8fafc 40%, #eef2ff 100%);
+            color: var(--ink);
+            padding: 28px;
+        }
+        .container { max-width: 1120px; margin: 0 auto; }
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 24px;
+            padding: 18px 22px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.12), rgba(14, 165, 233, 0.12));
+            border: 1px solid rgba(37, 99, 235, 0.15);
+        }
+        .header h1 {
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 6px;
+            letter-spacing: -0.02em;
+        }
+        .header-icon {
+            width: 46px;
+            height: 46px;
+            border-radius: 12px;
+            display: grid;
+            place-items: center;
+            background: linear-gradient(135deg, #2563eb, #0ea5e9);
+            color: white;
+            font-size: 20px;
+            box-shadow: 0 10px 18px rgba(37, 99, 235, 0.25);
+        }
+        .subtitle { color: var(--muted); font-size: 14px; }
+        .form-container {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            padding: 30px;
+            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+        }
+        .grid { display: grid; gap: 16px; }
+        .grid-2 { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+        .grid-3 { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+        .section-title {
+            font-size: 16px;
+            font-weight: 800;
+            margin: 24px 0 10px;
+            color: #111827;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .section-title::before {
+            content: '';
+            width: 10px;
+            height: 10px;
+            border-radius: 999px;
+            background: linear-gradient(135deg, #2563eb, #0ea5e9);
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+        }
+        .section-subtitle { color: var(--muted); font-size: 12px; margin-top: -4px; margin-bottom: 10px; }
+        .form-group { margin-bottom: 12px; }
+        label {
+            display: block;
+            font-size: 11px;
+            font-weight: 800;
+            color: #475569;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+        }
+        .form-control {
+            width: 100%;
+            padding: 11px 12px;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            font-size: 14px;
+            color: var(--ink);
+            background: var(--panel);
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+            background: #ffffff;
+        }
+        textarea.form-control { resize: vertical; min-height: 100px; }
+        .row-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .btn {
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-weight: 800;
+            font-size: 13px;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn-submit {
+            background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+            color: white;
+            box-shadow: 0 10px 20px rgba(37, 99, 235, 0.25);
+        }
+        .btn-submit:hover { transform: translateY(-1px); }
+        .btn-secondary {
+            background: #eef2ff;
+            color: var(--ink);
+            border: 1px solid #c7d2fe;
+        }
+        .btn-danger {
+            background: #fee2e2;
+            color: var(--warn);
+            border: 1px solid #fecaca;
+        }
+        .errors {
+            background: #fee2e2;
+            border-left: 4px solid #dc2626;
+            color: #991b1b;
+            padding: 12px 14px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 13px;
+        }
+        .success {
+            background: #dcfce7;
+            border-left: 4px solid #16a34a;
+            color: #166534;
+            padding: 12px 14px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .items-table th, .items-table td { padding: 10px; border-bottom: 1px solid var(--line); }
+        .items-table th {
+            text-align: left;
+            font-size: 11px;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            background: #f1f5f9;
+        }
+        .items-table tr:nth-child(even) { background: #f8fafc; }
+        @media (max-width: 768px) {
+            body { padding: 16px; }
+            .items-table th, .items-table td { display: block; width: 100%; }
+            .items-table tr { margin-bottom: 12px; display: block; border: 1px solid var(--line); border-radius: 12px; padding: 8px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <div class="header-icon">🚚</div>
+        <div>
+            <h1>Logistic Booking</h1>
+            <p class="subtitle">Create a new logistics booking with multiple objects</p>
+        </div>
+    </div>
+
+    <div class="form-container">
+        {% if errors %}
+        <div class="errors">
+            {% for error in errors %}
+                <div>• {{ error }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if success_message %}
+        <div class="success">✓ {{ success_message }}</div>
+        {% endif %}
+
+        <form method="POST">
+            {% csrf_token %}
+
+            <div class="section-title">Customer Details</div>
+            <div class="section-subtitle">Select the engineer and enter the customer details.</div>
+            <div class="grid grid-2">
+                <div class="form-group">
+                    <label>Engineer Name</label>
+                    <select class="form-control" name="engineer_id" required>
+                        <option value="">Select Engineer</option>
+                        {% for engineer in engineers %}
+                            <option value="{{ engineer.id }}" {% if form_data.engineer_id == engineer.id|stringformat:"s" %}selected{% endif %}>
+                                {{ engineer.get_full_name|default:engineer.username }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Customer / Company Name</label>
+                    <input class="form-control" name="customer_name" value="{{ form_data.customer_name|default:'' }}" required>
+                </div>
+                <div class="form-group">
+                    <label>Contact Details</label>
+                    <input class="form-control" name="contact_details" value="{{ form_data.contact_details|default:'' }}" required>
+                </div>
+            </div>
+
+            <div class="section-title">Pickup Address</div>
+            <div class="section-subtitle">Enter pincode to auto-fill city and state.</div>
+            <div class="grid grid-3">
+                <div class="form-group">
+                    <label>Pickup Pincode</label>
+                    <input class="form-control" id="pickup_pincode" name="pickup_pincode" value="{{ form_data.pickup_pincode|default:'' }}" required>
+                </div>
+                <div class="form-group">
+                    <label>State</label>
+                    <input class="form-control" id="pickup_state" name="pickup_state" value="{{ form_data.pickup_state|default:'' }}">
+                </div>
+                <div class="form-group">
+                    <label>District</label>
+                    <input class="form-control" id="pickup_district" name="pickup_district" value="{{ form_data.pickup_district|default:'' }}">
+                </div>
+                <div class="form-group">
+                    <label>City</label>
+                    <input class="form-control" id="pickup_city" name="pickup_city" value="{{ form_data.pickup_city|default:'' }}">
+                </div>
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label>Detailed Address</label>
+                    <textarea class="form-control" name="pickup_address">{{ form_data.pickup_address|default:'' }}</textarea>
+                </div>
+            </div>
+
+            <div class="section-title">Delivery Address</div>
+            <div class="section-subtitle">Receiver details and delivery address.</div>
+            <div class="grid grid-3">
+                <div class="form-group">
+                    <label>Company / Customer Name</label>
+                    <input class="form-control" name="delivery_name" value="{{ form_data.delivery_name|default:'' }}" required>
+                </div>
+                <div class="form-group">
+                    <label>Contact Details</label>
+                    <input class="form-control" name="delivery_contact" value="{{ form_data.delivery_contact|default:'' }}" required>
+                </div>
+                <div class="form-group">
+                    <label>Delivery Pincode</label>
+                    <input class="form-control" id="delivery_pincode" name="delivery_pincode" value="{{ form_data.delivery_pincode|default:'' }}" required>
+                </div>
+                <div class="form-group">
+                    <label>State</label>
+                    <input class="form-control" id="delivery_state" name="delivery_state" value="{{ form_data.delivery_state|default:'' }}">
+                </div>
+                <div class="form-group">
+                    <label>District</label>
+                    <input class="form-control" id="delivery_district" name="delivery_district" value="{{ form_data.delivery_district|default:'' }}">
+                </div>
+                <div class="form-group">
+                    <label>City</label>
+                    <input class="form-control" id="delivery_city" name="delivery_city" value="{{ form_data.delivery_city|default:'' }}">
+                </div>
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label>Detailed Address</label>
+                    <textarea class="form-control" name="delivery_address">{{ form_data.delivery_address|default:'' }}</textarea>
+                </div>
+            </div>
+
+            <div class="section-title">Objects</div>
+            <div class="section-subtitle">Add multiple objects; each row is saved separately.</div>
+            <table class="items-table" id="items-table">
+                <thead>
+                    <tr>
+                        <th>Object</th>
+                        <th>Capacity</th>
+                        <th>Type</th>
+                        <th>Serial Number</th>
+                        <th>Qty</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="items-body">
+                    {% for item in items %}
+                    <tr>
+                        <td>
+                            <select class="form-control" name="object_type">
+                                <option value="Inverter" {% if item.object_type == 'Inverter' %}selected{% endif %}>Inverter</option>
+                                <option value="PCB" {% if item.object_type == 'PCB' %}selected{% endif %}>PCB</option>
+                                <option value="Battery" {% if item.object_type == 'Battery' %}selected{% endif %}>Battery</option>
+                            </select>
+                        </td>
+                        <td class="capacity-cell">
+                            <select class="form-control object-capacity" name="object_capacity">
+                                <option value="">Select</option>
+                                {% for cap in capacity_options %}
+                                    <option value="{{ cap }}" {% if item.object_capacity == cap %}selected{% endif %}>{{ cap }}</option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        <td>
+                            <select class="form-control object-variant object-variant-inverter" name="object_variant">
+                                <option value="">Select</option>
+                                {% for opt in inverter_type_options %}
+                                    <option value="{{ opt }}" {% if item.object_variant == opt %}selected{% endif %}>{{ opt }}</option>
+                                {% endfor %}
+                            </select>
+                            <select class="form-control object-variant object-variant-battery" name="object_variant">
+                                <option value="">Select</option>
+                                {% for opt in battery_model_options %}
+                                    <option value="{{ opt }}" {% if item.object_variant == opt %}selected{% endif %}>{{ opt }}</option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        <td><input class="form-control" name="object_serial_number" value="{{ item.object_serial_number|default:'' }}"></td>
+                        <td><input class="form-control" name="object_quantity" value="{{ item.object_quantity|default:1 }}" type="number" min="1"></td>
+                        <td><button type="button" class="btn btn-danger" onclick="removeRow(this)">Remove</button></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <div style="margin-top: 12px;">
+                <button type="button" class="btn btn-secondary" onclick="addRow()">➕ Add Object</button>
+            </div>
+
+            <div class="section-title">Courier Details</div>
+            <div class="section-subtitle">Select partner and weight; AWB can be updated later.</div>
+            <div class="grid grid-3">
+                <div class="form-group">
+                    <label>Courier Partner</label>
+                    <select class="form-control" id="courier_partner" name="courier_partner" onchange="toggleCourierOther()" required>
+                        {% for partner in courier_partners %}
+                            <option value="{{ partner }}" {% if form_data.courier_partner == partner %}selected{% endif %}>{{ partner }}</option>
+                        {% endfor %}
+                        <option value="__other__" {% if form_data.courier_partner == '__other__' %}selected{% endif %}>Other</option>
+                    </select>
+                </div>
+                <div class="form-group" id="courier_other_group" style="display:none;">
+                    <label>Other Courier Partner</label>
+                    <input class="form-control" id="courier_partner_other" name="courier_partner_other" value="{{ form_data.courier_partner_other|default:'' }}">
+                </div>
+                <div class="form-group">
+                    <label>Shipment Weight</label>
+                    <input class="form-control" name="shipment_weight" value="{{ form_data.shipment_weight|default:'' }}" required>
+                </div>
+                <div class="form-group">
+                    <label>AWB Number (Optional)</label>
+                    <input class="form-control" name="awb_number" value="{{ form_data.awb_number|default:'' }}">
+                </div>
+                <div class="form-group">
+                    <label>Invoice Number</label>
+                    <input class="form-control" name="invoice_number" value="{{ form_data.invoice_number|default:'' }}" required>
+                </div>
+            </div>
+
+            <div class="section-title">Pickup Status</div>
+            <div class="grid grid-3">
+                <div class="form-group">
+                    <label>Pickup Status</label>
+                    <select class="form-control" name="pickup_status">
+                        <option value="">Select</option>
+                        {% for opt in pickup_status_options %}
+                            <option value="{{ opt }}" {% if form_data.pickup_status == opt %}selected{% endif %}>{{ opt }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Pickup Date</label>
+                    <input class="form-control" type="date" name="pickup_date" value="{{ form_data.pickup_date|default:'' }}">
+                </div>
+            </div>
+
+            <div class="section-title">Delivery Status</div>
+            <div class="grid grid-3">
+                <div class="form-group">
+                    <label>Delivery Status</label>
+                    <select class="form-control" name="delivery_status">
+                        <option value="">Select</option>
+                        {% for opt in delivery_status_options %}
+                            <option value="{{ opt }}" {% if form_data.delivery_status == opt %}selected{% endif %}>{{ opt }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Delivery Date</label>
+                    <input class="form-control" type="date" name="delivery_date" value="{{ form_data.delivery_date|default:'' }}">
+                </div>
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label>Remark</label>
+                    <textarea class="form-control" name="remark">{{ form_data.remark|default:'' }}</textarea>
+                </div>
+            </div>
+
+            <div class="row-actions" style="margin-top: 18px;">
+                <button type="submit" class="btn btn-submit">Save Booking</button>
+                <a class="btn btn-secondary" href="{% url 'forms:logistic_list' %}">View Bookings</a>
+                <a class="btn btn-secondary" href="{% url 'forms:select_form' %}">Back to Forms</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function addRow() {
+    const body = document.getElementById('items-body');
+    const row = document.createElement('tr');
+    row.innerHTML = `
+        <td>
+            <select class="form-control" name="object_type">
+                <option value="Inverter">Inverter</option>
+                <option value="PCB">PCB</option>
+                <option value="Battery">Battery</option>
+            </select>
+        </td>
+        <td class="capacity-cell">
+            <select class="form-control object-capacity" name="object_capacity">
+                <option value="">Select</option>
+                {% for cap in capacity_options %}
+                    <option value="{{ cap }}">{{ cap }}</option>
+                {% endfor %}
+            </select>
+        </td>
+        <td>
+            <select class="form-control object-variant object-variant-inverter" name="object_variant">
+                <option value="">Select</option>
+                {% for opt in inverter_type_options %}
+                    <option value="{{ opt }}">{{ opt }}</option>
+                {% endfor %}
+            </select>
+            <select class="form-control object-variant object-variant-battery" name="object_variant">
+                <option value="">Select</option>
+                {% for opt in battery_model_options %}
+                    <option value="{{ opt }}">{{ opt }}</option>
+                {% endfor %}
+            </select>
+        </td>
+        <td><input class="form-control" name="object_serial_number"></td>
+        <td><input class="form-control" name="object_quantity" type="number" min="1" value="1"></td>
+        <td><button type="button" class="btn btn-danger" onclick="removeRow(this)">Remove</button></td>
+    `;
+    body.appendChild(row);
+    const objectType = row.querySelector('select[name="object_type"]');
+    if (objectType) {
+        objectType.addEventListener('change', () => updateRowControls(row));
+    }
+    updateRowControls(row);
+}
+
+function removeRow(btn) {
+    const body = document.getElementById('items-body');
+    if (body.children.length <= 1) {
+        return;
+    }
+    btn.closest('tr').remove();
+}
+
+function updateRowControls(row) {
+    const objectType = row.querySelector('select[name="object_type"]');
+    const capacity = row.querySelector('.object-capacity');
+    const capacityCell = row.querySelector('.capacity-cell');
+    const inverterVariant = row.querySelector('.object-variant-inverter');
+    const batteryVariant = row.querySelector('.object-variant-battery');
+
+    if (!objectType || !capacity || !inverterVariant || !batteryVariant) {
+        return;
+    }
+
+    if (objectType.value === 'Battery') {
+        capacity.value = '';
+        if (capacityCell) {
+            capacityCell.style.display = 'none';
+        }
+        inverterVariant.style.display = 'none';
+        inverterVariant.disabled = true;
+        inverterVariant.value = '';
+        batteryVariant.style.display = 'block';
+        batteryVariant.disabled = false;
+    } else {
+        if (capacityCell) {
+            capacityCell.style.display = '';
+        }
+        inverterVariant.style.display = 'block';
+        inverterVariant.disabled = false;
+        batteryVariant.style.display = 'none';
+        batteryVariant.disabled = true;
+        batteryVariant.value = '';
+    }
+}
+
+function toggleCourierOther() {
+    const select = document.getElementById('courier_partner');
+    const otherGroup = document.getElementById('courier_other_group');
+    if (select.value === '__other__') {
+        otherGroup.style.display = 'block';
+    } else {
+        otherGroup.style.display = 'none';
+    }
+}
+
+function syncCourierOther() {
+    const select = document.getElementById('courier_partner');
+    const otherInput = document.getElementById('courier_partner_other');
+    const value = (otherInput.value || '').trim();
+    if (!value) {
+        return;
+    }
+    const existing = Array.from(select.options).some(opt => opt.value === value);
+    if (!existing) {
+        const option = document.createElement('option');
+        option.value = value;
+        option.textContent = value;
+        select.insertBefore(option, select.lastElementChild);
+    }
+    select.value = value;
+    toggleCourierOther();
+}
+
+function setupPincodeAutoFill(pinId, stateId, districtId, cityId) {
+    const pinInput = document.getElementById(pinId);
+    const stateInput = document.getElementById(stateId);
+    const districtInput = document.getElementById(districtId);
+    const cityInput = document.getElementById(cityId);
+
+    if (!pinInput) return;
+
+    pinInput.addEventListener('input', function() {
+        const pin = pinInput.value.trim();
+        if (pin.length !== 6 || !/^\d{6}$/.test(pin)) {
+            return;
+        }
+
+        fetch('/forms/api/pincode/?pin=' + encodeURIComponent(pin))
+            .then(r => r.ok ? r.json() : Promise.reject(r))
+            .then(j => {
+                if (j && j.ok && j.data) {
+                    stateInput.value = j.data.state || '';
+                    cityInput.value = j.data.city || '';
+                    districtInput.value = j.data.city || '';
+                }
+            })
+            .catch(() => {
+                fetch('https://api.postalpincode.in/pincode/' + pin)
+                    .then(r => r.json())
+                    .then(d => {
+                        if (d && d[0] && d[0].Status === 'Success' && d[0].PostOffice) {
+                            const po = d[0].PostOffice[0];
+                            stateInput.value = po.State || '';
+                            cityInput.value = po.District || po.Name || '';
+                            districtInput.value = po.District || po.Name || '';
+                        }
+                    });
+            });
+    });
+}
+
+setupPincodeAutoFill('pickup_pincode', 'pickup_state', 'pickup_district', 'pickup_city');
+setupPincodeAutoFill('delivery_pincode', 'delivery_state', 'delivery_district', 'delivery_city');
+
+document.querySelectorAll('#items-body tr').forEach(row => {
+    const objectType = row.querySelector('select[name="object_type"]');
+    if (objectType) {
+        objectType.addEventListener('change', () => updateRowControls(row));
+    }
+    updateRowControls(row);
+});
+
+const otherInput = document.getElementById('courier_partner_other');
+if (otherInput) {
+    otherInput.addEventListener('change', syncCourierOther);
+}
+toggleCourierOther();
+</script>
+</body>
+</html>

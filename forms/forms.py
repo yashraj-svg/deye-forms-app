@@ -237,6 +237,10 @@ class InwardFormForm(forms.ModelForm):
         # Always make email field not required
         if 'email' in self.fields:
             self.fields['email'].required = False
+        if 'invoice_number' in self.fields:
+            self.fields['invoice_number'].required = True
+        if 'inward_id' in self.fields:
+            self.fields['inward_id'].required = False
         # Dynamically relax requirements based on selected inward object
         inward_object = None
         # Prefer posted data when available

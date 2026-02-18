@@ -1,4 +1,5 @@
 import os
+import uuid
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseForbidden, JsonResponse
 from functools import wraps
@@ -16,6 +17,17 @@ def stock_manager_required(view_func):
         allowed_users = {"SnehalShinde", "NileshBagad"}
         if not (request.user.is_superuser or request.user.username in allowed_users):
             return HttpResponseForbidden("⛔ Access Denied: Only stock managers (Snehal/Nilesh) or superusers can access this page.")
+        return view_func(request, *args, **kwargs)
+    return _wrapped_view
+
+
+def logistic_access_required(view_func):
+    """Allow only superusers or SakshiChorghe"""
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        allowed_users = {"SakshiChorghe"}
+        if not (request.user.is_superuser or request.user.username in allowed_users):
+            return HttpResponseForbidden("⛔ Access Denied: Only SakshiChorghe or superusers can access this page.")
         return view_func(request, *args, **kwargs)
     return _wrapped_view
 
@@ -313,7 +325,8 @@ from .models import (
     UserProfile,
     StockRequisition,
     DispatchedStock,
-    StockItem
+    StockItem,
+    LogisticBooking
 )
 
 from .forms import (
@@ -337,10 +350,63 @@ from .calculator.data_loader import load_pincode_master, lookup_pincode
 @login_required
 def simple_home(request):
     today = date.today()
-    events = UpcomingEvent.objects.filter(
-        is_active=True,
-        event_date__gte=today
-    ).order_by('event_date')[:6]
+    month_start = date(today.year, today.month, 1)
+    if today.month == 12:
+        month_end = date(today.year + 1, 1, 1) - timedelta(days=1)
+    else:
+        month_end = date(today.year, today.month + 1, 1) - timedelta(days=1)
+
+    from .models import Holiday
+
+    upcoming_items = []
+
+    festival_holidays = Holiday.objects.filter(
+        category='Festival',
+        date__gte=month_start,
+        date__lte=month_end,
+    ).order_by('date')
+    for holiday in festival_holidays:
+        upcoming_items.append({
+            'event_date': holiday.date,
+            'title': holiday.name,
+            'location': '',
+            'description': 'Festival Holiday',
+            'event_kind': 'Festival',
+        })
+
+    birthday_profiles = UserProfile.objects.select_related('user').filter(
+        user__is_active=True,
+        date_of_birth__isnull=False,
+    )
+    for profile in birthday_profiles:
+        dob = profile.date_of_birth
+        if not dob:
+            continue
+        try:
+            next_birthday = date(today.year, dob.month, dob.day)
+        except ValueError:
+            continue
+
+        if next_birthday < month_start:
+            try:
+                next_birthday = date(today.year + 1, dob.month, dob.day)
+            except ValueError:
+                continue
+
+        if next_birthday < month_start or next_birthday > month_end:
+            continue
+
+        employee_name = profile.user.get_full_name() or profile.user.username
+        upcoming_items.append({
+            'event_date': next_birthday,
+            'title': f"{employee_name}'s Birthday",
+            'location': '',
+            'description': 'Team member birthday',
+            'event_kind': 'Birthday',
+        })
+
+    upcoming_items = sorted(upcoming_items, key=lambda item: item['event_date'])
+
     team_members = []
     if hasattr(request.user, 'profile'):
         team_members = request.user.profile.get_team_members()
@@ -351,7 +417,7 @@ def simple_home(request):
     show_team_attendance = is_manager or request.user.is_superuser
     
     return render(request, 'forms/simple_home_modern.html', {
-        'events': events, 
+        'events': upcoming_items,
         'user': request.user, 
         'team_members': team_members,
         'show_team_attendance': show_team_attendance
@@ -1015,6 +1081,503 @@ def select_form_page(request):
 
 
 @login_required
+@logistic_access_required
+def logistic_booking_create(request):
+    from django.contrib.auth.models import User
+
+    engineers = User.objects.filter(is_active=True).order_by('first_name', 'last_name', 'username')
+
+    courier_partner_base = [
+        'Safexpress',
+        'Bigship',
+        'Bluedart',
+        'Anjani',
+        'Global Cargo',
+    ]
+
+    capacity_options = [
+        '2.2 KW', '3 KW', '3.3 KW', '4 KW', '5 KW', '6 KW', '8 KW', '10 KW', '12 KW',
+        '15 KW', '18 KW', '20 KW', '25 KW', '30 KW', '33 KW', '35 KW', '40 KW',
+        '50 KW', '60 KW', '75 KW', '80 KW', '100 KW', '125 KW', '136 KW'
+    ]
+
+    inverter_type_options = [
+        '1PH - Hybrid',
+        '3PH - Hybrid',
+        '1PH - Ongrid',
+        '3PH - Ongrid',
+        'All In One - Hybrid',
+        'Other',
+    ]
+
+    battery_model_options = [
+        'RW - L 2.5 Neutral',
+        'RW - M 5.3 Neutral',
+        'RW - M 5.3 Pro Neutral (M6)',
+        'RW - M 6.1 Neutral',
+        'RW - M 6.1 B Neutral No Remark',
+        'SE - G 5.1 - Pro B Neutral No Remark',
+        'AI - W 5.1 Neutral',
+        'AI - W 5.1 - B Neutral No Remark',
+        'BOS - GM 5.1 Neutral',
+        'GB - LM 4.0 Neutral',
+        'GB - LB Neutral',
+        'SE - G 5.3',
+        'SE - G 5.3 Pro',
+        'SE - F 5',
+        'Other',
+    ]
+
+    pickup_status_options = [
+        'Pickup Done',
+        'Pickup Not Done',
+        'Order Cancelled',
+        'Only Invoice',
+    ]
+
+    delivery_status_options = [
+        'Delivered',
+        'Undelivered',
+        'OFD',
+        'Order Cancelled',
+        'In-Transit',
+        'RTO Delivered',
+        'Only Invoice',
+    ]
+
+    pickup_status_options = [
+        'Pickup Done',
+        'Pickup Not Done',
+        'Order Cancelled',
+        'Only Invoice',
+    ]
+
+    delivery_status_options = [
+        'Delivered',
+        'Undelivered',
+        'OFD',
+        'Order Cancelled',
+        'In-Transit',
+        'RTO Delivered',
+        'Only Invoice',
+    ]
+
+    existing_partners = list(
+        LogisticBooking.objects.values_list('courier_partner', flat=True).distinct()
+    )
+    extra_partners = [p for p in existing_partners if p and p not in courier_partner_base]
+    courier_partner_choices = courier_partner_base + sorted(extra_partners)
+
+    if request.method == 'POST':
+        data = request.POST
+        errors = []
+
+        def _get_value(key, required=False):
+            value = (data.get(key) or '').strip()
+            if required and not value:
+                errors.append(f"{key.replace('_', ' ').title()} is required")
+            return value
+
+        engineer_id = _get_value('engineer_id', required=True)
+        engineer = None
+        if engineer_id:
+            engineer = User.objects.filter(id=engineer_id).first()
+        if not engineer:
+            errors.append('Engineer name is required')
+
+        customer_name = _get_value('customer_name', required=True)
+        contact_details = _get_value('contact_details', required=True)
+
+        pickup_pincode = _get_value('pickup_pincode', required=True)
+        pickup_state = _get_value('pickup_state')
+        pickup_district = _get_value('pickup_district')
+        pickup_city = _get_value('pickup_city')
+        pickup_address = _get_value('pickup_address')
+
+        delivery_name = _get_value('delivery_name', required=True)
+        delivery_contact = _get_value('delivery_contact', required=True)
+        delivery_pincode = _get_value('delivery_pincode', required=True)
+        delivery_state = _get_value('delivery_state')
+        delivery_district = _get_value('delivery_district')
+        delivery_city = _get_value('delivery_city')
+        delivery_address = _get_value('delivery_address')
+
+        courier_partner = _get_value('courier_partner', required=True)
+        courier_partner_other = _get_value('courier_partner_other')
+        if courier_partner == '__other__':
+            if not courier_partner_other:
+                errors.append('Other courier partner is required')
+            courier_partner = courier_partner_other
+
+        shipment_weight_raw = _get_value('shipment_weight', required=True)
+        invoice_number = _get_value('invoice_number', required=True)
+        awb_number = _get_value('awb_number')
+
+        pickup_status = _get_value('pickup_status')
+        pickup_date_raw = _get_value('pickup_date')
+        delivery_status = _get_value('delivery_status')
+        delivery_date_raw = _get_value('delivery_date')
+        remark = _get_value('remark')
+
+        try:
+            shipment_weight = Decimal(shipment_weight_raw) if shipment_weight_raw else None
+        except Exception:
+            shipment_weight = None
+            errors.append('Shipment weight must be a valid number')
+
+        pickup_date = None
+        delivery_date = None
+        if pickup_date_raw:
+            try:
+                pickup_date = datetime.strptime(pickup_date_raw, '%Y-%m-%d').date()
+            except ValueError:
+                errors.append('Pickup date must be valid')
+        if delivery_date_raw:
+            try:
+                delivery_date = datetime.strptime(delivery_date_raw, '%Y-%m-%d').date()
+            except ValueError:
+                errors.append('Delivery date must be valid')
+
+        object_types = data.getlist('object_type')
+        object_capacities = data.getlist('object_capacity')
+        object_variants = data.getlist('object_variant')
+        object_serials = data.getlist('object_serial_number')
+        object_qtys = data.getlist('object_quantity')
+
+        items = []
+        for idx, obj_type in enumerate(object_types):
+            obj_type = (obj_type or '').strip()
+            if not obj_type:
+                continue
+            capacity = (object_capacities[idx] if idx < len(object_capacities) else '').strip()
+            variant = (object_variants[idx] if idx < len(object_variants) else '').strip()
+            serial_number = (object_serials[idx] if idx < len(object_serials) else '').strip()
+            qty_raw = (object_qtys[idx] if idx < len(object_qtys) else '').strip()
+            try:
+                quantity = int(qty_raw) if qty_raw else 1
+            except Exception:
+                quantity = 1
+            if quantity < 1:
+                quantity = 1
+            items.append({
+                'object_type': obj_type,
+                'object_capacity': capacity,
+                'object_variant': variant,
+                'object_serial_number': serial_number,
+                'object_quantity': quantity,
+            })
+
+        if not items:
+            errors.append('At least one object row is required')
+
+        if errors:
+            return render(request, 'forms/logistic_form.html', {
+                'errors': errors,
+                'form_data': data,
+                'items': items,
+                'courier_partners': courier_partner_choices,
+                'capacity_options': capacity_options,
+                'inverter_type_options': inverter_type_options,
+                'battery_model_options': battery_model_options,
+                'pickup_status_options': pickup_status_options,
+                'delivery_status_options': delivery_status_options,
+                'engineers': engineers,
+            })
+
+        batch_id = str(uuid.uuid4())
+        for item in items:
+            LogisticBooking.objects.create(
+                created_by=request.user,
+                engineer=engineer,
+                customer_name=customer_name,
+                contact_details=contact_details,
+                pickup_pincode=pickup_pincode,
+                pickup_state=pickup_state,
+                pickup_district=pickup_district,
+                pickup_city=pickup_city,
+                pickup_address=pickup_address,
+                delivery_name=delivery_name,
+                delivery_contact=delivery_contact,
+                delivery_pincode=delivery_pincode,
+                delivery_state=delivery_state,
+                delivery_district=delivery_district,
+                delivery_city=delivery_city,
+                delivery_address=delivery_address,
+                object_type=item['object_type'],
+                object_capacity=item['object_capacity'],
+                object_variant=item['object_variant'],
+                object_serial_number=item['object_serial_number'],
+                object_quantity=item['object_quantity'],
+                courier_partner=courier_partner,
+                shipment_weight=shipment_weight,
+                awb_number=awb_number,
+                invoice_number=invoice_number,
+                pickup_status=pickup_status,
+                pickup_date=pickup_date,
+                delivery_status=delivery_status,
+                delivery_date=delivery_date,
+                remark=remark,
+                batch_id=batch_id,
+            )
+
+        return render(request, 'forms/logistic_form.html', {
+            'success_message': 'Logistic booking saved successfully.',
+            'courier_partners': courier_partner_choices,
+            'capacity_options': capacity_options,
+            'inverter_type_options': inverter_type_options,
+            'battery_model_options': battery_model_options,
+            'pickup_status_options': pickup_status_options,
+            'delivery_status_options': delivery_status_options,
+            'engineers': engineers,
+            'items': [{'object_type': 'Inverter', 'object_capacity': '', 'object_serial_number': '', 'object_quantity': 1}],
+        })
+
+    return render(request, 'forms/logistic_form.html', {
+        'courier_partners': courier_partner_choices,
+        'capacity_options': capacity_options,
+        'inverter_type_options': inverter_type_options,
+        'battery_model_options': battery_model_options,
+        'pickup_status_options': pickup_status_options,
+        'delivery_status_options': delivery_status_options,
+        'engineers': engineers,
+        'items': [{'object_type': 'Inverter', 'object_capacity': '', 'object_serial_number': '', 'object_quantity': 1}],
+    })
+
+
+@login_required
+@logistic_access_required
+def logistic_booking_list(request):
+    from django.contrib.auth.models import User
+
+    bookings = LogisticBooking.objects.all()
+
+    from_date_str = (request.GET.get('from_date') or '').strip()
+    to_date_str = (request.GET.get('to_date') or '').strip()
+    engineer_id = (request.GET.get('engineer') or '').strip()
+    filled_by_id = (request.GET.get('filled_by') or '').strip()
+    courier = (request.GET.get('courier') or '').strip()
+    object_type = (request.GET.get('object_type') or '').strip()
+    search = (request.GET.get('search') or '').strip()
+
+    if from_date_str:
+        try:
+            from_date = datetime.strptime(from_date_str, '%Y-%m-%d').date()
+            bookings = bookings.filter(created_at__date__gte=from_date)
+        except ValueError:
+            from_date = None
+    if to_date_str:
+        try:
+            to_date = datetime.strptime(to_date_str, '%Y-%m-%d').date()
+            bookings = bookings.filter(created_at__date__lte=to_date)
+        except ValueError:
+            to_date = None
+
+    if engineer_id:
+        bookings = bookings.filter(engineer_id=engineer_id)
+    if filled_by_id:
+        bookings = bookings.filter(created_by_id=filled_by_id)
+    if courier:
+        bookings = bookings.filter(courier_partner=courier)
+    if object_type:
+        bookings = bookings.filter(object_type=object_type)
+    if search:
+        bookings = bookings.filter(
+            Q(customer_name__icontains=search)
+            | Q(delivery_name__icontains=search)
+            | Q(object_serial_number__icontains=search)
+            | Q(awb_number__icontains=search)
+            | Q(invoice_number__icontains=search)
+        )
+
+    bookings = bookings.order_by('-created_at')[:200]
+
+    engineers = User.objects.filter(is_active=True).order_by('first_name', 'last_name', 'username')
+    couriers = list(
+        LogisticBooking.objects.values_list('courier_partner', flat=True).distinct()
+    )
+    couriers = sorted([c for c in couriers if c])
+    return render(request, 'forms/logistic_list.html', {
+        'bookings': bookings,
+        'engineers': engineers,
+        'couriers': couriers,
+        'filters': {
+            'from_date': from_date_str,
+            'to_date': to_date_str,
+            'engineer': engineer_id,
+            'filled_by': filled_by_id,
+            'courier': courier,
+            'object_type': object_type,
+            'search': search,
+        },
+    })
+
+
+@login_required
+@logistic_access_required
+def logistic_booking_edit(request, booking_id):
+    booking = get_object_or_404(LogisticBooking, id=booking_id)
+    from django.contrib.auth.models import User
+
+    courier_partner_base = [
+        'Safexpress',
+        'Bigship',
+        'Bluedart',
+        'Anjani',
+        'Global Cargo',
+    ]
+
+    existing_partners = list(
+        LogisticBooking.objects.values_list('courier_partner', flat=True).distinct()
+    )
+    extra_partners = [p for p in existing_partners if p and p not in courier_partner_base]
+    courier_partner_choices = courier_partner_base + sorted(extra_partners)
+
+    capacity_options = [
+        '2.2 KW', '3 KW', '3.3 KW', '4 KW', '5 KW', '6 KW', '8 KW', '10 KW', '12 KW',
+        '15 KW', '18 KW', '20 KW', '25 KW', '30 KW', '33 KW', '35 KW', '40 KW',
+        '50 KW', '60 KW', '75 KW', '80 KW', '100 KW', '125 KW', '136 KW'
+    ]
+
+    inverter_type_options = [
+        '1PH - Hybrid',
+        '3PH - Hybrid',
+        '1PH - Ongrid',
+        '3PH - Ongrid',
+        'All In One - Hybrid',
+        'Other',
+    ]
+
+    battery_model_options = [
+        'RW - L 2.5 Neutral',
+        'RW - M 5.3 Neutral',
+        'RW - M 5.3 Pro Neutral (M6)',
+        'RW - M 6.1 Neutral',
+        'RW - M 6.1 B Neutral No Remark',
+        'SE - G 5.1 - Pro B Neutral No Remark',
+        'AI - W 5.1 Neutral',
+        'AI - W 5.1 - B Neutral No Remark',
+        'BOS - GM 5.1 Neutral',
+        'GB - LM 4.0 Neutral',
+        'GB - LB Neutral',
+        'SE - G 5.3',
+        'SE - G 5.3 Pro',
+        'SE - F 5',
+        'Other',
+    ]
+
+    pickup_status_options = [
+        'Pickup Pending',
+        'Picked',
+    ]
+
+    delivery_status_options = [
+        'In Transit',
+        'Delivered',
+    ]
+
+    engineers = User.objects.filter(is_active=True).order_by('first_name', 'last_name', 'username')
+
+    errors = []
+    if request.method == 'POST':
+        data = request.POST
+
+        def _get_value(key, required=False):
+            value = (data.get(key) or '').strip()
+            if required and not value:
+                errors.append(f"{key.replace('_', ' ').title()} is required")
+            return value
+
+        engineer_id = _get_value('engineer_id', required=True)
+        engineer = User.objects.filter(id=engineer_id).first() if engineer_id else None
+        if not engineer:
+            errors.append('Engineer name is required')
+
+        booking.customer_name = _get_value('customer_name', required=True)
+        booking.contact_details = _get_value('contact_details', required=True)
+
+        booking.pickup_pincode = _get_value('pickup_pincode', required=True)
+        booking.pickup_state = _get_value('pickup_state')
+        booking.pickup_district = _get_value('pickup_district')
+        booking.pickup_city = _get_value('pickup_city')
+        booking.pickup_address = _get_value('pickup_address')
+
+        booking.delivery_name = _get_value('delivery_name', required=True)
+        booking.delivery_contact = _get_value('delivery_contact', required=True)
+        booking.delivery_pincode = _get_value('delivery_pincode', required=True)
+        booking.delivery_state = _get_value('delivery_state')
+        booking.delivery_district = _get_value('delivery_district')
+        booking.delivery_city = _get_value('delivery_city')
+        booking.delivery_address = _get_value('delivery_address')
+
+        booking.object_type = _get_value('object_type', required=True)
+        booking.object_capacity = _get_value('object_capacity')
+        booking.object_variant = _get_value('object_variant')
+        booking.object_serial_number = _get_value('object_serial_number')
+        qty_raw = _get_value('object_quantity', required=True)
+        try:
+            booking.object_quantity = int(qty_raw)
+        except Exception:
+            errors.append('Object quantity must be a valid number')
+
+        courier_partner = _get_value('courier_partner', required=True)
+        courier_partner_other = _get_value('courier_partner_other')
+        if courier_partner == '__other__':
+            if not courier_partner_other:
+                errors.append('Other courier partner is required')
+            courier_partner = courier_partner_other
+        booking.courier_partner = courier_partner
+
+        weight_raw = _get_value('shipment_weight', required=True)
+        try:
+            booking.shipment_weight = Decimal(weight_raw)
+        except Exception:
+            errors.append('Shipment weight must be a valid number')
+
+        booking.awb_number = _get_value('awb_number')
+        booking.invoice_number = _get_value('invoice_number', required=True)
+
+        booking.pickup_status = _get_value('pickup_status')
+        pickup_date_raw = _get_value('pickup_date')
+        booking.delivery_status = _get_value('delivery_status')
+        delivery_date_raw = _get_value('delivery_date')
+        booking.remark = _get_value('remark')
+
+        if pickup_date_raw:
+            try:
+                booking.pickup_date = datetime.strptime(pickup_date_raw, '%Y-%m-%d').date()
+            except ValueError:
+                errors.append('Pickup date must be valid')
+        else:
+            booking.pickup_date = None
+
+        if delivery_date_raw:
+            try:
+                booking.delivery_date = datetime.strptime(delivery_date_raw, '%Y-%m-%d').date()
+            except ValueError:
+                errors.append('Delivery date must be valid')
+        else:
+            booking.delivery_date = None
+
+        booking.engineer = engineer
+
+        if not errors:
+            booking.save()
+            return redirect('forms:logistic_list')
+
+    return render(request, 'forms/logistic_edit.html', {
+        'booking': booking,
+        'errors': errors,
+        'engineers': engineers,
+        'courier_partners': courier_partner_choices,
+        'capacity_options': capacity_options,
+        'inverter_type_options': inverter_type_options,
+        'battery_model_options': battery_model_options,
+        'pickup_status_options': pickup_status_options,
+        'delivery_status_options': delivery_status_options,
+    })
+
+
+@login_required
 def forms_data_overview(request):
     context = {
         'inwards': InwardForm.objects.order_by('-created_at')[:50],
@@ -1440,6 +2003,67 @@ def pincode_lookup_api(request):
         return JsonResponse({'ok': True, 'data': data})
     except Exception as exc:
         return JsonResponse({'ok': False, 'error': str(exc)}, status=500)
+
+
+@login_required
+def awb_lookup_api(request):
+    query = (request.GET.get('q') or '').strip()
+    base_qs = LogisticBooking.objects.exclude(awb_number='')
+
+    if not query:
+        recent_awbs = base_qs.order_by('-created_at').values_list('awb_number', flat=True)
+        suggestions = []
+        seen = set()
+        for awb in recent_awbs:
+            if awb and awb not in seen:
+                seen.add(awb)
+                suggestions.append(awb)
+            if len(suggestions) >= 8:
+                break
+        return JsonResponse({'ok': True, 'suggestions': suggestions, 'detail': None})
+
+    matches = base_qs.filter(awb_number__icontains=query)
+    raw_suggestions = matches.values_list('awb_number', flat=True)
+    suggestions = []
+    seen = set()
+    for awb in raw_suggestions:
+        if awb and awb not in seen:
+            seen.add(awb)
+            suggestions.append(awb)
+        if len(suggestions) >= 8:
+            break
+
+    exact_matches = base_qs.filter(awb_number__iexact=query).order_by('-created_at', '-id')
+    items = []
+    for booking in exact_matches:
+        items.append({
+            'booking_id': booking.id,
+            'awb_number': booking.awb_number,
+            'invoice_number': booking.invoice_number,
+            'customer_name': booking.customer_name,
+            'delivery_name': booking.delivery_name,
+            'delivery_contact': booking.delivery_contact,
+            'pickup_pincode': booking.pickup_pincode,
+            'pickup_state': booking.pickup_state,
+            'pickup_district': booking.pickup_district,
+            'pickup_city': booking.pickup_city,
+            'pickup_address': booking.pickup_address,
+            'delivery_pincode': booking.delivery_pincode,
+            'delivery_state': booking.delivery_state,
+            'delivery_district': booking.delivery_district,
+            'delivery_city': booking.delivery_city,
+            'delivery_address': booking.delivery_address,
+            'courier_partner': booking.courier_partner,
+            'object_type': booking.object_type,
+            'object_capacity': booking.object_capacity,
+            'object_variant': booking.object_variant,
+            'object_serial_number': booking.object_serial_number,
+            'object_quantity': booking.object_quantity,
+        })
+
+    detail = items[0] if items else None
+
+    return JsonResponse({'ok': True, 'suggestions': suggestions, 'detail': detail, 'items': items})
 
 # ─────────────────────────────
 # LEAVE MANAGEMENT

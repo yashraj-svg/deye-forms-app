@@ -24,6 +24,7 @@ urlpatterns = [
     path('stock/request-required/', request_required_stock, name='request_required_stock'),
     path('stock/update-new-shipments/', views.update_new_shipments, name='update_new_shipments'),
     path('api/pincode/', views.pincode_lookup_api, name='pincode_lookup'),
+    path('api/awb-lookup/', views.awb_lookup_api, name='awb_lookup'),
     # Stock APIs
     path('api/stock/serial-search/', views.stock_serial_search, name='stock_serial_search'),
     path('api/stock/serial-details/', views.stock_serial_details, name='stock_serial_details'),
@@ -41,6 +42,9 @@ urlpatterns = [
     path('forms/inward/', views.inward_form_page, name='inward_form'),
     path('forms/outward/', views.outward_form_page, name='outward_form'),
     path('forms/service/', views.service_form_page, name='service_form'),
+    path('forms/logistic/', views.logistic_booking_create, name='logistic_form'),
+    path('forms/logistic/list/', views.logistic_booking_list, name='logistic_list'),
+    path('forms/logistic/<int:booking_id>/edit/', views.logistic_booking_edit, name='logistic_edit'),
     path('forms/service-report/<int:report_id>/pdf/', views.service_report_pdf, name='service_report_pdf'),
     path('forms/data/', views.forms_data_overview, name='forms_data_overview'),
         path('forms/repairing/<int:form_id>/pdf/', views.repairing_form_pdf, name='repairing_form_pdf'),

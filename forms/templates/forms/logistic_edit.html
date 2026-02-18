@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Logistic Booking - Deye</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --ink: #0f172a;
+            --muted: #64748b;
+            --line: #e2e8f0;
+            --accent: #2563eb;
+            --panel: #ffffff;
+            --wash: #f8fafc;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: radial-gradient(circle at top left, #e0f2fe 0%, #f8fafc 45%, #eef2ff 100%);
+            color: var(--ink);
+            padding: 24px;
+        }
+        .container { max-width: 980px; margin: 0 auto; }
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 20px;
+            padding: 16px 20px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.12), rgba(14, 165, 233, 0.12));
+            border: 1px solid rgba(37, 99, 235, 0.15);
+        }
+        .header-icon {
+            width: 46px;
+            height: 46px;
+            border-radius: 12px;
+            display: grid;
+            place-items: center;
+            background: linear-gradient(135deg, #2563eb, #0ea5e9);
+            color: white;
+            font-size: 20px;
+        }
+        .form-container {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            padding: 26px;
+            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+        }
+        .grid { display: grid; gap: 16px; }
+        .grid-2 { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+        .grid-3 { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+        .section-title {
+            font-size: 15px;
+            font-weight: 800;
+            margin: 18px 0 8px;
+            color: #111827;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .section-title::before {
+            content: '';
+            width: 10px;
+            height: 10px;
+            border-radius: 999px;
+            background: linear-gradient(135deg, #2563eb, #0ea5e9);
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+        }
+        label {
+            display: block;
+            margin: 8px 0 6px;
+            font-weight: 800;
+            font-size: 11px;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .form-control {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            font-size: 14px;
+            background: var(--wash);
+        }
+        textarea.form-control { min-height: 90px; resize: vertical; }
+        .btn { padding: 10px 16px; border-radius: 10px; font-weight: 800; font-size: 13px; text-decoration: none; border: none; cursor: pointer; }
+        .btn-submit { background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; }
+        .btn-secondary { background: #eef2ff; color: var(--ink); border: 1px solid #c7d2fe; }
+        .actions { margin-top: 18px; display: flex; gap: 10px; flex-wrap: wrap; }
+        .errors {
+            background: #fee2e2;
+            border-left: 4px solid #dc2626;
+            color: #991b1b;
+            padding: 12px 14px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <div class="header-icon">✏️</div>
+        <div>
+            <h2>Edit Logistic Booking</h2>
+            <p style="color: var(--muted); font-size: 13px;">Update all booking details and save.</p>
+        </div>
+    </div>
+
+    <div class="form-container">
+        {% if errors %}
+        <div class="errors">
+            {% for error in errors %}
+                <div>• {{ error }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <form method="POST">
+            {% csrf_token %}
+
+            <div class="section-title">Customer Details</div>
+            <div class="grid grid-2">
+                <div>
+                    <label>Engineer Name</label>
+                    <select class="form-control" name="engineer_id" required>
+                        <option value="">Select Engineer</option>
+                        {% for engineer in engineers %}
+                            <option value="{{ engineer.id }}" {% if booking.engineer and booking.engineer.id == engineer.id %}selected{% endif %}>
+                                {{ engineer.get_full_name|default:engineer.username }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label>Filled By</label>
+                    <input class="form-control" value="{{ booking.created_by.get_full_name|default:booking.created_by.username|default:'-' }}" disabled>
+                </div>
+                <div>
+                    <label>Customer / Company Name</label>
+                    <input class="form-control" name="customer_name" value="{{ booking.customer_name }}" required>
+                </div>
+                <div>
+                    <label>Contact Details</label>
+                    <input class="form-control" name="contact_details" value="{{ booking.contact_details }}" required>
+                </div>
+            </div>
+
+            <div class="section-title">Pickup Address</div>
+            <div class="grid grid-3">
+                <div>
+                    <label>Pickup Pincode</label>
+                    <input class="form-control" id="pickup_pincode" name="pickup_pincode" value="{{ booking.pickup_pincode }}" required>
+                </div>
+                <div>
+                    <label>State</label>
+                    <input class="form-control" id="pickup_state" name="pickup_state" value="{{ booking.pickup_state }}">
+                </div>
+                <div>
+                    <label>District</label>
+                    <input class="form-control" id="pickup_district" name="pickup_district" value="{{ booking.pickup_district }}">
+                </div>
+                <div>
+                    <label>City</label>
+                    <input class="form-control" id="pickup_city" name="pickup_city" value="{{ booking.pickup_city }}">
+                </div>
+                <div style="grid-column: 1 / -1;">
+                    <label>Detailed Address</label>
+                    <textarea class="form-control" name="pickup_address">{{ booking.pickup_address }}</textarea>
+                </div>
+            </div>
+
+            <div class="section-title">Delivery Address</div>
+            <div class="grid grid-3">
+                <div>
+                    <label>Company / Customer Name</label>
+                    <input class="form-control" name="delivery_name" value="{{ booking.delivery_name }}" required>
+                </div>
+                <div>
+                    <label>Contact Details</label>
+                    <input class="form-control" name="delivery_contact" value="{{ booking.delivery_contact }}" required>
+                </div>
+                <div>
+                    <label>Delivery Pincode</label>
+                    <input class="form-control" id="delivery_pincode" name="delivery_pincode" value="{{ booking.delivery_pincode }}" required>
+                </div>
+                <div>
+                    <label>State</label>
+                    <input class="form-control" id="delivery_state" name="delivery_state" value="{{ booking.delivery_state }}">
+                </div>
+                <div>
+                    <label>District</label>
+                    <input class="form-control" id="delivery_district" name="delivery_district" value="{{ booking.delivery_district }}">
+                </div>
+                <div>
+                    <label>City</label>
+                    <input class="form-control" id="delivery_city" name="delivery_city" value="{{ booking.delivery_city }}">
+                </div>
+                <div style="grid-column: 1 / -1;">
+                    <label>Detailed Address</label>
+                    <textarea class="form-control" name="delivery_address">{{ booking.delivery_address }}</textarea>
+                </div>
+            </div>
+
+            <div class="section-title">Object Details</div>
+            <div class="grid grid-3">
+                <div>
+                    <label>Object</label>
+                    <select class="form-control" id="object_type" name="object_type" required>
+                        <option value="Inverter" {% if booking.object_type == 'Inverter' %}selected{% endif %}>Inverter</option>
+                        <option value="PCB" {% if booking.object_type == 'PCB' %}selected{% endif %}>PCB</option>
+                        <option value="Battery" {% if booking.object_type == 'Battery' %}selected{% endif %}>Battery</option>
+                    </select>
+                </div>
+                <div id="capacity_wrapper">
+                    <label>Capacity</label>
+                    <select class="form-control" name="object_capacity">
+                        <option value="">Select</option>
+                        {% for cap in capacity_options %}
+                            <option value="{{ cap }}" {% if booking.object_capacity == cap %}selected{% endif %}>{{ cap }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label>Type</label>
+                    <select class="form-control" id="variant_inverter" name="object_variant">
+                        <option value="">Select</option>
+                        {% for opt in inverter_type_options %}
+                            <option value="{{ opt }}" {% if booking.object_variant == opt %}selected{% endif %}>{{ opt }}</option>
+                        {% endfor %}
+                    </select>
+                    <select class="form-control" id="variant_battery" name="object_variant">
+                        <option value="">Select</option>
+                        {% for opt in battery_model_options %}
+                            <option value="{{ opt }}" {% if booking.object_variant == opt %}selected{% endif %}>{{ opt }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label>Serial Number</label>
+                    <input class="form-control" name="object_serial_number" value="{{ booking.object_serial_number }}">
+                </div>
+                <div>
+                    <label>Quantity</label>
+                    <input class="form-control" name="object_quantity" type="number" min="1" value="{{ booking.object_quantity }}">
+                </div>
+            </div>
+
+            <div class="section-title">Courier Details</div>
+            <div class="grid grid-3">
+                <div>
+                    <label>Courier Partner</label>
+                    <select class="form-control" id="courier_partner" name="courier_partner" onchange="toggleCourierOther()" required>
+                        {% for partner in courier_partners %}
+                            <option value="{{ partner }}" {% if booking.courier_partner == partner %}selected{% endif %}>{{ partner }}</option>
+                        {% endfor %}
+                        <option value="__other__">Other</option>
+                    </select>
+                </div>
+                <div id="courier_other_group" style="display:none;">
+                    <label>Other Courier Partner</label>
+                    <input class="form-control" id="courier_partner_other" name="courier_partner_other" value="">
+                </div>
+                <div>
+                    <label>Shipment Weight</label>
+                    <input class="form-control" name="shipment_weight" value="{{ booking.shipment_weight }}" required>
+                </div>
+                <div>
+                    <label>AWB Number</label>
+                    <input class="form-control" name="awb_number" value="{{ booking.awb_number }}">
+                </div>
+                <div>
+                    <label>Invoice Number</label>
+                    <input class="form-control" name="invoice_number" value="{{ booking.invoice_number }}" required>
+                </div>
+            </div>
+
+            <div class="section-title">Pickup Status</div>
+            <div class="grid grid-3">
+                <div>
+                    <label>Pickup Status</label>
+                    <select class="form-control" name="pickup_status">
+                        <option value="">Select</option>
+                        {% for opt in pickup_status_options %}
+                            <option value="{{ opt }}" {% if booking.pickup_status == opt %}selected{% endif %}>{{ opt }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label>Pickup Date</label>
+                    <input class="form-control" type="date" name="pickup_date" value="{{ booking.pickup_date|date:'Y-m-d' }}">
+                </div>
+            </div>
+
+            <div class="section-title">Delivery Status</div>
+            <div class="grid grid-3">
+                <div>
+                    <label>Delivery Status</label>
+                    <select class="form-control" name="delivery_status">
+                        <option value="">Select</option>
+                        {% for opt in delivery_status_options %}
+                            <option value="{{ opt }}" {% if booking.delivery_status == opt %}selected{% endif %}>{{ opt }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label>Delivery Date</label>
+                    <input class="form-control" type="date" name="delivery_date" value="{{ booking.delivery_date|date:'Y-m-d' }}">
+                </div>
+                <div style="grid-column: 1 / -1;">
+                    <label>Remark</label>
+                    <textarea class="form-control" name="remark">{{ booking.remark }}</textarea>
+                </div>
+            </div>
+
+            <div class="actions">
+                <button type="submit" class="btn btn-submit">Save</button>
+                <a class="btn btn-secondary" href="{% url 'forms:logistic_list' %}">Back</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function toggleCourierOther() {
+    const select = document.getElementById('courier_partner');
+    const otherGroup = document.getElementById('courier_other_group');
+    if (select.value === '__other__') {
+        otherGroup.style.display = 'block';
+    } else {
+        otherGroup.style.display = 'none';
+    }
+}
+
+function toggleObjectVariant() {
+    const objectType = document.getElementById('object_type');
+    const inverterVariant = document.getElementById('variant_inverter');
+    const batteryVariant = document.getElementById('variant_battery');
+    const capacityWrapper = document.getElementById('capacity_wrapper');
+
+    if (objectType.value === 'Battery') {
+        capacityWrapper.style.display = 'none';
+        inverterVariant.style.display = 'none';
+        inverterVariant.disabled = true;
+        batteryVariant.style.display = 'block';
+        batteryVariant.disabled = false;
+    } else {
+        capacityWrapper.style.display = '';
+        inverterVariant.style.display = 'block';
+        inverterVariant.disabled = false;
+        batteryVariant.style.display = 'none';
+        batteryVariant.disabled = true;
+    }
+}
+
+function setupPincodeAutoFill(pinId, stateId, districtId, cityId) {
+    const pinInput = document.getElementById(pinId);
+    const stateInput = document.getElementById(stateId);
+    const districtInput = document.getElementById(districtId);
+    const cityInput = document.getElementById(cityId);
+    if (!pinInput) return;
+    pinInput.addEventListener('input', function() {
+        const pin = pinInput.value.trim();
+        if (pin.length !== 6 || !/^\d{6}$/.test(pin)) {
+            return;
+        }
+        fetch('/forms/api/pincode/?pin=' + encodeURIComponent(pin))
+            .then(r => r.ok ? r.json() : Promise.reject(r))
+            .then(j => {
+                if (j && j.ok && j.data) {
+                    stateInput.value = j.data.state || '';
+                    cityInput.value = j.data.city || '';
+                    districtInput.value = j.data.city || '';
+                }
+            })
+            .catch(() => {
+                fetch('https://api.postalpincode.in/pincode/' + pin)
+                    .then(r => r.json())
+                    .then(d => {
+                        if (d && d[0] && d[0].Status === 'Success' && d[0].PostOffice) {
+                            const po = d[0].PostOffice[0];
+                            stateInput.value = po.State || '';
+                            cityInput.value = po.District || po.Name || '';
+                            districtInput.value = po.District || po.Name || '';
+                        }
+                    });
+            });
+    });
+}
+
+document.getElementById('object_type').addEventListener('change', toggleObjectVariant);
+toggleObjectVariant();
+toggleCourierOther();
+setupPincodeAutoFill('pickup_pincode', 'pickup_state', 'pickup_district', 'pickup_city');
+setupPincodeAutoFill('delivery_pincode', 'delivery_state', 'delivery_district', 'delivery_city');
+</script>
+</body>
+</html>
